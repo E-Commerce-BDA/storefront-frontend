@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# next.js build output
+.next/
+out/
+dist/
+
+# deployment
+.vercel
+
+# env (never commit real secrets)
+.env
+.env*.local
+!.env.example
+
+# logs / debug
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# editors
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
