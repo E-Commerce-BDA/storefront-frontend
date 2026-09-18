@@ -50,7 +50,17 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Wave button — solid fills only, wave rises on hover (storefront.md §7.1) */
+/* Wave button — variable-driven, full-coverage rise (storefront.md §7.1 + §6)
+   Knobs (inline vars from Button.tsx, resolved from ctas[].animation later):
+   --wave-bg/--wave-text/--wave-border, --wave-duration, --wave-delay,
+   --wave-easing, --wave-peak. Geometry via data-wave-origin/peaks/anim-kind.
+   Technique: ::before is a solid wave-bg layer taller than the button whose
+    top strip is a multi-peak SVG mask (transparent valleys). It parks fully
+    below (translate 100% + 8px buffer — a bare 101% park leaves only ~0.5px
+    of hiding margin, which subpixel rounding eats at some zooms, bleeding a
+    1px sliver at rest) and rises to 0, leaving the wave strip clipped above
+   the top edge by overflow:hidden → solid full coverage at rest, any width,
+   any radius (CMS 0-24/pill), any height (sm 36/md 44/lg 52). */
 .sf-btn {
   position: relative;
   display: inline-flex;
@@ -68,30 +78,159 @@ body {
   border: var(--btn-bw, 1px) solid var(--btn-border);
   border-radius: var(--btn-radius, 8px);
   transition:
-    color 0.16s ease 0.2s,
-    border-color 0.16s ease 0.2s;
+    color 0.16s ease var(--wave-delay, 200ms),
+    border-color 0.16s ease var(--wave-delay, 200ms),
+    background-color 0.16s ease var(--wave-delay, 200ms),
+    transform 0.12s ease;
   text-decoration: none;
   white-space: nowrap;
 }
+/* Base travelling layer — bottom origin, wave-rise. Other origins override
+   anchoring/transform below; fade kinds override to opacity cross-fade. */
 .sf-btn::before {
   content: "";
   position: absolute;
-  left: 50%;
-  bottom: -60%;
-  width: 150%;
-  aspect-ratio: 1.6;
-  transform: translate(-50%, 100%);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: calc(100% + var(--wave-peak, 12px));
+  /* Park buffer: 100% of own height + 8px. A bare 101% park leaves only a
+     ~0.5px hiding margin, which subpixel rounding at some zooms/DPRs eats,
+     bleeding a 1px wave sliver at rest. 8px survives any rounding. */
+  transform: translateY(calc(100% + 8px));
   background: var(--wave-bg);
-  border-radius: 50%;
-  transition: transform 0.36s cubic-bezier(0.32, 0.72, 0.32, 1);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  transition: transform var(--wave-duration, 360ms) var(--wave-easing, cubic-bezier(0.32, 0.72, 0.32, 1));
   pointer-events: none;
 }
-.sf-btn:hover::before {
-  transform: translate(-50%, 30%);
+/* Bottom-origin masks: wavy top edge, solid body (1/2/3 peaks). */
+.sf-btn[data-wave-origin="bottom"][data-peaks="1"]::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' preserveAspectRatio='none'%3E%3Cpath d='M0 14 Q50 -2 100 14 L100 60 L0 60 Z' fill='%23fff'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' preserveAspectRatio='none'%3E%3Cpath d='M0 14 Q50 -2 100 14 L100 60 L0 60 Z' fill='%23fff'/%3E%3C/svg%3E");
 }
-.sf-btn:hover {
+.sf-btn[data-wave-origin="bottom"][data-peaks="2"]::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' preserveAspectRatio='none'%3E%3Cpath d='M0 14 Q25 2 50 14 T100 14 L100 60 L0 60 Z' fill='%23fff'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' preserveAspectRatio='none'%3E%3Cpath d='M0 14 Q25 2 50 14 T100 14 L100 60 L0 60 Z' fill='%23fff'/%3E%3C/svg%3E");
+}
+.sf-btn[data-wave-origin="bottom"][data-peaks="3"]::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' preserveAspectRatio='none'%3E%3Cpath d='M0 14 Q16.7 4 33.3 14 T66.7 14 T100 14 L100 60 L0 60 Z' fill='%23fff'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' preserveAspectRatio='none'%3E%3Cpath d='M0 14 Q16.7 4 33.3 14 T66.7 14 T100 14 L100 60 L0 60 Z' fill='%23fff'/%3E%3C/svg%3E");
+}
+/* Top origin: layer hangs from top, wavy bottom edge, parks above. */
+.sf-btn[data-wave-origin="top"]::before {
+  top: 0;
+  bottom: auto;
+  transform: translateY(calc(-100% - 8px));
+}
+.sf-btn[data-wave-origin="top"][data-peaks="1"]::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L100 0 L100 46 Q50 62 0 46 Z' fill='%23fff'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L100 0 L100 46 Q50 62 0 46 Z' fill='%23fff'/%3E%3C/svg%3E");
+}
+.sf-btn[data-wave-origin="top"][data-peaks="2"]::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L100 0 L100 46 Q75 58 50 46 T0 46 Z' fill='%23fff'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L100 0 L100 46 Q75 58 50 46 T0 46 Z' fill='%23fff'/%3E%3C/svg%3E");
+}
+.sf-btn[data-wave-origin="top"][data-peaks="3"]::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L100 0 L100 46 Q83.3 56 66.7 46 T33.3 46 T0 46 Z' fill='%23fff'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L100 0 L100 46 Q83.3 56 66.7 46 T33.3 46 T0 46 Z' fill='%23fff'/%3E%3C/svg%3E");
+}
+/* Left origin: layer anchored left, wavy right edge, parks off-canvas left. */
+.sf-btn[data-wave-origin="left"]::before {
+  left: 0;
+  right: auto;
+  top: 0;
+  bottom: 0;
+  width: calc(100% + var(--wave-peak, 12px));
+  height: 100%;
+  transform: translateX(calc(-100% - 8px));
+}
+.sf-btn[data-wave-origin="left"][data-peaks="1"]::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L46 0 Q62 50 46 100 L0 100 Z' fill='%23fff'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L46 0 Q62 50 46 100 L0 100 Z' fill='%23fff'/%3E%3C/svg%3E");
+}
+.sf-btn[data-wave-origin="left"][data-peaks="2"]::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L46 0 Q58 25 46 50 T46 100 L0 100 Z' fill='%23fff'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L46 0 Q58 25 46 50 T46 100 L0 100 Z' fill='%23fff'/%3E%3C/svg%3E");
+}
+.sf-btn[data-wave-origin="left"][data-peaks="3"]::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L46 0 Q56 16.7 46 33.3 T46 66.7 T46 100 L0 100 Z' fill='%23fff'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M0 0 L46 0 Q56 16.7 46 33.3 T46 66.7 T46 100 L0 100 Z' fill='%23fff'/%3E%3C/svg%3E");
+}
+/* Right origin: mirrored — anchored right, wavy left edge. */
+.sf-btn[data-wave-origin="right"]::before {
+  left: auto;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: calc(100% + var(--wave-peak, 12px));
+  height: 100%;
+  transform: translateX(calc(100% + 8px));
+}
+.sf-btn[data-wave-origin="right"][data-peaks="1"]::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M60 0 L14 0 Q-2 50 14 100 L60 100 Z' fill='%23fff'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M60 0 L14 0 Q-2 50 14 100 L60 100 Z' fill='%23fff'/%3E%3C/svg%3E");
+}
+.sf-btn[data-wave-origin="right"][data-peaks="2"]::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M60 0 L14 0 Q2 25 14 50 T14 100 L60 100 Z' fill='%23fff'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M60 0 L14 0 Q2 25 14 50 T14 100 L60 100 Z' fill='%23fff'/%3E%3C/svg%3E");
+}
+.sf-btn[data-wave-origin="right"][data-peaks="3"]::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M60 0 L14 0 Q4 16.7 14 33.3 T14 66.7 T14 100 L60 100 Z' fill='%23fff'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 100' preserveAspectRatio='none'%3E%3Cpath d='M60 0 L14 0 Q4 16.7 14 33.3 T14 66.7 T14 100 L60 100 Z' fill='%23fff'/%3E%3C/svg%3E");
+}
+/* Hover travel — wave-rise + linear (linear forces linear easing, no delay).
+   Gated off disabled/loading: :hover matches disabled elements, so every
+   hover rule must exclude them or the text/border swap fires on dead buttons. */
+.sf-btn[data-anim-kind="wave-rise"]:not([disabled]):not([aria-disabled="true"]):hover::before,
+.sf-btn[data-anim-kind="linear"]:not([disabled]):not([aria-disabled="true"]):hover::before {
+  transform: translate(0, 0);
+}
+.sf-btn[data-anim-kind="linear"]::before {
+  transition-timing-function: linear;
+}
+.sf-btn[data-anim-kind="linear"] {
+  --wave-delay: 0ms;
+}
+/* Fade kinds: static full-bleed layer cross-fading (no travel). */
+.sf-btn[data-anim-kind="fade"]::before,
+.sf-btn[data-anim-kind="fade-in"]::before,
+.sf-btn[data-anim-kind="fade-out"]::before,
+.sf-btn[data-anim-kind="fade-in-out"]::before {
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+  opacity: 0;
+  transition: opacity var(--wave-duration, 360ms) var(--wave-easing, cubic-bezier(0.32, 0.72, 0.32, 1));
+}
+.sf-btn[data-anim-kind="fade"]:not([disabled]):not([aria-disabled="true"]):hover::before,
+.sf-btn[data-anim-kind="fade-in"]:not([disabled]):not([aria-disabled="true"]):hover::before,
+.sf-btn[data-anim-kind="fade-out"]:not([disabled]):not([aria-disabled="true"]):hover::before,
+.sf-btn[data-anim-kind="fade-in-out"]:not([disabled]):not([aria-disabled="true"]):hover::before {
+  opacity: 1;
+}
+/* Disabled animation (enabled=false / kind=none / useWave=false+wave-rise):
+   no layer — hover swaps palette directly on the button. */
+.sf-btn[data-anim="off"]::before {
+  display: none;
+}
+.sf-btn[data-anim="off"]:not([disabled]):not([aria-disabled="true"]):hover {
+  background: var(--wave-bg);
   color: var(--wave-text);
-  border-color: var(--wave-bg);
+  border-color: var(--wave-border, var(--wave-bg));
+}
+.sf-btn:not([disabled]):not([aria-disabled="true"]):hover {
+  color: var(--wave-text);
+  border-color: var(--wave-border, var(--wave-bg));
 }
 .sf-btn > * {
   position: relative;
@@ -101,10 +240,34 @@ body {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
+/* Disabled + loading (loading renders disabled under the hood) share one
+   universal face across all variants/sizes. Explicit solid colors — never
+   opacity — because fading text and face together toward the page destroys
+   contrast (white on faded blue ≈ 1.5:1). Ink on mist-border ≈ 12:1.
+   transition:none also kills the flash when a button disables mid-hover. */
 .sf-btn[disabled],
 .sf-btn[aria-disabled="true"] {
-  opacity: 0.5;
+  background: var(--btn-disabled-bg, #dce8ee);
+  color: var(--btn-disabled-text, #0a2540);
+  border-color: var(--btn-disabled-border, #dce8ee);
+  border-width: var(--btn-disabled-bw, 1px);
+  opacity: 1;
   cursor: not-allowed;
+  transition: none;
+}
+/* Opt-in only (admin `disabled.hoverEnabled`, default off): a palette swap
+   on disabled hover — never the travelling wave, which stays display:none
+   above regardless. */
+.sf-btn[data-disabled-hover="on"][disabled]:hover,
+.sf-btn[data-disabled-hover="on"][aria-disabled="true"]:hover {
+  color: var(--wave-text);
+  border-color: var(--wave-border, var(--wave-bg));
+}
+/* Pressed effect — off unless admin enables it (data-pressed="on").
+   Gated off disabled like every other interaction rule. */
+.sf-btn[data-pressed="on"]:not([disabled]):not([aria-disabled="true"]):active {
+  transform: translateY(var(--pressed-translate, 0px)) scale(var(--pressed-scale, 1));
+  box-shadow: var(--pressed-shadow, none);
 }
 .sf-btn[disabled]::before,
 .sf-btn[aria-disabled="true"]::before {

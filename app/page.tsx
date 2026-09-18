@@ -71,6 +71,13 @@ export default function PreviewPage() {
               </Button>
               <Button href="/#preview">Link button</Button>
             </Row>
+            <Row>
+              <Button animation={{ peaks: 1 }}>Peak 1</Button>
+              <Button animation={{ peaks: 3 }}>Peaks 3</Button>
+              <Button animation={{ waveOrigin: "left" }}>Rise left</Button>
+              <Button animation={{ animationKind: "fade" }}>Fade</Button>
+              <Button hoverBorderColor="#023E8A">Custom hover border</Button>
+            </Row>
           </div>
         </Card>
 
