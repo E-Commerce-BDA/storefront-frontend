@@ -1,0 +1,12 @@
+# Local workspace boundary — do not remove.
+#
+# The parent tree (E:\E-Commerce\pnpm-workspace.yaml) explicitly excludes
+# frontend/**, but pnpm still walks up to it and links this project's
+# node_modules into the parent root store. Turbopack then refuses those
+# files (outside its detected project root) and dev dies with
+# "Could not find the Next.js package (next/package.json)".
+#
+# This file stops upward traversal HERE, so every plain `pnpm add/install`
+# inside the storefront builds a self-contained local store — no flags.
+# Empty member list: this directory is a standalone project, not a monorepo.
+packages: []

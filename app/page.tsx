@@ -14,6 +14,8 @@ import {
   Slider,
   Card,
   Dialog,
+  Icon,
+  ICON_NAMES,
 } from "@/components/ui";
 
 const section: React.CSSProperties = { maxWidth: 960, margin: "0 auto", padding: "28px 24px" };
@@ -133,13 +135,58 @@ export default function PreviewPage() {
           </Row>
         </Card>
 
-        <H2>7. IconButton</H2>
+        <H2>7. IconButton + Icons (lucide, currentColor)</H2>
         <Card>
           <Row>
-            <IconButton label="Search">⌕</IconButton>
-            <IconButton label="Cart">🛒</IconButton>
-            <IconButton label="Close">✕</IconButton>
+            <IconButton label="Search">
+              <Icon name="search" />
+            </IconButton>
+            <IconButton label="Cart">
+              <Icon name="shopping-bag" />
+            </IconButton>
+            <IconButton label="Close">
+              <Icon name="x" />
+            </IconButton>
+            <IconButton label="Wishlist">
+              <Icon name="heart" filled />
+            </IconButton>
+            <IconButton label="Previous slide">
+              <Icon name="chevron-left" />
+            </IconButton>
+            <IconButton label="Next slide">
+              <Icon name="chevron-right" />
+            </IconButton>
           </Row>
+          <p className="mt-3 text-sm text-[var(--text-muted)]">
+            Full set at 20px on white, then on ink (icons follow text color — dark on white, white on
+            dark, no color props):
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            {ICON_NAMES.map((name) => (
+              <span
+                key={name}
+                title={name}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--border)] bg-white text-[var(--color-ink)]"
+              >
+                <Icon name={name} />
+              </span>
+            ))}
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-3 rounded-xl bg-[var(--color-ink)] p-3 text-white">
+            {ICON_NAMES.map((name) => (
+              <span key={name} title={name} className="inline-flex items-center justify-center">
+                <Icon name={name} />
+              </span>
+            ))}
+          </div>
+          <div className="mt-2 flex items-center gap-4 text-[var(--color-ink)]">
+            <span className="inline-flex items-center gap-1 text-xs text-[var(--text-muted)]">16</span>
+            <Icon name="star" size={16} filled />
+            <span className="inline-flex items-center gap-1 text-xs text-[var(--text-muted)]">20</span>
+            <Icon name="star" filled />
+            <span className="inline-flex items-center gap-1 text-xs text-[var(--text-muted)]">24</span>
+            <Icon name="star" size={24} filled />
+          </div>
         </Card>
 
         <H2>8. Textarea</H2>

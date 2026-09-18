@@ -1,4 +1,5 @@
 import { forwardRef } from "react";
+import Icon from "./icons/Icon";
 
 /** Dumb Checkbox — controlled-only. 20x20 radius 6 default. */
 export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "checked" | "size"> {
@@ -67,20 +68,13 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
           {...rest}
         />
         {(checked || indeterminate) && (
-          <svg viewBox="0 0 12 12" width={size * 0.6} height={size * 0.6} aria-hidden>
-            {indeterminate ? (
-              <line x1="2" y1="6" x2="10" y2="6" stroke={tickColor} strokeWidth="2" strokeLinecap="round" />
-            ) : (
-              <path
-                d="M2 6.5 4.8 9 10 3"
-                fill="none"
-                stroke={tickColor}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            )}
-          </svg>
+          <span style={{ color: tickColor }} className="inline-flex items-center justify-center">
+            <Icon
+              name={indeterminate ? "minus" : "check"}
+              size={size * 0.6}
+              strokeWidth={2.5}
+            />
+          </span>
         )}
       </span>
       {(label || helper || invalid) && (

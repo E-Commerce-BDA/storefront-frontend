@@ -6,6 +6,8 @@ export { default as Radio } from "./Radio";
 export { default as Toggle } from "./Toggle";
 export { default as Badge } from "./Badge";
 export { default as IconButton } from "./IconButton";
+export { Icon, ICON_NAMES } from "./icons";
+export type { IconName, IconProps } from "./icons";
 export { default as Textarea } from "./Textarea";
 export { default as Select } from "./Select";
 export { default as Slider } from "./Slider";
