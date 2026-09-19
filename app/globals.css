@@ -328,4 +328,135 @@ body {
   .sf-btn::before {
     display: none;
   }
+  .sf-tip__bubble {
+    transition: none;
+  }
+}
+
+/* Tooltip — zero-JS positioning (components/tooltip.md).
+   Ink bubble + white text: readable on page surfaces AND product images.
+   Show: wrapper :hover / :focus-within, or data-tip-open="on" (controlled).
+   Hide is immediate; show waits var(--tip-delay) so passing hovers stay quiet. */
+.sf-tip {
+  position: relative;
+  display: inline-flex;
+}
+.sf-tip__bubble {
+  position: absolute;
+  z-index: 60;
+  max-width: var(--tip-max-width, 240px);
+  width: max-content;
+  background: var(--tip-bg, var(--color-ink));
+  color: var(--tip-text, #ffffff);
+  border: var(--tip-border-width, 0px) solid var(--tip-border-color, transparent);
+  font-size: var(--tip-font-size, 12px);
+  font-weight: var(--tip-font-weight, 500);
+  line-height: 1.4;
+  text-align: center;
+  padding: 6px 10px;
+  border-radius: var(--tip-radius, 8px);
+  box-shadow: 0 4px 16px rgba(10, 37, 64, 0.25);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--tip-duration, 160ms) ease,
+    transform var(--tip-duration, 160ms) ease,
+    visibility 0s linear var(--tip-duration, 160ms);
+}
+.sf-tip__bubble[data-tip-anim="none"] {
+  transition: none;
+}
+.sf-tip:hover > .sf-tip__bubble,
+.sf-tip:focus-within > .sf-tip__bubble,
+.sf-tip[data-tip-open="on"] > .sf-tip__bubble {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: var(--tip-delay, 200ms);
+}
+.sf-tip[data-tip-open="off"] > .sf-tip__bubble {
+  display: none;
+}
+/* Placement: bubble sits one offset off the trigger edge. Base = visible
+   transform (fade/none: opacity only); slide adds a 4px rest drift below. */
+.sf-tip__bubble[data-placement="top"] {
+  bottom: calc(100% + var(--tip-offset, 8px));
+  left: 50%;
+  transform: translate(-50%, 0);
+}
+.sf-tip__bubble[data-tip-anim="slide"][data-placement="top"] {
+  transform: translate(-50%, 4px);
+}
+.sf-tip:hover > .sf-tip__bubble[data-placement="top"],
+.sf-tip:focus-within > .sf-tip__bubble[data-placement="top"],
+.sf-tip[data-tip-open="on"] > .sf-tip__bubble[data-placement="top"] {
+  transform: translate(-50%, 0);
+}
+.sf-tip__bubble[data-placement="bottom"] {
+  top: calc(100% + var(--tip-offset, 8px));
+  left: 50%;
+  transform: translate(-50%, 0);
+}
+.sf-tip__bubble[data-tip-anim="slide"][data-placement="bottom"] {
+  transform: translate(-50%, -4px);
+}
+.sf-tip:hover > .sf-tip__bubble[data-placement="bottom"],
+.sf-tip:focus-within > .sf-tip__bubble[data-placement="bottom"],
+.sf-tip[data-tip-open="on"] > .sf-tip__bubble[data-placement="bottom"] {
+  transform: translate(-50%, 0);
+}
+.sf-tip__bubble[data-placement="left"] {
+  right: calc(100% + var(--tip-offset, 8px));
+  top: 50%;
+  transform: translate(0, -50%);
+}
+.sf-tip__bubble[data-tip-anim="slide"][data-placement="left"] {
+  transform: translate(4px, -50%);
+}
+.sf-tip:hover > .sf-tip__bubble[data-placement="left"],
+.sf-tip:focus-within > .sf-tip__bubble[data-placement="left"],
+.sf-tip[data-tip-open="on"] > .sf-tip__bubble[data-placement="left"] {
+  transform: translate(0, -50%);
+}
+.sf-tip__bubble[data-placement="right"] {
+  left: calc(100% + var(--tip-offset, 8px));
+  top: 50%;
+  transform: translate(0, -50%);
+}
+.sf-tip__bubble[data-tip-anim="slide"][data-placement="right"] {
+  transform: translate(-4px, -50%);
+}
+.sf-tip:hover > .sf-tip__bubble[data-placement="right"],
+.sf-tip:focus-within > .sf-tip__bubble[data-placement="right"],
+.sf-tip[data-tip-open="on"] > .sf-tip__bubble[data-placement="right"] {
+  transform: translate(0, -50%);
+}
+/* Arrow nub: 8px rotated square straddling the bubble edge. */
+.sf-tip__bubble[data-arrow="on"]::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--tip-bg, var(--color-ink));
+  transform: rotate(45deg);
+}
+.sf-tip__bubble[data-arrow="on"][data-placement="top"]::after {
+  bottom: -4px;
+  left: 50%;
+  margin-left: -4px;
+}
+.sf-tip__bubble[data-arrow="on"][data-placement="bottom"]::after {
+  top: -4px;
+  left: 50%;
+  margin-left: -4px;
+}
+.sf-tip__bubble[data-arrow="on"][data-placement="left"]::after {
+  right: -4px;
+  top: 50%;
+  margin-top: -4px;
+}
+.sf-tip__bubble[data-arrow="on"][data-placement="right"]::after {
+  left: -4px;
+  top: 50%;
+  margin-top: -4px;
 }

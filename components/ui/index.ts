@@ -8,6 +8,8 @@ export { default as Badge } from "./Badge";
 export { default as IconButton } from "./IconButton";
 export { Icon, ICON_NAMES } from "./icons";
 export type { IconName, IconProps } from "./icons";
+export { default as Tooltip, DEFAULT_TOOLTIP_STYLE, TOOLTIP_LIMITS } from "./Tooltip";
+export type { TooltipAnimation, TooltipMode, TooltipPlacement, TooltipProps, TooltipStyleField } from "./Tooltip";
 export { default as Textarea } from "./Textarea";
 export { default as Select } from "./Select";
 export { default as Slider } from "./Slider";

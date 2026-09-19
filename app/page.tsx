@@ -16,6 +16,7 @@ import {
   Dialog,
   Icon,
   ICON_NAMES,
+  Tooltip,
 } from "@/components/ui";
 
 const section: React.CSSProperties = { maxWidth: 960, margin: "0 auto", padding: "28px 24px" };
@@ -246,6 +247,57 @@ export default function PreviewPage() {
             </Button>
           </div>
         </Dialog>
+
+        <H2>12. Tooltip — image, dots, disabled reason, icon</H2>
+        <Card>
+          <div className="grid gap-6">
+            <div>
+              <p className="mb-2 text-sm font-medium text-[var(--color-ink)]">
+                Product image — hover shows the product name
+              </p>
+              <Tooltip mode="product-name" productName="Ocean Linen Shirt — $48.00" placement="top">
+                <span
+                  className="flex h-40 w-56 items-center justify-center rounded-xl text-sm font-medium text-[var(--text-muted)]"
+                  style={{ background: "linear-gradient(135deg,#E6F7FB,#CAF0F8)" }}
+                >
+                  Product image
+                </span>
+              </Tooltip>
+            </div>
+            <div>
+              <p className="mb-2 text-sm font-medium text-[var(--color-ink)]">
+                Pagination dots — hover a dot, position reads below (“2 of 3”)
+              </p>
+              <div className="flex items-center gap-2">
+                {[0, 1, 2].map((i) => (
+                  <Tooltip key={i} mode="position" index={i} total={3} placement="bottom">
+                    <button
+                      type="button"
+                      aria-label={`Go to slide ${i + 1}`}
+                      className="h-2 w-2 rounded-full"
+                      style={{ background: "var(--color-ink)", opacity: i === 1 ? 1 : 0.3 }}
+                    />
+                  </Tooltip>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="mb-2 text-sm font-medium text-[var(--color-ink)]">
+                Disabled button — hover explains why (no wave, no swap)
+              </p>
+              <Row>
+                <Tooltip content="Out of stock in this size" placement="top">
+                  <Button disabled>Sold out</Button>
+                </Tooltip>
+                <Tooltip content="Search products" placement="top">
+                  <IconButton label="Search">
+                    <Icon name="search" />
+                  </IconButton>
+                </Tooltip>
+              </Row>
+            </div>
+          </div>
+        </Card>
       </main>
 
       <footer className="p-6 text-center text-xs text-[var(--text-muted)]">
