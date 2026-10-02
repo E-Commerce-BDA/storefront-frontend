@@ -20,6 +20,9 @@ dist/
 npm-debug.log*
 pnpm-debug.log*
 
+# session transcripts (working notes, never reviewable code)
+session-*.md
+
 # OS
 .DS_Store
 Thumbs.db
