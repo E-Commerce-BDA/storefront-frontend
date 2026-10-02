@@ -23,6 +23,13 @@ app/api/<domain>/<action>/route.ts      # ONE action per handler:
 lib/<domain>/*.ts                       # pure: types, DEFAULT_*, resolvers,
                                         # var emitters. No React, no fetch, no DB
 components/ui/*.tsx                     # dumb: props → JSX only
+components/<domain>/*.tsx               # composed dumb: domain-arranged
+                                        # props → JSX (AuthPage/Split/Panel/Form);
+                                        # still no fetch/store/state (see §3)
+app/**/_components/*.tsx                # route-colocated client islands ("use client"):
+                                        # stateful forms owned by their route only;
+                                        # never imported across routes (share via
+                                        # components/<domain>/ instead)
 test/                                   # mirrors source (test/lib ↔ lib,
                                         # test/components ↔ components)
 proxy.ts                                # repo root, edge-safe
@@ -61,7 +68,10 @@ docs defer to this section where wording differs.)
    `aria-hidden` on live content).
 7. **Every component ships five artifacts:** model section in `lib`, CSS
    block, component file, doc (5-section button shape), barrel export in
-   `components/ui/index.ts`.
+   `components/ui/index.ts`. Composed `components/<domain>/` blocks share
+   their domain's `lib` entry (no model file per block) but keep their own
+   tests; route islands in `app/**/_components/` ship with their route's
+   tests only.
 
 ## 4. Tests (trio mandatory — no merges without all three)
 
