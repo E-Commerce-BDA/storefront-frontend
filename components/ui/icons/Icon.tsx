@@ -10,6 +10,7 @@ import {
   ChevronRight,
   ChevronUp,
   Eye,
+  EyeOff,
   Heart,
   Menu,
   Minus,
@@ -63,6 +64,7 @@ export const ICON_NAMES = [
   "shield-check",
   "returns",
   "eye",
+  "eye-off",
   "share",
 ] as const;
 
@@ -94,6 +96,9 @@ const MAP: Record<IconName, LucideIcon> = {
   "shield-check": ShieldCheck,
   returns: RotateCcw,
   eye: Eye,
+  // eye-off: password visibility toggle must be perceivable (a11y) —
+  // same-stroke sibling of eye, no new look invented.
+  "eye-off": EyeOff,
   share: Share2,
 };
 

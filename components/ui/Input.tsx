@@ -8,12 +8,17 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
   helper?: string;
   error?: string;
   size?: "sm" | "md";
-  radius?: number;
+  /** Numeric px, or a var() ref for domain theming (auth passes
+   *  "var(--auth-input-radius, 10px)"). Widened, never replaced. */
+  radius?: number | string;
   bg?: string;
   textColor?: string;
   borderColor?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  /** True when rightIcon is interactive (password eye): renders it WITHOUT
+   *  the decorative aria-hidden wrapper so it stays operable + named. */
+  rightIconInteractive?: boolean;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
@@ -33,6 +38,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     required = false,
     leftIcon,
     rightIcon,
+    rightIconInteractive = false,
     type = "text",
     id,
     className = "",
@@ -52,7 +58,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         </label>
       )}
       <div
-        className="flex items-center gap-2 bg-white focus-within:border-[var(--color-accent)] focus-within:shadow-[0_0_0_3px_var(--focus-ring)]"
+        className="flex items-center gap-2 bg-white focus-within:border-[var(--auth-input-focus-border,var(--color-accent))] focus-within:shadow-[var(--auth-input-focus-shadow,0_0_0_3px_var(--focus-ring))]"
         data-disabled={disabled}
         data-invalid={invalid}
         style={{
@@ -72,7 +78,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         <input
           ref={ref}
           id={fieldId}
-          className="min-h-[inherit] w-full min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm text-[var(--color-ink)] outline-0"
+          className="min-h-[inherit] w-full min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm text-[var(--color-ink)] outline-0 placeholder:text-[var(--auth-input-placeholder,var(--text-muted))]"
           value={value}
           onChange={(e) => onChange?.(e.target.value, e)}
           placeholder={placeholder}
@@ -83,11 +89,14 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           aria-describedby={invalid ? `${fieldId}-err` : helper ? `${fieldId}-help` : undefined}
           {...rest}
         />
-        {rightIcon && (
-          <span className="inline-flex text-[var(--text-muted)]" aria-hidden>
-            {rightIcon}
-          </span>
-        )}
+        {rightIcon &&
+          (rightIconInteractive ? (
+            rightIcon
+          ) : (
+            <span className="inline-flex text-[var(--text-muted)]" aria-hidden>
+              {rightIcon}
+            </span>
+          ))}
       </div>
       {invalid ? (
         <p id={`${fieldId}-err`} role="alert" className="m-0 text-xs text-[var(--color-error)]">
