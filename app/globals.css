@@ -469,6 +469,37 @@ body {
   font-family: var(--auth-font, var(--font-sans));
   animation: sf-auth-in var(--auth-page-fade, 200ms) ease;
 }
+
+.sf-navlinks a {
+  color: var(--nb-text, #0a2540);
+}
+.sf-navlinks a:hover {
+  color: var(--nb-hover, #0077b6);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.sf-navlinks a[data-highlight="sale"] {
+  color: var(--color-sale);
+  font-weight: 700;
+}
+.sf-navlinks a[data-highlight="sale"]:hover {
+  color: var(--color-sale);
+}
+.sf-navlinks a[data-highlight="bold"] {
+  font-weight: 700;
+}
+.sf-navlinks a[data-highlight="accent"] {
+  color: var(--nb-hover, #0077b6);
+}
+.sf-navlinks__badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--nb-badge-bg, #0077b6);
+  color: var(--nb-badge-text, #ffffff);
+  margin-left: 6px;
+}
 @keyframes sf-auth-in {
   from {
     opacity: 0;

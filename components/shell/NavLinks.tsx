@@ -15,7 +15,7 @@ export default function NavLinks({links, className = ""}: NavLinksProps) {
                 data-highlight={l.highlight}
                 aria-current={l.current ? "page" : undefined}
             >
-                {l.badge && <span> {l.badge.text}</span>}
+                {l.badge && <span className="sf-navlinks__badge">{l.badge.text}</span>}
             {l.label}
             </a>
 
