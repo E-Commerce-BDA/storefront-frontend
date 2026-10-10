@@ -5,9 +5,10 @@ import type { ResolvedOverlayMotion } from "@/lib/search/motion";
 
 /**
  * Dumb inspect-modal shell (overlay variant "inspect") — backdrop, centered
- * frame, close, focus trap. List / preview / actions regions land next
- * turns as separate components; this shell renders the frame and nothing
- * else (no placeholders, no dead markup). props → JSX. No fetch, no timers.
+ * frame, query input row, close, focus trap. List / preview / actions
+ * regions land next turns as separate components. The input row is shell
+ * chrome (like close): controlled query/onQuery pair, autofocus on mount.
+ * props → JSX. No fetch, no timers.
  */
 export interface SearchInspectProps {
   /**
@@ -19,6 +20,14 @@ export interface SearchInspectProps {
   /** True while the owner animates dismissal (CSS reverses, then unmounts). */
   closing?: boolean;
   onClose: () => void;
+  /**
+   * Controlled query input row (shell chrome, like close — the click-path
+   * audit proved an input owned by no region renders a dead shell).
+   * Placeholder only; value + changes stay owner-held.
+   */
+  query?: string;
+  onQuery?: (q: string) => void;
+  placeholder?: string;
   className?: string;
 }
 
@@ -33,9 +42,14 @@ export default function SearchInspect({
   motion = OCEANIC_BUILTIN,
   closing = false,
   onClose,
+  query,
+  onQuery,
+  placeholder = "Search products…",
   className = "",
 }: SearchInspectProps) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
 
   // Same trap contract as drawers/sheet: Tab cycles inside (recomputed per
   // press); Esc closes. No keyboard user left behind the overlay.
@@ -67,6 +81,10 @@ export default function SearchInspect({
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
   // Motion vars ride inline (presentation via props — no new lib module);
   // disabled motion renders no vars (CSS fallbacks stay instant-safe).
   const motionVars = motion.enabled
@@ -94,6 +112,20 @@ export default function SearchInspect({
         aria-hidden="true"
       />
       <div className={`sf-inspect ${className}`}>
+        {typeof query === "string" && typeof onQuery === "function" && (
+          <div className="sf-inspect__bar">
+            <Icon name="search" size={20} />
+            <input
+              ref={inputRef}
+              type="search"
+              value={query}
+              onChange={(e) => onQuery(e.target.value)}
+              placeholder={placeholder}
+              aria-label="Search products"
+              autoComplete="off"
+            />
+          </div>
+        )}
         <button type="button" className="sf-inspect__close" onClick={onClose} aria-label="Close search">
           <Icon name="x" size={18} />
         </button>
