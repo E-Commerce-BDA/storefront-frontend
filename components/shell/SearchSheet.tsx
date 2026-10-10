@@ -49,7 +49,7 @@ export default function SearchSheet({
   onSelect,
   onClose,
   onCancel,
-  motion = { enabled: true, durationMs: 240, easing: "ease-out" },
+  motion = { enabled: true, durationMs: 240, easing: "ease-out", travel: "full" },
   closing = false,
   className = "",
 }: SearchSheetProps) {
