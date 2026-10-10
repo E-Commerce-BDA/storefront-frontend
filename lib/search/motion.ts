@@ -87,22 +87,21 @@ export function resolveOverlayMotion(
   builtin: ResolvedOverlayMotion = { enabled: true, durationMs: 240, easing: "ease-out", travel: "full" },
 ): ResolvedOverlayMotion {
   const enabled = admin?.enabled ?? builtin.enabled;
-  // Builtins carry concrete values (no preset concept); an absent or
-  // unknown admin preset falls back to smooth, never to a raw string.
-  const preset: OverlayMotionPreset =
-    admin?.preset !== undefined && admin.preset in MOTION_PRESETS
-      ? (admin.preset as Exclude<OverlayMotionPreset, "custom">)
-      : admin?.preset === "custom"
-        ? "custom"
-        : "smooth";
-  if (preset !== "custom") {
-    const table = MOTION_PRESETS[preset];
+  // Absent or unknown preset inherits the builtin itself (cascade rule:
+  // a miss means inherit — and builtins are per-variant, so oceanic stays
+  // oceanic). Only a valid table preset or "custom" overrides.
+  const preset = admin?.preset;
+  if (preset !== undefined && preset !== "custom" && preset in MOTION_PRESETS) {
+    const table = MOTION_PRESETS[preset as Exclude<OverlayMotionPreset, "custom">];
     return { enabled, durationMs: table.durationMs, easing: table.easing, travel: table.travel };
   }
-  return {
-    enabled,
-    durationMs: clampInt(admin?.durationMs, MOTION_LIMITS.durationMs.min, MOTION_LIMITS.durationMs.max, builtin.durationMs),
-    easing: cleanEasing(admin?.easing, builtin.easing),
-    travel: builtin.travel,
-  };
+  if (preset === "custom") {
+    return {
+      enabled,
+      durationMs: clampInt(admin?.durationMs, MOTION_LIMITS.durationMs.min, MOTION_LIMITS.durationMs.max, builtin.durationMs),
+      easing: cleanEasing(admin?.easing, builtin.easing),
+      travel: builtin.travel,
+    };
+  }
+  return { ...builtin, enabled };
 }
