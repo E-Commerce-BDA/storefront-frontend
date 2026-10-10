@@ -72,12 +72,15 @@ function cleanEasing(v: unknown, fallback: string): string {
  */
 export function resolveOverlayMotion(
   admin?: OverlayMotionField | null,
-  builtin: Required<OverlayMotionField> = { enabled: true, preset: "smooth", durationMs: 240, easing: "ease-out" },
+  builtin: ResolvedOverlayMotion = { enabled: true, durationMs: 240, easing: "ease-out" },
 ): ResolvedOverlayMotion {
   const enabled = admin?.enabled ?? builtin.enabled;
-  const preset = admin?.preset === "smooth" || admin?.preset === "snappy" || admin?.preset === "custom"
-    ? admin.preset
-    : builtin.preset;
+  // Builtins carry concrete ms+easing (no preset concept); an absent or
+  // unknown admin preset falls back to smooth, never to a raw string.
+  const preset: OverlayMotionPreset =
+    admin?.preset === "smooth" || admin?.preset === "snappy" || admin?.preset === "custom"
+      ? admin.preset
+      : "smooth";
   if (preset !== "custom") {
     const table = MOTION_PRESETS[preset];
     return { enabled, durationMs: table.durationMs, easing: table.easing };
