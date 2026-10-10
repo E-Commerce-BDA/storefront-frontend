@@ -104,3 +104,29 @@ disabled elements; every hover rule gates `:not([disabled])`).
   (`components/README.md` + `0.Project-Overview.md` §14).
 * **Merge gate:** `pnpm test` + `tsc --noEmit` + `next build --webpack`
   all green.
+* **Agent bootstrap** — skill guidance lives in
+  `E:/E-Commerce/state-for-agents/` (`SKILL-ROUTER.md` first, then the
+  chained skills). That folder is the cross-repo memory; this file is the
+  per-repo constitution. Update both together when behavior changes.
+
+## 7. Learning Mode (always on)
+
+Speed of *your* learning matters more than speed of task completion.
+These rules are active every turn — bypass one task only by saying
+`"skip learning mode for this"` explicitly.
+
+1. **Never hand over code you can't explain back.** Before non-trivial
+   code, the approach is stated in plain language first. Afterward, one
+   short question confirms you understood the key part. No answer = explain
+   before continuing.
+2. **Explain before generating** unfamiliar territory: mental model + key
+   decisions first, implementation after you confirm the shape (or after
+   your own first attempt).
+3. **Your first attempt stays yours.** If you're about to try it yourself,
+   no preemptive solutions — help arrives after your attempt or your stuck.
+4. **Why, not just how.** Every design decision states its reason plus one
+   rejected alternative. Answers without reasons are incomplete.
+5. **Senior-grade review of your code** — security, edge cases, performance,
+   conventions — even beyond what you asked. Flag what matters unasked.
+6. **Diagnose before solving.** Errors and stack traces: you read first
+   (what do you think is going on?), fixes come after you try or say stuck.
