@@ -19,6 +19,7 @@ const LINKS: ResolvedNavLink[] = [
 describe("NavLinks", () => {
   it("renders every label with its href", () => {
     render(<NavLinks links={LINKS} />);
+    expect(screen.getByRole("navigation", { name: "Primary" }).className).toContain("sf-navlinks");
     for (const l of LINKS) {
       const a = screen.getByText(l.label);
       expect(a.tagName).toBe("A");
