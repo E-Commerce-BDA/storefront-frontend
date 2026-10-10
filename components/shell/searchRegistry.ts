@@ -11,8 +11,10 @@ export type SearchOverlayId = "classic" | "palette" | "sheet" | "editorial" | "i
 
 type AnyOverlay = ComponentType<Record<string, unknown>>;
 
+// Reason for the cast: dynamic-import boundary — the registry loads
+// modules, never renders them; props are checked at the call site.
 const registry: Partial<Record<SearchOverlayId, () => Promise<{ default: AnyOverlay }>>> = {
-  sheet: () => import("./SearchSheet"),
+  sheet: (() => import("./SearchSheet")) as unknown as () => Promise<{ default: AnyOverlay }>,
 };
 
 export function resolveSearchOverlay(id: SearchOverlayId): (() => Promise<{ default: AnyOverlay }>) | null {
