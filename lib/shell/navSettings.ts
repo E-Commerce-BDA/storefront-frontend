@@ -103,10 +103,10 @@ export interface NavCartField {
 }
 
 export interface NavAnnouncementField {
-  text?: string;
-  cta?: { label: string; href: string } | null;
+  items?: { text: string; cta?: { label: string; href: string }; countdownTo?: string; }[];
+  showArrows?: boolean;
+  autoplayMs?: number | null;
   dismissible?: boolean;
-  countdownTo?: string;
 }
 
 export interface NavMobileField {
@@ -174,10 +174,10 @@ export interface ResolvedNavSettings {
   account: { enabled: boolean; items: AccountItem[] };
   cart: { enabled: boolean; destination: CartDestination; dedicatedPage: boolean; badgeCap: number };
   announcement: {
-    text: string;
-    cta: { label: string; href: string } | null;
+    items: { text: string; cta: { label: string; href: string } | null; countdownTo: string }[];
+    showArrows: boolean;
+    autoplayMs: number | null;
     dismissible: boolean;
-    countdownTo: string;
   };
   mobile: { breakpoint: number; drawerSide: DrawerSide };
 }
@@ -211,10 +211,10 @@ export const DEFAULT_NAV_SETTINGS: ResolvedNavSettings = {
   account: { enabled: true, items: ["orders", "addresses", "wishlist", "signout"] },
   cart: { enabled: true, destination: "drawer", dedicatedPage: false, badgeCap: 9 },
   announcement: {
-    text: "",
-    cta: null,
+    items: [],
+    showArrows: true,
+    autoplayMs: null,
     dismissible: true,
-    countdownTo: "",
   },
   mobile: { breakpoint: 768, drawerSide: "left" },
 };
