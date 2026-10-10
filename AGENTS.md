@@ -72,6 +72,12 @@ docs defer to this section where wording differs.)
    their domain's `lib` entry (no model file per block) but keep their own
    tests; route islands in `app/**/_components/` ship with their route's
    tests only.
+8. **Paint/state/motion → `.sf-*` CSS (themeable, testable); layout/
+   positioning → Tailwind utilities (disposable, unthemed).** State
+   selectors, pseudo-elements, keyframes, and var() fallbacks live in the
+   stylesheet where the style-contract tests can read them; one-off flex,
+   gap, and spacing stay inline utilities. Either end of the spectrum is
+   legal — invented middle layers (e.g. per-component CSS Modules) are not.
 
 ## 4. Tests (trio mandatory — no merges without all three)
 
