@@ -1,3 +1,8 @@
+/**
+ * TEMPORARY living showcase (route /components) — scaffolding with an
+ * expiry date: DELETE at homepage launch. Not a product surface; do not
+ * link it from shop chrome, do not add new sections without a task.
+ */
 "use client";
 
 import { useState } from "react";
