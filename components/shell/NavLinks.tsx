@@ -7,7 +7,7 @@ export interface NavLinksProps {
 
 export default function NavLinks({links, className = ""}: NavLinksProps) {
     return (
-        <nav aria-label="Primary" className={className}>
+        <nav aria-label="Primary" className={`sf-navlinks ${className}`}>
         {links.map((l) => (
             <a
                 key={l.href}
