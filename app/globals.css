@@ -331,6 +331,9 @@ body {
   .sf-tip__bubble {
     transition: none;
   }
+  .sf-announce-collapse {
+    transition: none;
+  }
 }
 
 /* Tooltip — zero-JS positioning (components/tooltip.md).
@@ -502,7 +505,26 @@ body {
 }
 /* Announcement bar — single-line promo carousel shell. Paint resolves
    through --nb-announce-* vars; fallbacks mirror DEFAULT_NAV_SETTINGS. */
+/* Collapse wrapper: grid-rows animation lets the section below slide up
+   smoothly on dismiss. Instant when reduced-motion is preferred. */
+.sf-announce-collapse {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-rows 220ms ease,
+    opacity 220ms ease;
+}
+.sf-announce-collapse[data-collapsed="true"] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+.sf-announce-collapse > .sf-announce {
+  overflow: hidden;
+  min-height: 0;
+}
 .sf-announce {
+  position: relative;
   height: 36px;
   background: var(--nb-announce-bg, #0a2540);
   color: var(--nb-announce-text, #ffffff);
@@ -510,9 +532,38 @@ body {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  padding: 0 12px;
+  padding: 0 72px;
   font-size: 13px;
   letter-spacing: 0.02em;
+}
+/* Edge controls: prev pinned left, next + dismiss pinned right, content
+   stays centered regardless of which controls render. */
+/* Edge controls pin via top/bottom + auto margins (vertical centering
+   WITHOUT translateY(-50%) — bare-percentage translates trip the
+   wave-park guard, which owns that syntax for wave layers only). */
+.sf-announce__arrow:first-of-type {
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+.sf-announce__text + .sf-announce__arrow {
+  position: absolute;
+  right: 40px;
+  top: 0;
+  bottom: 0;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+.sf-announce__dismiss {
+  position: absolute;
+  right: 8px;
+  top: 0;
+  bottom: 0;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 .sf-announce__text {
   margin: 0;
