@@ -23,6 +23,11 @@ export function useInspectPreview(
   const [detail, setDetail] = useState<ProductDetail | null>(null);
   const [status, setStatus] = useState<PreviewStatus>("idle");
   const seq = useRef(0);
+  // Source identity changes every parent render (inline construction);
+  // the fetch must key on productId only, or every render refetches and
+  // the panel flashes skeleton forever. Ref mirror, not dep.
+  const sourceRef = useRef(source);
+  sourceRef.current = source;
 
   useEffect(() => {
     if (productId === null) {
@@ -33,7 +38,7 @@ export function useInspectPreview(
     setStatus("loading");
     const id = ++seq.current;
     const controller = new AbortController();
-    source
+    sourceRef.current
       .fetchProduct(productId, controller.signal)
       .then((row) => {
         // Stale hovers never overwrite: only the latest inspect lands.
@@ -51,7 +56,7 @@ export function useInspectPreview(
     return () => {
       controller.abort();
     };
-  }, [productId, source]);
+  }, [productId]);
 
   return { detail, status };
 }
