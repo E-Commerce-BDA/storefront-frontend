@@ -17,6 +17,19 @@ describe("resolveNavSettings", () => {
     expect(resolveNavSettings({ settings: null, global: null }, NOW)).toEqual(DEFAULT_NAV_SETTINGS);
   });
 
+  it("resolves sheetAnimation presets to concrete motion (components never see names)", () => {
+    expect(resolveNavSettings({}, NOW).search.sheetAnimation).toEqual({
+      enabled: true,
+      durationMs: 240,
+      easing: "ease-out",
+    });
+    const r = resolveNavSettings(
+      { settings: { shared: { search: { sheetAnimation: { preset: "custom", durationMs: 999, easing: "bogus" } } } } },
+      NOW,
+    );
+    expect(r.search.sheetAnimation).toEqual({ enabled: true, durationMs: 500, easing: "ease-out" });
+  });
+
   it("shared wins over global, clamps apply", () => {
     const r = resolveNavSettings(
       {
