@@ -20,6 +20,8 @@ export interface AnnouncementBarProps {
   /** Derived display string (timer owned by the hook, text rendered here). */
   countdownText?: string;
   dismissible?: boolean;
+  /** True while the owner animates dismissal (CSS collapses, then unmounts). */
+  collapsing?: boolean;
   onDismiss?: () => void;
   onPrev?: () => void;
   onNext?: () => void;
@@ -32,6 +34,7 @@ export default function AnnouncementBar({
   showArrows = true,
   countdownText = "",
   dismissible = true,
+  collapsing = false,
   onDismiss,
   onPrev,
   onNext,
@@ -44,7 +47,8 @@ export default function AnnouncementBar({
   const canSlide = showArrows && items.length > 1;
 
   return (
-    <div className={`sf-announce ${className}`} data-slides={items.length}>
+    <div className="sf-announce-collapse" data-collapsed={collapsing}>
+      <div className={`sf-announce ${className}`} data-slides={items.length}>
       {canSlide && (
         <button type="button" className="sf-announce__arrow" onClick={onPrev} aria-label="Previous announcement">
           <Icon name="chevron-left" size={16} />
@@ -69,6 +73,7 @@ export default function AnnouncementBar({
           <Icon name="x" size={14} />
         </button>
       )}
+      </div>
     </div>
   );
 }
