@@ -99,29 +99,23 @@ export function resolveNavSettings(input: ResolveNavInput, now: number = Date.no
   const colors = mergeGroup(D.colors, global?.colors, shared?.colors);
   // Motion instances resolve through their own resolver (preset → concrete
   // ms+easing, clamped + allowlisted) — generic merge would pass presets
-  // through raw, so both partial keys are excluded here and set concrete
+  // through raw, so the partial key is excluded here and set concrete
   // below. One instance per variant; settings never leak across variants.
-  type SearchNoMotion = Omit<NavPageOverrides["search"], "sheetAnimation" | "inspectAnimation">;
+  type SearchNoMotion = Omit<NavPageOverrides["search"], "sheetAnimation">;
   const stripMotion = (s: NavPageOverrides["search"]): SearchNoMotion | undefined => {
     if (!s) return undefined;
-    const { sheetAnimation: _dropSheet, inspectAnimation: _dropInspect, ...rest } = s;
+    const { sheetAnimation: _dropSheet, ...rest } = s;
     void _dropSheet;
-    void _dropInspect;
     return rest;
   };
   const searchBase = mergeGroup(D.search, stripMotion(global?.search), stripMotion(shared?.search));
-  const { sheetAnimation: _builtinSheet, inspectAnimation: _builtinInspect, ...searchRest } = searchBase;
+  const { sheetAnimation: _builtinSheet, ...searchRest } = searchBase;
   void _builtinSheet;
-  void _builtinInspect;
   const search = {
     ...searchRest,
     sheetAnimation: resolveOverlayMotion(
       shared?.search?.sheetAnimation ?? global?.search?.sheetAnimation ?? undefined,
       D.search.sheetAnimation,
-    ),
-    inspectAnimation: resolveOverlayMotion(
-      shared?.search?.inspectAnimation ?? global?.search?.inspectAnimation ?? undefined,
-      D.search.inspectAnimation,
     ),
   };
   const account = mergeGroup(D.account, global?.account, shared?.account);
