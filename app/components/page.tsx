@@ -7,13 +7,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import SearchSheet from "@/components/shell/SearchSheet";
-import SearchInspect from "@/components/shell/SearchInspect";
-import SearchInspectList from "@/components/shell/SearchInspectList";
-import SearchInspectPreview from "@/components/shell/SearchInspectPreview";
-import SearchInspectActions from "@/components/shell/SearchInspectActions";
-import { useInspectPreview } from "@/app/hooks/useInspectPreview";
-import { createDemoPdpSource } from "@/lib/search/demoPdp";
-import SpotlightButton from "@/components/shell/SpotlightButton";
 import { useSearch } from "@/app/hooks/useSearch";
 import { createDemoSource } from "@/lib/search/demoSource";
 import {
@@ -195,12 +188,6 @@ export default function PreviewPage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetActive, setSheetActive] = useState(0);
   const [sheetClosing, setSheetClosing] = useState(false);
-  const [inspectOpen, setInspectOpen] = useState(false);
-  const [inspectClosing, setInspectClosing] = useState(false);
-  const [inspectedId, setInspectedId] = useState<string | null>(null);
-  const [inspectSize, setInspectSize] = useState<string | null>(null);
-  const pdpSource = useMemo(() => createDemoPdpSource(), []);
-  const preview = useInspectPreview(pdpSource, inspectOpen ? inspectedId : null);
   const sheetDepartments = useMemo(
     () => ["All", "Shirts", "Pants", "Outerwear", "Footwear", "Accessories"],
     [],
@@ -215,17 +202,6 @@ export default function PreviewPage() {
       typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
     );
-  }
-  function closeInspectDemo() {
-    if (prefersInstant()) {
-      setInspectOpen(false);
-      return;
-    }
-    setInspectClosing(true);
-    setTimeout(() => {
-      setInspectOpen(false);
-      setInspectClosing(false);
-    }, 320);
   }
   function closeSheetDemo() {
     if (prefersInstant()) {
@@ -568,7 +544,7 @@ export default function PreviewPage() {
               <b>Editorial takeover</b> <span className="text-[var(--text-muted)]">— coming: full-white, serif input, curated grid</span>
             </p>
             <p className="m-0 text-[var(--color-ink)]">
-              <b>Inspect split</b> <span className="text-[var(--text-muted)]">— live below (§16): oceanic shell, regions land next</span>
+              <b>Inspect split</b> <span className="text-[var(--text-muted)]">— coming: hover inspect, lazy preview, size select</span>
             </p>
             <p className="m-0 text-[13px] text-[var(--text-muted)]">
               Admin picks one via <code>search.overlayVariant</code>; only the selected variant ships (registry
@@ -577,23 +553,6 @@ export default function PreviewPage() {
           </div>
         </Card>
 
-        <H2>16. Search inspect shell — oceanic modal (temporary)</H2>
-        <Card>
-          <p className="mb-3 text-sm text-[var(--text-muted)]">
-            Shell behind the spotlight trigger: backdrop, frame, query input row, close, trap. wired to
-            <code>useSearch</code> query (results grid lands with the list region). List / preview / actions
-            regions land next turns. Motion: oceanic scale+rise (320ms wave-curve), reversed on close.
-          </p>
-          <Row>
-            <SpotlightButton
-              onOpen={() => {
-                setInspectClosing(false);
-                setInspectOpen(true);
-              }}
-            />
-            <span className="text-sm text-[var(--text-muted)]">Blue circle opens the shell (replaces the search icon where inspect is picked).</span>
-          </Row>
-        </Card>
       </main>
 
       <footer className="p-6 text-center text-xs text-[var(--text-muted)]">
@@ -634,48 +593,6 @@ export default function PreviewPage() {
           onActive={setSheetActive}
           onSelect={() => closeSheetDemo()}
           onClose={() => closeSheetDemo()}
-        />
-      )}
-      {inspectOpen && (
-        <SearchInspect
-          closing={inspectClosing}
-          onClose={() => closeInspectDemo()}
-          query={liveSearch.query}
-          onQuery={liveSearch.setQuery}
-          placeholder="Search products by style, material, or keyword…"
-          list={
-            <SearchInspectList
-              results={liveSearch.results}
-              departments={sheetDepartments}
-              dept={liveSearch.dept}
-              activeId={inspectedId}
-              onDept={liveSearch.setDept}
-              onInspect={(id) => {
-                setInspectedId(id);
-                setInspectSize(null);
-              }}
-            />
-          }
-          detail={
-            <>
-              <SearchInspectPreview
-                detail={preview.detail}
-                status={preview.status}
-                selectedSize={inspectSize}
-                onSize={setInspectSize}
-              />
-              {preview.detail && (
-                <SearchInspectActions
-                  price={preview.detail.price}
-                  size={inspectSize}
-                  sizesExist={preview.detail.sizes.length > 1}
-                  inStock={preview.detail.stock > 0}
-                  onAdd={() => closeInspectDemo()}
-                  onFullPage={() => closeInspectDemo()}
-                />
-              )}
-            </>
-          }
         />
       )}
     </div>
