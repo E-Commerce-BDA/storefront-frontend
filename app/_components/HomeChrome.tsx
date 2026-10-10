@@ -9,6 +9,17 @@ export interface HomeAnnouncement {
   items: { text: string; cta: { label: string; href: string } | null; countdownTo: string }[];
   showArrows: boolean;
   dismissible: boolean;
+  collapseAnimation: boolean;
+}
+
+const COLLAPSE_MS = 220;
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
 }
 
 /**
@@ -24,8 +35,21 @@ export default function HomeChrome({
   links: ResolvedNavLink[];
 }) {
   const [dismissed, setDismissed] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [active, setActive] = useState(0);
   const count = announcement.items.length;
+
+  // Two-phase dismiss: collapsing class animates (CSS grid-rows), unmount
+  // follows after the transition. Instant when animation is off or
+  // reduced-motion is preferred — never make users wait out a transition.
+  function dismiss() {
+    if (!announcement.collapseAnimation || prefersReducedMotion()) {
+      setDismissed(true);
+      return;
+    }
+    setClosing(true);
+    setTimeout(() => setDismissed(true), COLLAPSE_MS);
+  }
 
   return (
     <>
@@ -35,7 +59,8 @@ export default function HomeChrome({
           activeIndex={count === 0 ? 0 : active % count}
           showArrows={announcement.showArrows}
           dismissible={announcement.dismissible}
-          onDismiss={() => setDismissed(true)}
+          collapsing={closing}
+          onDismiss={dismiss}
           onPrev={() => setActive((a) => (a - 1 + count) % count)}
           onNext={() => setActive((a) => (a + 1) % count)}
         />
