@@ -28,6 +28,13 @@ export interface SearchInspectProps {
   query?: string;
   onQuery?: (q: string) => void;
   placeholder?: string;
+  /**
+   * Region slots (composition, not imports — shell stays region-ignorant;
+   * absent slots render absent columns). Parent composes list left,
+   * preview+actions right.
+   */
+  list?: ReactNode;
+  detail?: ReactNode;
   className?: string;
 }
 
@@ -137,6 +144,7 @@ export default function SearchInspect({
             {detail !== undefined && <div className="sf-inspect__col-detail">{detail}</div>}
           </div>
         )}
+      </div>
     </div>
   );
 }
