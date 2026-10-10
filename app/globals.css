@@ -1099,7 +1099,7 @@ body {
 }
 .sf-inspect__depts button[data-active="true"] {
   background: var(--color-ink);
-  color: #ffffff;
+  color: var(--nb-badge-text, #ffffff);
 }
 .sf-inspect__rows {
   list-style: none;
