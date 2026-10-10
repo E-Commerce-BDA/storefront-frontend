@@ -7,6 +7,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import SearchSheet from "@/components/shell/SearchSheet";
+import SearchInspect from "@/components/shell/SearchInspect";
+import SpotlightButton from "@/components/shell/SpotlightButton";
 import { useSearch } from "@/app/hooks/useSearch";
 import { createDemoSource } from "@/lib/search/demoSource";
 import {
@@ -188,20 +190,36 @@ export default function PreviewPage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetActive, setSheetActive] = useState(0);
   const [sheetClosing, setSheetClosing] = useState(false);
+  const [inspectOpen, setInspectOpen] = useState(false);
+  const [inspectClosing, setInspectClosing] = useState(false);
   const sheetDepartments = useMemo(
     () => ["All", "Shirts", "Pants", "Outerwear", "Footwear", "Accessories"],
     [],
   );
 
-  // Demo-grade two-phase close (mirrors HomeChrome pattern): closing class
-  // slides the sheet up, unmount follows after the motion duration (240ms
-  // matches the smooth builtin default). Instant under reduced-motion.
-  function closeSheetDemo() {
-    if (
+  // Demo-grade two-phase closes (mirror HomeChrome pattern): closing class
+  // plays the exit, unmount follows after the motion duration. Instant
+  // under reduced-motion. Durations match each variant's builtin default.
+  function prefersInstant() {
+    return (
       typeof window !== "undefined" &&
       typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
+    );
+  }
+  function closeInspectDemo() {
+    if (prefersInstant()) {
+      setInspectOpen(false);
+      return;
+    }
+    setInspectClosing(true);
+    setTimeout(() => {
+      setInspectOpen(false);
+      setInspectClosing(false);
+    }, 320);
+  }
+  function closeSheetDemo() {
+    if (prefersInstant()) {
       setSheetOpen(false);
       return;
     }
@@ -541,13 +559,30 @@ export default function PreviewPage() {
               <b>Editorial takeover</b> <span className="text-[var(--text-muted)]">— coming: full-white, serif input, curated grid</span>
             </p>
             <p className="m-0 text-[var(--color-ink)]">
-              <b>Inspect split</b> <span className="text-[var(--text-muted)]">— coming: hover inspect, lazy preview, size select</span>
+              <b>Inspect split</b> <span className="text-[var(--text-muted)]">— live below (§16): oceanic shell, regions land next</span>
             </p>
             <p className="m-0 text-[13px] text-[var(--text-muted)]">
               Admin picks one via <code>search.overlayVariant</code>; only the selected variant ships (registry
               dynamic-imports, build output proves the rest absent).
             </p>
           </div>
+        </Card>
+
+        <H2>16. Search inspect shell — oceanic modal (temporary)</H2>
+        <Card>
+          <p className="mb-3 text-sm text-[var(--text-muted)]">
+            Empty shell behind the spotlight trigger: backdrop, frame, close, trap. List / preview / actions
+            regions land next turns. Motion: oceanic scale+rise (320ms wave-curve), reversed on close.
+          </p>
+          <Row>
+            <SpotlightButton
+              onOpen={() => {
+                setInspectClosing(false);
+                setInspectOpen(true);
+              }}
+            />
+            <span className="text-sm text-[var(--text-muted)]">Blue circle opens the shell (replaces the search icon where inspect is picked).</span>
+          </Row>
         </Card>
       </main>
 
@@ -590,6 +625,9 @@ export default function PreviewPage() {
           onSelect={() => closeSheetDemo()}
           onClose={() => closeSheetDemo()}
         />
+      )}
+      {inspectOpen && (
+        <SearchInspect closing={inspectClosing} onClose={() => closeInspectDemo()} />
       )}
     </div>
   );
