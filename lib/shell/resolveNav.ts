@@ -97,24 +97,31 @@ export function resolveNavSettings(input: ResolveNavInput, now: number = Date.no
   const logo = mergeGroup(D.logo, global?.logo, shared?.logo);
   const bar = mergeGroup(D.bar, global?.bar, shared?.bar);
   const colors = mergeGroup(D.colors, global?.colors, shared?.colors);
-  // Motion resolves through its own resolver (preset → concrete ms+easing,
-  // clamped + allowlisted) — generic merge would pass presets through raw,
-  // so the partial key is excluded here and set concrete below.
-  type SearchNoMotion = Omit<NavPageOverrides["search"], "sheetAnimation">;
+  // Motion instances resolve through their own resolver (preset → concrete
+  // ms+easing, clamped + allowlisted) — generic merge would pass presets
+  // through raw, so both partial keys are excluded here and set concrete
+  // below. One instance per variant; settings never leak across variants.
+  type SearchNoMotion = Omit<NavPageOverrides["search"], "sheetAnimation" | "inspectAnimation">;
   const stripMotion = (s: NavPageOverrides["search"]): SearchNoMotion | undefined => {
     if (!s) return undefined;
-    const { sheetAnimation: _drop, ...rest } = s;
-    void _drop;
+    const { sheetAnimation: _dropSheet, inspectAnimation: _dropInspect, ...rest } = s;
+    void _dropSheet;
+    void _dropInspect;
     return rest;
   };
   const searchBase = mergeGroup(D.search, stripMotion(global?.search), stripMotion(shared?.search));
-  const { sheetAnimation: _builtinMotion, ...searchRest } = searchBase;
-  void _builtinMotion;
+  const { sheetAnimation: _builtinSheet, inspectAnimation: _builtinInspect, ...searchRest } = searchBase;
+  void _builtinSheet;
+  void _builtinInspect;
   const search = {
     ...searchRest,
     sheetAnimation: resolveOverlayMotion(
       shared?.search?.sheetAnimation ?? global?.search?.sheetAnimation ?? undefined,
       D.search.sheetAnimation,
+    ),
+    inspectAnimation: resolveOverlayMotion(
+      shared?.search?.inspectAnimation ?? global?.search?.inspectAnimation ?? undefined,
+      D.search.inspectAnimation,
     ),
   };
   const account = mergeGroup(D.account, global?.account, shared?.account);
