@@ -770,11 +770,28 @@ body {
   .sf-auth {
     animation: none;
   }
+  .sf-searchsheet,
+  [data-motion] .sf-searchsheet {
+    animation: none;
+    transition: none;
+  }
 }
 
 /* Search sheet — overlay variant "sheet" (components/shell/SearchSheet).
    Top slide-down panel. Paint resolves through vars; fallbacks mirror
-   DEFAULT_NAV_SETTINGS + Oceanic tokens. State via data-* hooks only. */
+   DEFAULT_NAV_SETTINGS + Oceanic tokens. State via data-* hooks only.
+   Motion (enter keyframes + exit transition) is var-driven per-variant
+   (--searchsheet-duration/--searchsheet-easing, inlined from resolved
+   motion); data-motion="off" renders both instant. Pure slide — zero
+   opacity anywhere in this block by design decision. */
+@keyframes sf-sheet-in {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: none;
+  }
+}
 .sf-searchsheet {
   position: absolute;
   top: 0;
@@ -785,6 +802,17 @@ body {
   border-bottom: 1px solid var(--border);
   box-shadow: 0 8px 32px rgba(10, 37, 64, 0.12);
   padding: 20px 24px 24px;
+}
+[data-motion="on"] .sf-searchsheet {
+  animation: sf-sheet-in var(--searchsheet-duration, 240ms) var(--searchsheet-easing, ease-out);
+  transition: transform var(--searchsheet-duration, 240ms) var(--searchsheet-easing, ease-out);
+}
+[data-motion="off"] .sf-searchsheet {
+  animation: none;
+  transition: none;
+}
+[data-closing="true"] .sf-searchsheet {
+  transform: translateY(-100%);
 }
 .sf-searchsheet__row {
   display: flex;
