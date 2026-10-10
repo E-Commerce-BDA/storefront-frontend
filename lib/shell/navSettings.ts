@@ -231,7 +231,7 @@ export const DEFAULT_NAV_SETTINGS: ResolvedNavSettings = {
     enabled: true,
     overlayVariant: "classic",
     placeholder: "Search products…",
-    sheetAnimation: { enabled: true, durationMs: 240, easing: "ease-out" },
+    sheetAnimation: { enabled: true, durationMs: 240, easing: "ease-out", travel: "full" },
   },
   account: { enabled: true, items: ["orders", "addresses", "wishlist", "signout"] },
   cart: { enabled: true, destination: "drawer", dedicatedPage: false, badgeCap: 9 },
