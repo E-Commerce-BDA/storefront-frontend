@@ -5,7 +5,7 @@
  */
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Button,
   Input,
@@ -34,6 +34,139 @@ function Row({ children }: { children: React.ReactNode }) {
   return <div className="flex flex-wrap items-center gap-3">{children}</div>;
 }
 
+/**
+ * TEMPORARY search-overlay demo (trap vs light feel-test) — lives only in
+ * this showcase file, deleted at launch with it. Props-only even here:
+ * results arrive as props from the parent's stub filter (hook-era source
+ * replaces the stub, not the overlay). Winner becomes production
+ * SearchOverlay.tsx; loser is deleted.
+ */
+interface DemoResult {
+  name: string;
+  price: string;
+}
+
+function SearchDemoOverlay({
+  mode,
+  query,
+  onQueryChange,
+  results,
+  onClose,
+}: {
+  mode: "trap" | "light";
+  query: string;
+  onQueryChange: (q: string) => void;
+  results: DemoResult[];
+  onClose: () => void;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+    if (mode !== "trap") return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const root = rootRef.current;
+      if (!root) return;
+      const focusables = Array.from(
+        root.querySelectorAll<HTMLElement>('button, a[href], input, [tabindex]:not([tabindex="-1"])'),
+      ).filter((el) => !el.hasAttribute("disabled"));
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [mode]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      ref={rootRef}
+      role="dialog"
+      aria-modal={mode === "trap"}
+      aria-label="Search products (demo)"
+      className="fixed inset-0 z-50 flex flex-col items-center px-4 pt-24"
+      style={{ background: "rgba(10,37,64,0.72)" }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close search"
+        className="absolute top-5 right-5 inline-flex h-11 w-11 items-center justify-center rounded-full text-white"
+        style={{ border: "1px solid rgba(255,255,255,0.4)" }}
+      >
+        <Icon name="x" size={20} />
+      </button>
+      <div
+        className="flex w-full items-center gap-3 bg-white px-5"
+        style={{ maxWidth: 640, borderRadius: 16, boxShadow: "0 16px 64px rgba(0,0,0,0.3)" }}
+      >
+        <Icon name="search" size={22} />
+        <input
+          ref={inputRef}
+          type="search"
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          placeholder="Search products… (min 2 chars)"
+          aria-label="Search products"
+          autoComplete="off"
+          className="w-full min-w-0 flex-1 border-0 bg-transparent text-lg text-[var(--color-ink)] outline-0"
+          style={{ height: 64 }}
+        />
+      </div>
+      {query.trim().length < 2 ? (
+        <p className="mt-4 text-sm text-white">Popular: Linen · Shoes · Jacket — type 2+ characters</p>
+      ) : results.length === 0 ? (
+        <p className="mt-4 text-sm text-white">No matches for “{query.trim()}”.</p>
+      ) : (
+        <div className="mt-4 grid w-full gap-3" style={{ maxWidth: 640 }}>
+          {results.map((r) => (
+            <button
+              key={r.name}
+              type="button"
+              onClick={onClose}
+              className="flex items-center justify-between bg-white px-4 py-3 text-left text-sm text-[var(--color-ink)]"
+              style={{ borderRadius: 12 }}
+            >
+              <span className="font-semibold">{r.name}</span>
+              <span className="text-[var(--text-muted)]">{r.price}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const DEMO_CATALOG: DemoResult[] = [
+  { name: "Ocean Linen Shirt", price: "$48" },
+  { name: "Court Sneaker", price: "$89" },
+  { name: "Trail Runner", price: "$120" },
+  { name: "Denim Jacket", price: "$95" },
+  { name: "Silk Scarf", price: "$35" },
+  { name: "Wool Beanie", price: "$28" },
+];
+
 export default function PreviewPage() {
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
@@ -43,6 +176,10 @@ export default function PreviewPage() {
   const [ship, setShip] = useState("flat");
   const [radius, setRadius] = useState(8);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchMode, setSearchMode] = useState<"trap" | "light">("trap");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchTriggerRef = useRef<HTMLButtonElement>(null);
 
   return (
     <div className="min-h-screen">
@@ -303,11 +440,59 @@ export default function PreviewPage() {
             </div>
           </div>
         </Card>
+
+        <H2>13. Search overlay demo — trap vs light (temporary)</H2>
+        <Card>
+          <p className="mb-3 text-sm text-[var(--text-muted)]">
+            Same overlay content, one variable isolated. Trap: Tab cycles inside. Light: autofocus + Esc only,
+            Tab escapes to the page. Feel both, then pick the production behavior.
+          </p>
+          <Row>
+            <Button
+              variant={searchMode === "trap" ? "primary" : "light"}
+              onClick={() => setSearchMode("trap")}
+            >
+              Trap
+            </Button>
+            <Button
+              variant={searchMode === "light" ? "primary" : "light"}
+              onClick={() => setSearchMode("light")}
+            >
+              Light dismiss
+            </Button>
+            <Button
+              onClick={(e) => {
+                searchTriggerRef.current = e.currentTarget;
+                setSearchQuery("");
+                setSearchOpen(true);
+              }}
+            >
+              Open search demo
+            </Button>
+          </Row>
+        </Card>
       </main>
 
       <footer className="p-6 text-center text-xs text-[var(--text-muted)]">
         Sale uses ink text (4.6:1 AA) — never white on #FF6B4A. Focus ring #0077B633 everywhere.
       </footer>
+      {searchOpen && (
+        <SearchDemoOverlay
+          mode={searchMode}
+          query={searchQuery}
+          onQueryChange={setSearchQuery}
+          results={
+            // TODO(hook-era): replace stub filter with the search source.
+            searchQuery.trim().length < 2
+              ? []
+              : DEMO_CATALOG.filter((p) => p.name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+          }
+          onClose={() => {
+            setSearchOpen(false);
+            searchTriggerRef.current?.focus();
+          }}
+        />
+      )}
     </div>
   );
 }
