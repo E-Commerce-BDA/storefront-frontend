@@ -80,6 +80,23 @@ describe("SearchSheet", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it("emits motion vars + closing hook (slide, never fade)", () => {
+    const { container } = render(
+      <SearchSheet
+        query="linen"
+        results={ROWS}
+        {...BASE}
+        motion={{ enabled: true, durationMs: 180, easing: "linear" }}
+        closing
+      />,
+    );
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.getPropertyValue("--searchsheet-duration")).toBe("180ms");
+    expect(root.style.getPropertyValue("--searchsheet-easing")).toBe("linear");
+    expect(root.getAttribute("data-closing")).toBe("true");
+    expect(root.getAttribute("data-motion")).toBe("on");
+  });
+
   it("arrow keys cycle with wrap, Enter selects the active row", () => {
     const onActive = vi.fn();
     const onSelect = vi.fn();
