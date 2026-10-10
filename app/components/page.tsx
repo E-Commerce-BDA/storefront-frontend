@@ -8,6 +8,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import SearchSheet from "@/components/shell/SearchSheet";
 import SearchInspect from "@/components/shell/SearchInspect";
+import SearchInspectList from "@/components/shell/SearchInspectList";
+import SearchInspectPreview from "@/components/shell/SearchInspectPreview";
+import SearchInspectActions from "@/components/shell/SearchInspectActions";
+import { useInspectPreview } from "@/app/hooks/useInspectPreview";
+import { createDemoPdpSource } from "@/lib/search/demoPdp";
 import SpotlightButton from "@/components/shell/SpotlightButton";
 import { useSearch } from "@/app/hooks/useSearch";
 import { createDemoSource } from "@/lib/search/demoSource";
@@ -192,6 +197,10 @@ export default function PreviewPage() {
   const [sheetClosing, setSheetClosing] = useState(false);
   const [inspectOpen, setInspectOpen] = useState(false);
   const [inspectClosing, setInspectClosing] = useState(false);
+  const [inspectedId, setInspectedId] = useState<string | null>(null);
+  const [inspectSize, setInspectSize] = useState<string | null>(null);
+  const pdpSource = useMemo(() => createDemoPdpSource(), []);
+  const preview = useInspectPreview(pdpSource, inspectOpen ? inspectedId : null);
   const sheetDepartments = useMemo(
     () => ["All", "Shirts", "Pants", "Outerwear", "Footwear", "Accessories"],
     [],
@@ -634,6 +643,39 @@ export default function PreviewPage() {
           query={liveSearch.query}
           onQuery={liveSearch.setQuery}
           placeholder="Search products by style, material, or keyword…"
+          list={
+            <SearchInspectList
+              results={liveSearch.results}
+              departments={sheetDepartments}
+              dept={liveSearch.dept}
+              activeId={inspectedId}
+              onDept={liveSearch.setDept}
+              onInspect={(id) => {
+                setInspectedId(id);
+                setInspectSize(null);
+              }}
+            />
+          }
+          detail={
+            <>
+              <SearchInspectPreview
+                detail={preview.detail}
+                status={preview.status}
+                selectedSize={inspectSize}
+                onSize={setInspectSize}
+              />
+              {preview.detail && (
+                <SearchInspectActions
+                  price={preview.detail.price}
+                  size={inspectSize}
+                  sizesExist={preview.detail.sizes.length > 1}
+                  inStock={preview.detail.stock > 0}
+                  onAdd={() => closeInspectDemo()}
+                  onFullPage={() => closeInspectDemo()}
+                />
+              )}
+            </>
+          }
         />
       )}
     </div>
