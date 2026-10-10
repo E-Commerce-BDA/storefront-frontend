@@ -571,7 +571,8 @@ export default function PreviewPage() {
         <H2>16. Search inspect shell — oceanic modal (temporary)</H2>
         <Card>
           <p className="mb-3 text-sm text-[var(--text-muted)]">
-            Empty shell behind the spotlight trigger: backdrop, frame, close, trap. List / preview / actions
+            Shell behind the spotlight trigger: backdrop, frame, query input row, close, trap. wired to
+            <code>useSearch</code> query (results grid lands with the list region). List / preview / actions
             regions land next turns. Motion: oceanic scale+rise (320ms wave-curve), reversed on close.
           </p>
           <Row>
@@ -627,7 +628,13 @@ export default function PreviewPage() {
         />
       )}
       {inspectOpen && (
-        <SearchInspect closing={inspectClosing} onClose={() => closeInspectDemo()} />
+        <SearchInspect
+          closing={inspectClosing}
+          onClose={() => closeInspectDemo()}
+          query={liveSearch.query}
+          onQuery={liveSearch.setQuery}
+          placeholder="Search products by style, material, or keyword…"
+        />
       )}
     </div>
   );
