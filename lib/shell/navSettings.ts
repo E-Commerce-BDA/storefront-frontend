@@ -107,6 +107,8 @@ export interface NavAnnouncementField {
   showArrows?: boolean;
   autoplayMs?: number | null;
   dismissible?: boolean;
+  /** Smooth upward collapse on dismiss (reduced-motion forces instant). */
+  collapseAnimation?: boolean;
 }
 
 export interface NavMobileField {
@@ -178,6 +180,7 @@ export interface ResolvedNavSettings {
     showArrows: boolean;
     autoplayMs: number | null;
     dismissible: boolean;
+    collapseAnimation: boolean;
   };
   mobile: { breakpoint: number; drawerSide: DrawerSide };
 }
@@ -215,6 +218,7 @@ export const DEFAULT_NAV_SETTINGS: ResolvedNavSettings = {
     showArrows: true,
     autoplayMs: null,
     dismissible: true,
+    collapseAnimation: true,
   },
   mobile: { breakpoint: 768, drawerSide: "left" },
 };
