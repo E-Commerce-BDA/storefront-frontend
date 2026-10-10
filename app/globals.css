@@ -786,7 +786,7 @@ body {
    opacity anywhere in this block by design decision. */
 @keyframes sf-sheet-in {
   from {
-    transform: translateY(-100%);
+    transform: translateY(calc(-100% - 8px));
   }
   to {
     transform: none;
@@ -812,7 +812,7 @@ body {
   transition: none;
 }
 [data-closing="true"] .sf-searchsheet {
-  transform: translateY(-100%);
+  transform: translateY(calc(-100% - 8px));
 }
 .sf-searchsheet__row {
   display: flex;
