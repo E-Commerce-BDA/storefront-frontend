@@ -25,6 +25,7 @@ import {
   type ResolvedNavLink,
   type ResolvedNavSettings,
 } from "./navSettings";
+import { resolveOverlayMotion } from "@/lib/search/motion";
 
 export interface ResolveNavInput {
   /** CMS admin values. Null = CMS unreadable (builtins render). */
@@ -96,7 +97,26 @@ export function resolveNavSettings(input: ResolveNavInput, now: number = Date.no
   const logo = mergeGroup(D.logo, global?.logo, shared?.logo);
   const bar = mergeGroup(D.bar, global?.bar, shared?.bar);
   const colors = mergeGroup(D.colors, global?.colors, shared?.colors);
-  const search = mergeGroup(D.search, global?.search, shared?.search);
+  // Motion resolves through its own resolver (preset → concrete ms+easing,
+  // clamped + allowlisted) — generic merge would pass presets through raw,
+  // so the partial key is excluded here and set concrete below.
+  type SearchNoMotion = Omit<NavPageOverrides["search"], "sheetAnimation">;
+  const stripMotion = (s: NavPageOverrides["search"]): SearchNoMotion | undefined => {
+    if (!s) return undefined;
+    const { sheetAnimation: _drop, ...rest } = s;
+    void _drop;
+    return rest;
+  };
+  const searchBase = mergeGroup(D.search, stripMotion(global?.search), stripMotion(shared?.search));
+  const { sheetAnimation: _builtinMotion, ...searchRest } = searchBase;
+  void _builtinMotion;
+  const search = {
+    ...searchRest,
+    sheetAnimation: resolveOverlayMotion(
+      shared?.search?.sheetAnimation ?? global?.search?.sheetAnimation ?? undefined,
+      D.search.sheetAnimation,
+    ),
+  };
   const account = mergeGroup(D.account, global?.account, shared?.account);
   const cart = mergeGroup(D.cart, global?.cart, shared?.cart);
   const mobile = mergeGroup(D.mobile, global?.mobile, shared?.mobile);
