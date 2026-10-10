@@ -50,6 +50,7 @@ export default function SearchInspectList({
           No products match — try another department or query.
         </p>
       ) : (
+        <>
         <ul className="sf-inspect__rows">
           {results.map((r) => (
             <li key={r.id}>
@@ -87,8 +88,9 @@ export default function SearchInspectList({
             </li>
           ))}
         </ul>
+        <p className="sf-inspect__hint">Hover or use ↑↓ to inspect</p>
+        </>
       )}
-      <p className="sf-inspect__hint">Hover or use ↑↓ to inspect</p>
     </div>
   );
 }
