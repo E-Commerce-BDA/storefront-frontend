@@ -771,3 +771,165 @@ body {
     animation: none;
   }
 }
+
+/* Search sheet — overlay variant "sheet" (components/shell/SearchSheet).
+   Top slide-down panel. Paint resolves through vars; fallbacks mirror
+   DEFAULT_NAV_SETTINGS + Oceanic tokens. State via data-* hooks only. */
+.sf-searchsheet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--nb-bg, #ffffff);
+  color: var(--nb-text, #0a2540);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(10, 37, 64, 0.12);
+  padding: 20px 24px 24px;
+}
+.sf-searchsheet__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.sf-searchsheet__bar {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--color-section-bg);
+  color: var(--text-muted);
+}
+.sf-searchsheet__bar input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 15px;
+  color: var(--color-ink);
+}
+.sf-searchsheet__bar input::placeholder {
+  color: var(--text-muted);
+}
+.sf-searchsheet__cancel {
+  flex: none;
+  height: 48px;
+  padding: 0 22px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--color-ink);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sf-searchsheet__cancel:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+.sf-searchsheet__depts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  max-width: 960px;
+  margin: 14px auto 0;
+}
+.sf-searchsheet__depts-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.sf-searchsheet__depts button {
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--color-section-bg);
+  color: var(--text-muted);
+}
+.sf-searchsheet__depts button[data-active="true"] {
+  background: var(--color-ink);
+  color: #ffffff;
+}
+.sf-searchsheet__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  max-width: 960px;
+  margin: 16px auto 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.sf-searchsheet__hint {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.sf-searchsheet__empty {
+  max-width: 960px;
+  margin: 18px auto 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.sf-searchsheet__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+  max-width: 960px;
+  margin: 14px auto 0;
+}
+.sf-searchsheet__cards > button {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0 0 12px;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  color: var(--color-ink);
+}
+.sf-searchsheet__cards > button[data-active="true"] {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.sf-searchsheet__thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  background: var(--color-image-bg);
+  color: var(--color-ink);
+  font-size: 32px;
+  font-weight: 700;
+}
+.sf-searchsheet__name {
+  display: block;
+  padding: 10px 12px 0;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sf-searchsheet__pricerow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 4px 12px 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+.sf-searchsheet__tag {
+  font-weight: 500;
+  color: var(--color-success);
+}
