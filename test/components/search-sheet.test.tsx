@@ -86,7 +86,7 @@ describe("SearchSheet", () => {
         query="linen"
         results={ROWS}
         {...BASE}
-        motion={{ enabled: true, durationMs: 180, easing: "linear" }}
+        motion={{ enabled: true, durationMs: 180, easing: "linear", travel: "full" }}
         closing
       />,
     );
