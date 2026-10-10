@@ -10,7 +10,7 @@
  * Pure types + constants. No React, no fetch.
  */
 
-export type OverlayMotionPreset = "smooth" | "snappy" | "custom";
+export type OverlayMotionPreset = "smooth" | "snappy" | "oceanic" | "fast" | "flat" | "custom";
 
 /** Admin-facing: everything optional (absent = inherit). */
 export interface OverlayMotionField {
@@ -22,11 +22,17 @@ export interface OverlayMotionField {
   easing?: string;
 }
 
-/** Resolved: concrete values the component inlines as CSS vars. */
+/** Resolved: concrete values the component inlines as CSS vars + data hooks. */
 export interface ResolvedOverlayMotion {
   enabled: boolean;
   durationMs: number;
   easing: string;
+  /**
+   * Travel distance class (full = off-screen parks like sheets; minimal =
+   * nudges like flat). Concrete value, not a preset name — CSS switches on
+   * this, never on preset strings.
+   */
+  travel: "full" | "minimal";
 }
 
 export const MOTION_LIMITS = {
@@ -37,14 +43,20 @@ export const MOTION_LIMITS = {
  * Preset table: duration scales with travel distance (full-travel sheets
  * need room to read as motion, not a flinch). 240ms ease-out matches the
  * announcement collapse rhythm (220ms family); snappy reuses the wave
- * easing curve so the system speaks one motion language.
+ * easing curve so the system speaks one motion language. Families:
+ * oceanic = slow deliberate full travel; fast = quick full travel;
+ * flat = minimal-travel nudge (8px, never off-screen parks). smooth/snappy
+ * kept byte-identical (additive change — stored admin values keep working).
  */
 export const MOTION_PRESETS: Record<
   Exclude<OverlayMotionPreset, "custom">,
-  { durationMs: number; easing: string }
+  { durationMs: number; easing: string; travel: "full" | "minimal" }
 > = {
-  smooth: { durationMs: 240, easing: "ease-out" },
-  snappy: { durationMs: 180, easing: "cubic-bezier(0.32, 0.72, 0.32, 1)" },
+  smooth: { durationMs: 240, easing: "ease-out", travel: "full" },
+  snappy: { durationMs: 180, easing: "cubic-bezier(0.32, 0.72, 0.32, 1)", travel: "full" },
+  oceanic: { durationMs: 320, easing: "cubic-bezier(0.32, 0.72, 0.32, 1)", travel: "full" },
+  fast: { durationMs: 160, easing: "ease-out", travel: "full" },
+  flat: { durationMs: 140, easing: "ease-out", travel: "minimal" },
 };
 
 /** Easing allowlist: unknown strings fall back (never inject raw CSS). */
@@ -72,22 +84,25 @@ function cleanEasing(v: unknown, fallback: string): string {
  */
 export function resolveOverlayMotion(
   admin?: OverlayMotionField | null,
-  builtin: ResolvedOverlayMotion = { enabled: true, durationMs: 240, easing: "ease-out" },
+  builtin: ResolvedOverlayMotion = { enabled: true, durationMs: 240, easing: "ease-out", travel: "full" },
 ): ResolvedOverlayMotion {
   const enabled = admin?.enabled ?? builtin.enabled;
-  // Builtins carry concrete ms+easing (no preset concept); an absent or
+  // Builtins carry concrete values (no preset concept); an absent or
   // unknown admin preset falls back to smooth, never to a raw string.
   const preset: OverlayMotionPreset =
-    admin?.preset === "smooth" || admin?.preset === "snappy" || admin?.preset === "custom"
-      ? admin.preset
-      : "smooth";
+    admin?.preset !== undefined && admin.preset in MOTION_PRESETS
+      ? (admin.preset as Exclude<OverlayMotionPreset, "custom">)
+      : admin?.preset === "custom"
+        ? "custom"
+        : "smooth";
   if (preset !== "custom") {
     const table = MOTION_PRESETS[preset];
-    return { enabled, durationMs: table.durationMs, easing: table.easing };
+    return { enabled, durationMs: table.durationMs, easing: table.easing, travel: table.travel };
   }
   return {
     enabled,
     durationMs: clampInt(admin?.durationMs, MOTION_LIMITS.durationMs.min, MOTION_LIMITS.durationMs.max, builtin.durationMs),
     easing: cleanEasing(admin?.easing, builtin.easing),
+    travel: builtin.travel,
   };
 }
