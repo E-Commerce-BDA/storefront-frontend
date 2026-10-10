@@ -81,6 +81,12 @@ describe("resolveNavSettings", () => {
     expect(high.links.maxItems).toBe(8);
   });
 
+  it("defaults collapseAnimation on, honors explicit off", () => {
+    expect(resolveNavSettings({}, NOW).announcement.collapseAnimation).toBe(true);
+    const r = resolveNavSettings({ settings: { shared: { announcement: { collapseAnimation: false } } } }, NOW);
+    expect(r.announcement.collapseAnimation).toBe(false);
+  });
+
   it("resolves announcement items with per-item countdown, drops empties", () => {
     const r = resolveNavSettings(
       {
