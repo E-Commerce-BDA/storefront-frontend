@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { Icon } from "@/components/ui";
 import type { ResolvedOverlayMotion } from "@/lib/search/motion";
@@ -45,6 +45,8 @@ export default function SearchInspect({
   query,
   onQuery,
   placeholder = "Search products…",
+  list,
+  detail,
   className = "",
 }: SearchInspectProps) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -129,7 +131,12 @@ export default function SearchInspect({
         <button type="button" className="sf-inspect__close" onClick={onClose} aria-label="Close search">
           <Icon name="x" size={18} />
         </button>
-      </div>
+        {(list !== undefined || detail !== undefined) && (
+          <div className="sf-inspect__body">
+            {list !== undefined && <div className="sf-inspect__col-list">{list}</div>}
+            {detail !== undefined && <div className="sf-inspect__col-detail">{detail}</div>}
+          </div>
+        )}
     </div>
   );
 }
