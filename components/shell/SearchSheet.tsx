@@ -1,7 +1,9 @@
+import type { CSSProperties } from "react";
 import { useEffect, useRef } from "react";
 import { Icon } from "@/components/ui";
 import type { SearchResult } from "@/lib/search/source";
 import type { SearchStatus } from "@/app/hooks/useSearch";
+import type { ResolvedOverlayMotion } from "@/lib/search/motion";
 
 /**
  * Dumb search sheet (overlay variant "sheet") — top slide-down panel.
@@ -22,6 +24,14 @@ export interface SearchSheetProps {
   onSelect?: (r: SearchResult) => void;
   onClose: () => void;
   onCancel?: () => void;
+  /**
+   * Resolved slide motion (concrete ms + easing, preset already resolved
+   * upstream). Inlined as CSS vars — the component never sees knob names.
+   * Default mirrors builtins for standalone/demo use without a pipeline.
+   */
+  motion?: ResolvedOverlayMotion;
+  /** True while the owner animates dismissal (CSS slides up, then unmounts). */
+  closing?: boolean;
   className?: string;
 }
 
@@ -39,6 +49,8 @@ export default function SearchSheet({
   onSelect,
   onClose,
   onCancel,
+  motion = { enabled: true, durationMs: 240, easing: "ease-out" },
+  closing = false,
   className = "",
 }: SearchSheetProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -87,8 +99,27 @@ export default function SearchSheet({
     onActive?.((activeIndex + dir + results.length) % results.length);
   }
 
+  // Motion vars ride inline (presentation via props — no new lib module);
+  // disabled motion renders no vars (CSS fallbacks stay instant-safe).
+  const motionVars = motion.enabled
+    ? {
+        "--searchsheet-duration": `${motion.durationMs}ms`,
+        "--searchsheet-easing": motion.easing,
+      } as CSSProperties
+    : undefined;
+
   return (
-    <div ref={rootRef} data-trap="true" className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Search">
+    <div
+      ref={rootRef}
+      data-trap="true"
+      data-motion={motion.enabled ? "on" : "off"}
+      data-closing={closing}
+      className="fixed inset-0 z-50"
+      style={motionVars}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Search"
+    >
       <div
         className="absolute inset-0"
         style={{ background: "rgba(10,37,64,0.5)", backdropFilter: "blur(6px)" }}
