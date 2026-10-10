@@ -55,4 +55,9 @@ describe("AnnouncementBar", () => {
     const { container } = render(<AnnouncementBar items={[]} />);
     expect(container.firstChild).toBeNull();
   });
+
+  it("exposes the collapsing phase for the collapse animation", () => {
+    const { container } = render(<AnnouncementBar items={ITEMS} collapsing />);
+    expect(container.firstElementChild?.getAttribute("data-collapsed")).toBe("true");
+  });
 });
