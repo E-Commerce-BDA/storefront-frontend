@@ -22,12 +22,13 @@ describe("resolveNavSettings", () => {
       enabled: true,
       durationMs: 240,
       easing: "ease-out",
+      travel: "full",
     });
     const r = resolveNavSettings(
       { settings: { shared: { search: { sheetAnimation: { preset: "custom", durationMs: 999, easing: "bogus" } } } } },
       NOW,
     );
-    expect(r.search.sheetAnimation).toEqual({ enabled: true, durationMs: 500, easing: "ease-out" });
+    expect(r.search.sheetAnimation).toEqual({ enabled: true, durationMs: 500, easing: "ease-out", travel: "full" });
   });
 
   it("shared wins over global, clamps apply", () => {
