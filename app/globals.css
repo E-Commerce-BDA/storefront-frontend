@@ -823,7 +823,7 @@ body {
   padding: 0 22px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: #ffffff;
+  background: var(--nb-bg, #ffffff);
   color: var(--color-ink);
   font-size: 14px;
   font-weight: 600;
@@ -859,7 +859,7 @@ body {
 }
 .sf-searchsheet__depts button[data-active="true"] {
   background: var(--color-ink);
-  color: #ffffff;
+  color: var(--nb-badge-text, #ffffff);
 }
 .sf-searchsheet__meta {
   display: flex;
@@ -891,7 +891,7 @@ body {
 .sf-searchsheet__cards > button {
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--nb-bg, #ffffff);
   padding: 0 0 12px;
   overflow: hidden;
   cursor: pointer;
