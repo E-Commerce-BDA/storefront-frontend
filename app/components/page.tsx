@@ -5,7 +5,10 @@
  */
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import SearchSheet from "@/components/shell/SearchSheet";
+import { useSearch } from "@/app/hooks/useSearch";
+import { createDemoSource } from "@/lib/search/demoSource";
 import {
   Button,
   Input,
@@ -180,6 +183,14 @@ export default function PreviewPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
+  const searchSource = useMemo(() => createDemoSource(), []);
+  const liveSearch = useSearch(searchSource);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetActive, setSheetActive] = useState(0);
+  const sheetDepartments = useMemo(
+    () => ["All", "Shirts", "Pants", "Outerwear", "Footwear", "Accessories"],
+    [],
+  );
 
   return (
     <div className="min-h-screen">
@@ -471,6 +482,52 @@ export default function PreviewPage() {
             </Button>
           </Row>
         </Card>
+
+        <H2>14. Search sheet V2 — live overlay variant</H2>
+        <Card>
+          <p className="mb-3 text-sm text-[var(--text-muted)]">
+            Production <code>SearchSheet</code> wired to <code>useSearch</code> + demo source (locked discipline:
+            300ms debounce, min-2 gate, stale-kill). Trap + Esc + focus return. Type 2+ characters, filter by
+            department, cycle with arrow keys.
+          </p>
+          <Row>
+            <Button
+              onClick={() => {
+                liveSearch.setQuery("");
+                liveSearch.setDept("All");
+                setSheetActive(0);
+                setSheetOpen(true);
+              }}
+            >
+              Open search sheet
+            </Button>
+          </Row>
+        </Card>
+
+        <H2>15. Search overlay variants index</H2>
+        <Card>
+          <div className="grid gap-2 text-sm">
+            <p className="m-0 text-[var(--color-ink)]">
+              <b>Classic</b> <span className="text-[var(--text-muted)]">— §13 feel-test behavior (trap won, kept as fallback)</span>
+            </p>
+            <p className="m-0 text-[var(--color-ink)]">
+              <b>Palette modal</b> <span className="text-[var(--text-muted)]">— coming: filters, trending + recent, quick-add, keyboard hints</span>
+            </p>
+            <p className="m-0 text-[var(--color-ink)]">
+              <b>Sheet</b> <span className="text-[var(--text-muted)]">— live above (§14): slide-down panel, departments, cards</span>
+            </p>
+            <p className="m-0 text-[var(--color-ink)]">
+              <b>Editorial takeover</b> <span className="text-[var(--text-muted)]">— coming: full-white, serif input, curated grid</span>
+            </p>
+            <p className="m-0 text-[var(--color-ink)]">
+              <b>Inspect split</b> <span className="text-[var(--text-muted)]">— coming: hover inspect, lazy preview, size select</span>
+            </p>
+            <p className="m-0 text-[13px] text-[var(--text-muted)]">
+              Admin picks one via <code>search.overlayVariant</code>; only the selected variant ships (registry
+              dynamic-imports, build output proves the rest absent).
+            </p>
+          </div>
+        </Card>
       </main>
 
       <footer className="p-6 text-center text-xs text-[var(--text-muted)]">
@@ -491,6 +548,25 @@ export default function PreviewPage() {
             setSearchOpen(false);
             searchTriggerRef.current?.focus();
           }}
+        />
+      )}
+      {sheetOpen && (
+        <SearchSheet
+          query={liveSearch.query}
+          results={liveSearch.results}
+          status={liveSearch.status}
+          dept={liveSearch.dept}
+          departments={sheetDepartments}
+          placeholder="Search products by style, material, or keyword…"
+          activeIndex={sheetActive}
+          onQuery={(q) => {
+            liveSearch.setQuery(q);
+            setSheetActive(0);
+          }}
+          onDept={liveSearch.setDept}
+          onActive={setSheetActive}
+          onSelect={() => setSheetOpen(false)}
+          onClose={() => setSheetOpen(false)}
         />
       )}
     </div>
