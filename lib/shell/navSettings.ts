@@ -88,7 +88,7 @@ export interface NavLinksField {
   maxItems?: number;
 }
 
-export type SearchOverlayVariant = "classic" | "palette" | "sheet" | "editorial" | "inspect";
+export type SearchOverlayVariant = "classic" | "palette" | "sheet" | "editorial";
 
 export interface NavSearchField {
   enabled?: boolean;
@@ -100,12 +100,6 @@ export interface NavSearchField {
    * OverlayMotionField shape — other overlays get their own instances).
    */
   sheetAnimation?: OverlayMotionField;
-  /**
-   * Inspect-variant entrance motion (oceanic default: slow deliberate
-   * scale+rise suited to centered modals — full-travel slides belong to
-   * top sheets, not centered cards).
-   */
-  inspectAnimation?: OverlayMotionField;
 }
 
 export interface NavAccountField {
@@ -195,7 +189,6 @@ export interface ResolvedNavSettings {
     overlayVariant: SearchOverlayVariant;
     placeholder: string;
     sheetAnimation: ResolvedOverlayMotion;
-    inspectAnimation: ResolvedOverlayMotion;
   };
   account: { enabled: boolean; items: AccountItem[] };
   cart: { enabled: boolean; destination: CartDestination; dedicatedPage: boolean; badgeCap: number };
@@ -239,7 +232,6 @@ export const DEFAULT_NAV_SETTINGS: ResolvedNavSettings = {
     overlayVariant: "classic",
     placeholder: "Search products…",
     sheetAnimation: { enabled: true, durationMs: 240, easing: "ease-out", travel: "full" },
-    inspectAnimation: { enabled: true, durationMs: 320, easing: "cubic-bezier(0.32, 0.72, 0.32, 1)", travel: "full" },
   },
   account: { enabled: true, items: ["orders", "addresses", "wishlist", "signout"] },
   cart: { enabled: true, destination: "drawer", dedicatedPage: false, badgeCap: 9 },
