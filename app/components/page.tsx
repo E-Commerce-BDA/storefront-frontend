@@ -187,10 +187,30 @@ export default function PreviewPage() {
   const liveSearch = useSearch(searchSource);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetActive, setSheetActive] = useState(0);
+  const [sheetClosing, setSheetClosing] = useState(false);
   const sheetDepartments = useMemo(
     () => ["All", "Shirts", "Pants", "Outerwear", "Footwear", "Accessories"],
     [],
   );
+
+  // Demo-grade two-phase close (mirrors HomeChrome pattern): closing class
+  // slides the sheet up, unmount follows after the motion duration (240ms
+  // matches the smooth builtin default). Instant under reduced-motion.
+  function closeSheetDemo() {
+    if (
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      setSheetOpen(false);
+      return;
+    }
+    setSheetClosing(true);
+    setTimeout(() => {
+      setSheetOpen(false);
+      setSheetClosing(false);
+    }, 240);
+  }
 
   return (
     <div className="min-h-screen">
@@ -496,6 +516,7 @@ export default function PreviewPage() {
                 liveSearch.setQuery("");
                 liveSearch.setDept("All");
                 setSheetActive(0);
+                setSheetClosing(false);
                 setSheetOpen(true);
               }}
             >
@@ -559,14 +580,15 @@ export default function PreviewPage() {
           departments={sheetDepartments}
           placeholder="Search products by style, material, or keyword…"
           activeIndex={sheetActive}
+          closing={sheetClosing}
           onQuery={(q) => {
             liveSearch.setQuery(q);
             setSheetActive(0);
           }}
           onDept={liveSearch.setDept}
           onActive={setSheetActive}
-          onSelect={() => setSheetOpen(false)}
-          onClose={() => setSheetOpen(false)}
+          onSelect={() => closeSheetDemo()}
+          onClose={() => closeSheetDemo()}
         />
       )}
     </div>
