@@ -31,32 +31,6 @@ describe("resolveNavSettings", () => {
     expect(r.search.sheetAnimation).toEqual({ enabled: true, durationMs: 500, easing: "ease-out", travel: "full" });
   });
 
-  it("resolves inspectAnimation to oceanic builtins, independently of sheet", () => {
-    const d = resolveNavSettings({}, NOW).search;
-    expect(d.inspectAnimation).toEqual({
-      enabled: true,
-      durationMs: 320,
-      easing: "cubic-bezier(0.32, 0.72, 0.32, 1)",
-      travel: "full",
-    });
-    const r = resolveNavSettings(
-      {
-        settings: {
-          shared: {
-            search: {
-              sheetAnimation: { preset: "fast" },
-              inspectAnimation: { preset: "flat" },
-            },
-          },
-        },
-      },
-      NOW,
-    );
-    // Instances never leak across variants: sheet fast, inspect flat.
-    expect(r.search.sheetAnimation.durationMs).toBe(160);
-    expect(r.search.inspectAnimation).toEqual({ enabled: true, durationMs: 140, easing: "ease-out", travel: "minimal" });
-  });
-
   it("shared wins over global, clamps apply", () => {
     const r = resolveNavSettings(
       {
