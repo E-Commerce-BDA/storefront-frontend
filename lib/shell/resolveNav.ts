@@ -125,6 +125,7 @@ export function resolveNavSettings(input: ResolveNavInput, now: number = Date.no
       showArrows: shared?.announcement?.showArrows ?? global?.announcement?.showArrows ?? D.announcement.showArrows,
       autoplayMs: shared?.announcement?.autoplayMs ?? global?.announcement?.autoplayMs ?? D.announcement.autoplayMs,
       dismissible: shared?.announcement?.dismissible ?? global?.announcement?.dismissible ?? D.announcement.dismissible,
+      collapseAnimation: shared?.announcement?.collapseAnimation ?? global?.announcement?.collapseAnimation ?? D.announcement.collapseAnimation,
     },
     mobile: { ...mobile, breakpoint: clampInt(mobile.breakpoint, L.breakpoint.min, L.breakpoint.max, D.mobile.breakpoint) },
   };
