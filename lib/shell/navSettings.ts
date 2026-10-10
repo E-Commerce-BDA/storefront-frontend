@@ -86,8 +86,13 @@ export interface NavLinksField {
   maxItems?: number;
 }
 
+export type SearchOverlayVariant = "classic" | "palette" | "sheet" | "editorial" | "inspect";
+
 export interface NavSearchField {
   enabled?: boolean;
+  /** Which overlay ships to the client (registry dynamic-imports only this). */
+  overlayVariant?: SearchOverlayVariant;
+  placeholder?: string;
 }
 
 export interface NavAccountField {
@@ -172,7 +177,7 @@ export interface ResolvedNavSettings {
     announceText: string;
   };
   links: { items: ResolvedNavLink[]; maxItems: number };
-  search: { enabled: boolean };
+  search: { enabled: boolean; overlayVariant: SearchOverlayVariant; placeholder: string };
   account: { enabled: boolean; items: AccountItem[] };
   cart: { enabled: boolean; destination: CartDestination; dedicatedPage: boolean; badgeCap: number };
   announcement: {
@@ -210,7 +215,7 @@ export const DEFAULT_NAV_SETTINGS: ResolvedNavSettings = {
     announceText: "#ffffff",
   },
   links: { items: [], maxItems: 5 },
-  search: { enabled: true },
+  search: { enabled: true, overlayVariant: "classic", placeholder: "Search products…" },
   account: { enabled: true, items: ["orders", "addresses", "wishlist", "signout"] },
   cart: { enabled: true, destination: "drawer", dedicatedPage: false, badgeCap: 9 },
   announcement: {
