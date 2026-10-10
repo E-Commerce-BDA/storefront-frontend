@@ -4,7 +4,7 @@
  * arrows flip slides. Route-owned test (AGENTS.md §3.7).
  */
 import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen, fireEvent } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react";
 import HomeChrome from "@/app/_components/HomeChrome";
 import type { ResolvedNavLink } from "@/lib/shell/navSettings";
 
@@ -17,6 +17,7 @@ const ANNOUNCEMENT = {
   ],
   showArrows: true,
   dismissible: true,
+  collapseAnimation: true,
 };
 
 const LINKS: ResolvedNavLink[] = [
@@ -32,12 +33,19 @@ describe("HomeChrome", () => {
     expect(screen.getByText("Sale").getAttribute("href")).toBe("/sale");
   });
 
-  it("dismiss removes the bar, arrows flip slides", () => {
+  it("dismiss collapses then removes the bar, arrows flip slides", async () => {
     render(<HomeChrome announcement={ANNOUNCEMENT} links={[]} />);
     fireEvent.click(screen.getByRole("button", { name: "Next announcement" }));
     expect(screen.getByText(/Diwali sale/)).not.toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Dismiss announcement" }));
-    expect(screen.queryByText(/Diwali sale/)).toBeNull();
-    expect(screen.queryByText(/Free shipping/)).toBeNull();
+    // Collapsing phase: bar still mounted with the attr (CSS animates it).
+    expect(document.querySelector('[data-collapsed="true"]')).not.toBeNull();
+    await waitFor(
+      () => {
+        expect(screen.queryByText(/Diwali sale/)).toBeNull();
+        expect(screen.queryByText(/Free shipping/)).toBeNull();
+      },
+      { timeout: 3000 },
+    );
   });
 });
