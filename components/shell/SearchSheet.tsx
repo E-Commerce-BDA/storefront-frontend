@@ -42,19 +42,45 @@ export default function SearchSheet({
   className = "",
 }: SearchSheetProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const showResults = query.trim().length >= 2;
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
+  // Locked feel-test verdict: trap wins. Tab cycles inside (recomputed per
+  // press — result lists change while typing); Esc closes. Same contract as
+  // drawers: no keyboard user left behind the overlay.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const root = rootRef.current;
+      if (!root) return;
+      const focusables = Array.from(
+        root.querySelectorAll<HTMLElement>('button, a[href], input, [tabindex]:not([tabindex="-1"])'),
+      ).filter((el) => !el.hasAttribute("disabled"));
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  // Reason for data-* below: trap root is a behavior hook for tests, not paint.
 
   function cycle(dir: 1 | -1) {
     if (results.length === 0) return;
@@ -62,7 +88,7 @@ export default function SearchSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Search products">
+    <div ref={rootRef} data-trap="true" className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Search">
       <div
         className="absolute inset-0"
         style={{ background: "rgba(10,37,64,0.5)", backdropFilter: "blur(6px)" }}
