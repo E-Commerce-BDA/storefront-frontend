@@ -48,6 +48,25 @@ describe("SearchInspect", () => {
     fireEvent.keyDown(document, { key: "Escape" });
     expect(onClose).toHaveBeenCalledTimes(2);
   });
+
+  it("binds the query input row when both halves arrive", () => {
+    const onQuery = vi.fn();
+    render(<SearchInspect onClose={() => {}} query="linen" onQuery={onQuery} placeholder="Search here…" />);
+    const input = screen.getByLabelText("Search products") as HTMLInputElement;
+    expect(input.value).toBe("linen");
+    expect(input.getAttribute("placeholder")).toBe("Search here…");
+    expect(document.activeElement).toBe(input); // autofocus on mount
+    fireEvent.change(input, { target: { value: "linen shirt" } });
+    expect(onQuery).toHaveBeenCalledWith("linen shirt");
+  });
+
+  it("renders no input row on half bindings (half a binding is a bug)", () => {
+    const { unmount } = render(<SearchInspect onClose={() => {}} query="linen" />);
+    expect(screen.queryByLabelText("Search products")).toBeNull();
+    unmount();
+    render(<SearchInspect onClose={() => {}} onQuery={() => {}} />);
+    expect(screen.queryByLabelText("Search products")).toBeNull();
+  });
 });
 
 describe("SpotlightButton", () => {
