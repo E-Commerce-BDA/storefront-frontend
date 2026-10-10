@@ -21,6 +21,8 @@ describe("inspect style contract", () => {
       /background:\s*var\(--nb-bg/,
       /color:\s*var\(--nb-text/,
       /background:\s*var\(--color-button-bg/,
+      /background:\s*var\(--color-section-bg/,
+      /border:\s*1px solid var\(--color-accent\)/,
     ]) {
       expect(inspectCss, `inspect paint must resolve ${prop} through a var`).toMatch(prop);
     }
