@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 
 /** Dumb Badge — 11px 700 pill. Sale uses ink text, never white on coral. */
-export type BadgeTone = "success" | "warning" | "error" | "sale" | "info" | "neutral";
+export type BadgeTone = "success" | "warning" | "error" | "sale" | "info" | "neutral" | "lilac";
 
 const TONES: Record<BadgeTone, { bg: string; text: string; border: string }> = {
   success: { bg: "var(--color-success-bg)", text: "var(--color-success)", border: "var(--color-success-border)" },
@@ -10,6 +10,7 @@ const TONES: Record<BadgeTone, { bg: string; text: string; border: string }> = {
   sale: { bg: "var(--color-sale)", text: "var(--color-ink)", border: "var(--color-sale)" },
   info: { bg: "var(--color-accent-50)", text: "var(--color-accent)", border: "var(--color-accent-50)" },
   neutral: { bg: "#fff", text: "var(--text-muted)", border: "var(--border)" },
+  lilac: { bg: "var(--color-lilac-bg)", text: "var(--color-lilac)", border: "var(--color-lilac-border)" },
 };
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
