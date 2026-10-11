@@ -20,7 +20,7 @@ export interface PillProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
 }
 
 const Pill = forwardRef<HTMLButtonElement, PillProps>(function Pill(
-  { variant = "filter", active = false, state, className = "", type = "button", ...rest },
+  { variant = "filter", active = false, state, className = "", type = "button", children, ...rest },
   ref,
 ) {
   return (
