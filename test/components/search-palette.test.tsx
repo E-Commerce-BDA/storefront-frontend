@@ -8,6 +8,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import SearchPalette from "@/components/shell/SearchPalette";
+import { DEFAULT_NAV_SETTINGS } from "@/lib/shell/navSettings";
 import type { SearchResult } from "@/lib/search/source";
 
 afterEach(cleanup);
@@ -153,6 +154,41 @@ describe("SearchPalette", () => {
     expect(root.getAttribute("data-closing")).toBe("true");
     expect(root.getAttribute("data-motion")).toBe("on");
     expect(root.getAttribute("data-card")).toBe("row");
+  });
+
+  it("admin gates hide regions without placeholders (sf-028)", () => {
+    const hidden = {
+      ...DEFAULT_NAV_SETTINGS.search.palette,
+      showFilters: false,
+      showTrending: false,
+      showRecent: false,
+      showRatings: false,
+      showTags: false,
+      showDept: false,
+      showFooter: false,
+    };
+    const { unmount } = render(<SearchPalette query="" results={[]} {...BASE} theme={hidden} />);
+    expect(screen.queryByText("Filters:")).toBeNull();
+    expect(screen.queryByText("Trending right now")).toBeNull();
+    expect(screen.queryByText("Recent searches")).toBeNull();
+    expect(screen.queryByText("Bestseller")).toBeNull();
+    expect(screen.queryByText("Shirts", { selector: ".sf-searchpalette__dept" })).toBeNull();
+    expect(screen.queryByText("4.8")).toBeNull();
+    expect(screen.queryByText("2 available items")).toBeNull();
+    // Grid still renders (products aren't gated — only their regions).
+    expect(screen.getByText("Ocean Linen Shirt")).not.toBeNull();
+    unmount();
+  });
+
+  it("emits admin geometry vars (sf-028)", () => {
+    const { container } = render(<SearchPalette query="" results={[]} {...BASE} />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.getPropertyValue("--pl-maxw")).toBe(
+      `${DEFAULT_NAV_SETTINGS.search.palette.cardMaxWidth}px`,
+    );
+    expect(root.style.getPropertyValue("--pl-rows-max")).toBe("300px");
+    expect(root.style.getPropertyValue("--pl-thumb-size")).toBe("64px");
+    expect(root.style.getPropertyValue("--pill-radius")).toBe("999px");
   });
 
   it("arrow keys cycle with wrap, Enter selects the active row", () => {
