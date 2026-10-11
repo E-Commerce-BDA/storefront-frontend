@@ -78,7 +78,7 @@ describe("search palette style contract", () => {
   it("pins the footer flush in both short and tall cases (sf-028)", () => {
     expect(css).toMatch(/\.sf-searchpalette__card\s*\{[^}]*flex-direction:\s*column/);
     expect(css).toMatch(/\.sf-searchpalette__rows\s*\{[^}]*flex:\s*1 1 auto/);
-    expect(css).toMatch(/\.sf-searchpalette__footer\s*\{[^}]*margin:\s*auto -22px -16px/);
+    expect(css).toMatch(/\.sf-searchpalette__footer\s*\{[^}]*margin:\s*auto -22px 0/);
   });
 
   it("scrolls rows internally and collapses columns on narrow screens", () => {
