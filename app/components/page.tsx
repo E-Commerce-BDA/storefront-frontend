@@ -8,8 +8,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import SearchSheet from "@/components/shell/SearchSheet";
 import SearchEditorial from "@/components/shell/SearchEditorial";
+import SearchPalette from "@/components/shell/SearchPalette";
 import { useSearch } from "@/app/hooks/useSearch";
-import { createDemoSource, DEMO_CATALOG } from "@/lib/search/demoSource";
+import { useRecentSearches } from "@/app/hooks/useRecentSearches";
+import { useQuickAdd } from "@/app/hooks/useQuickAdd";
+import { createDemoSource, DEMO_CATALOG, DEMO_TRENDING } from "@/lib/search/demoSource";
+import { createDemoQuickAdd } from "@/lib/cart/quickAdd";
 import {
   Button,
   Input,
@@ -187,6 +191,7 @@ export default function PreviewPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
   const searchSource = useMemo(() => createDemoSource(), []);
+  const paletteQuickAddPort = useMemo(() => createDemoQuickAdd(), []);
   const liveSearch = useSearch(searchSource);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetActive, setSheetActive] = useState(0);
@@ -236,6 +241,26 @@ export default function PreviewPage() {
     setTimeout(() => {
       setEdOpen(false);
       setEdClosing(false);
+    }, 320);
+  }
+  // Palette runs its OWN hook trio (never shares sheet/editorial state —
+  // all three demos stay independently drivable on one page).
+  const paletteSearch = useSearch(searchSource);
+  const paletteRecents = useRecentSearches();
+  const paletteQuickAdd = useQuickAdd(paletteQuickAddPort);
+  const [palOpen, setPalOpen] = useState(false);
+  const [palActive, setPalActive] = useState(0);
+  const [palClosing, setPalClosing] = useState(false);
+  function closePaletteDemo() {
+    // 320ms = oceanic builtin (the palette default).
+    if (prefersInstant()) {
+      setPalOpen(false);
+      return;
+    }
+    setPalClosing(true);
+    setTimeout(() => {
+      setPalOpen(false);
+      setPalClosing(false);
     }, 320);
   }
 
@@ -559,7 +584,7 @@ export default function PreviewPage() {
               <b>Classic</b> <span className="text-[var(--text-muted)]">— §13 feel-test behavior (trap won, kept as fallback)</span>
             </p>
             <p className="m-0 text-[var(--color-ink)]">
-              <b>Palette modal</b> <span className="text-[var(--text-muted)]">— coming: filters, trending + recent, quick-add, keyboard hints</span>
+              <b>Palette modal</b> <span className="text-[var(--color-ink)]">— live below (§17): modal, filter Pills, trending + recent, quick-add</span>
             </p>
             <p className="m-0 text-[var(--color-ink)]">
               <b>Sheet</b> <span className="text-[var(--text-muted)]">— live above (§14): slide-down panel, departments, cards</span>
@@ -595,6 +620,29 @@ export default function PreviewPage() {
               }}
             >
               Open editorial search
+            </Button>
+          </Row>
+        </Card>
+
+        <H2>17. Search palette — live modal variant</H2>
+        <Card>
+          <p className="mb-3 text-sm text-[var(--text-muted)]">
+            Production <code>SearchPalette</code> on its own hook trio (<code>useSearch</code> +{" "}
+            <code>useRecentSearches</code> + <code>useQuickAdd</code> over demo ports). Empty query shows
+            trending + recent + curated rows; selecting pushes to recents; Quick Add flips to Added via the
+            hook. Trap + Esc + focus return, oceanic arrival.
+          </p>
+          <Row>
+            <Button
+              onClick={() => {
+                paletteSearch.setQuery("");
+                paletteSearch.setDept("All");
+                setPalActive(0);
+                setPalClosing(false);
+                setPalOpen(true);
+              }}
+            >
+              Open palette search
             </Button>
           </Row>
         </Card>
@@ -659,6 +707,40 @@ export default function PreviewPage() {
           onActive={setEdActive}
           onSelect={() => closeEditorialDemo()}
           onClose={() => closeEditorialDemo()}
+        />
+      )}
+      {palOpen && (
+        <SearchPalette
+          query={paletteSearch.query}
+          results={paletteSearch.results}
+          status={paletteSearch.status}
+          dept={paletteSearch.dept}
+          departments={sheetDepartments}
+          trending={DEMO_TRENDING}
+          recent={paletteRecents.recent}
+          curated={DEMO_CATALOG}
+          activeIndex={palActive}
+          addedIds={paletteQuickAdd.addedIds}
+          pendingIds={paletteQuickAdd.pendingIds}
+          closing={palClosing}
+          onQuery={(q) => {
+            paletteSearch.setQuery(q);
+            setPalActive(0);
+          }}
+          onDept={paletteSearch.setDept}
+          onActive={setPalActive}
+          onSelect={(r) => {
+            paletteRecents.push(r.name);
+            closePaletteDemo();
+          }}
+          onQuickAdd={(r) => paletteQuickAdd.quickAdd(r.id)}
+          onTrending={(t) => {
+            paletteSearch.setQuery(t);
+            setPalActive(0);
+            paletteRecents.push(t);
+          }}
+          onClearRecent={paletteRecents.clear}
+          onClose={() => closePaletteDemo()}
         />
       )}
     </div>
