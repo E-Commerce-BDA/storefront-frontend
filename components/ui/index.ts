@@ -7,6 +7,8 @@ export { default as Toggle } from "./Toggle";
 export { default as Badge } from "./Badge";
 export { default as Pill } from "./Pill";
 export type { PillVariant, PillProps } from "./Pill";
+export { default as Toast } from "./Toast";
+export type { ToastProps } from "./Toast";
 export { default as IconButton } from "./IconButton";
 export { Icon, ICON_NAMES } from "./icons";
 export type { IconName, IconProps } from "./icons";
