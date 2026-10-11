@@ -18,7 +18,7 @@ describe("Pill", () => {
     );
     const btn = screen.getByRole("button", { name: "All" });
     expect(btn.tagName).toBe("BUTTON");
-    expect(btn.getAttribute("data-variant")).toBe("filter");
+    expect(btn.getAttribute("data-pill")).toBe("filter");
     expect(btn.getAttribute("data-active")).toBe("true");
     expect(btn.getAttribute("aria-pressed")).toBe("true");
   });

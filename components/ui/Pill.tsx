@@ -27,7 +27,7 @@ const Pill = forwardRef<HTMLButtonElement, PillProps>(function Pill(
     <button
       ref={ref}
       type={type}
-      data-variant={variant}
+      data-pill={variant}
       data-active={active}
       data-state={state}
       className={`sf-pill ${className}`}

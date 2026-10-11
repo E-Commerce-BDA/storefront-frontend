@@ -28,9 +28,9 @@ describe("pill style contract", () => {
   });
 
   it("drives variant + active + action-state through data hooks", () => {
-    expect(css).toMatch(/\.sf-pill\[data-variant="filter"\]\[data-active="true"\]/);
-    expect(css).toMatch(/\.sf-pill\[data-variant="chip"\]/);
-    expect(css).toMatch(/\.sf-pill\[data-variant="action"\]\[data-state="added"\]/);
+    expect(css).toMatch(/\.sf-pill\[data-pill="filter"\]\[data-active="true"\]/);
+    expect(css).toMatch(/\.sf-pill\[data-pill="chip"\]/);
+    expect(css).toMatch(/\.sf-pill\[data-pill="action"\]\[data-state="added"\]/);
   });
 
   it("scopes hover off the active face and off disabled", () => {
