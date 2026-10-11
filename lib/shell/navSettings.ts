@@ -48,6 +48,12 @@ export const NAV_LIMITS = {
   bgAlpha: { min: 0, max: 100 },
   blurPx: { min: 0, max: 24 },
   cardRadius: { min: 0, max: 24 },
+  cardMaxWidth: { min: 480, max: 960 },
+  rowsMaxHeight: { min: 160, max: 600 },
+  thumbSize: { min: 48, max: 96 },
+  inputSize: { min: 14, max: 24 },
+  nameSize: { min: 14, max: 22 },
+  pillRadius: { min: 0, max: 999 },
 } as const;
 
 /** Resolved palette settings: all required (produced by resolveNav.ts). */
@@ -78,6 +84,21 @@ export interface ResolvedPaletteSettings {
   quickAddedText: string;
   cardType: PaletteCardType;
   thumbRadius: number;
+  cardMaxWidth: number;
+  rowsMaxHeight: number;
+  thumbSize: number;
+  inputSize: number;
+  nameSize: number;
+  pillRadius: number;
+  showFilters: boolean;
+  showTrending: boolean;
+  showRecent: boolean;
+  showRatings: boolean;
+  showTags: boolean;
+  showDept: boolean;
+  showFooter: boolean;
+  rowAction: PaletteRowAction;
+  notifyOnQuickAdd: boolean;
   paletteAnimation: ResolvedOverlayMotion;
 }
 
@@ -213,6 +234,11 @@ export interface EditorialOverlayField {
  * name, price+rating, quick-add). Later cards extend this union.
  */
 export type PaletteCardType = "row";
+/**
+ * Row action selector. v1 ships one ("quick-add"); "view"/"both" extend
+ * this union with the onView callback (locked: owner-handled view).
+ */
+export type PaletteRowAction = "quick-add";
 
 /**
  * Palette-modal paint knobs (admin-facing: all optional, absent =
@@ -250,6 +276,30 @@ export interface PaletteOverlayField {
   cardType?: PaletteCardType;
   /** Thumbnail corner radius px. */
   thumbRadius?: number;
+  /** Card width px (clamped). */
+  cardMaxWidth?: number;
+  /** Rows scrollport cap px (clamped). */
+  rowsMaxHeight?: number;
+  /** Thumbnail box px (clamped, square). */
+  thumbSize?: number;
+  /** Search input font px (clamped). */
+  inputSize?: number;
+  /** Product name font px (clamped). */
+  nameSize?: number;
+  /** Pill corner radius px, 999 = stadium (later shape presets ride this var). */
+  pillRadius?: number;
+  /** Region visibility toggles (all default true). */
+  showFilters?: boolean;
+  showTrending?: boolean;
+  showRecent?: boolean;
+  showRatings?: boolean;
+  showTags?: boolean;
+  showDept?: boolean;
+  showFooter?: boolean;
+  /** Row action set (v1-only union, see PaletteRowAction). */
+  rowAction?: PaletteRowAction;
+  /** True = owner surfaces a notification on quick-add (default on). */
+  notifyOnQuickAdd?: boolean;
   /**
    * Palette-variant motion (per-variant instance of the shared
    * OverlayMotionField shape — settings never leak across variants).
@@ -470,6 +520,21 @@ export const DEFAULT_NAV_SETTINGS: ResolvedNavSettings = {
       quickAddedText: "#0e9f6e",
       cardType: "row",
       thumbRadius: 14,
+      cardMaxWidth: 720,
+      rowsMaxHeight: 300,
+      thumbSize: 64,
+      inputSize: 16,
+      nameSize: 17,
+      pillRadius: 999,
+      showFilters: true,
+      showTrending: true,
+      showRecent: true,
+      showRatings: true,
+      showTags: true,
+      showDept: true,
+      showFooter: true,
+      rowAction: "quick-add",
+      notifyOnQuickAdd: true,
       paletteAnimation: {
         enabled: true,
         durationMs: 320,
