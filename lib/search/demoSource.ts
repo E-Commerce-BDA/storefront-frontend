@@ -14,6 +14,13 @@ const CATALOG: SearchResult[] = [
   { id: "p6", name: "Structured Canvas Weekender Bag", price: 110, image: "", category: "Accessories", tag: "Heavyweight", rating: 4.7 },
 ];
 
+/**
+ * Curated rows for the editorial takeover's empty-query view (photo: grid
+ * present before typing). Throwaway with the source — CMS collections
+ * replace this export, never the component.
+ */
+export const DEMO_CATALOG: SearchResult[] = CATALOG;
+
 export function createDemoSource(delayMs = 120): SearchSource {
   return {
     suggest(q: string, signal: AbortSignal): Promise<SearchResult[]> {
