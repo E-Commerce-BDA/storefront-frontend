@@ -29,6 +29,7 @@ import {
   Dialog,
   Icon,
   ICON_NAMES,
+  Toast,
   Tooltip,
 } from "@/components/ui";
 
@@ -263,6 +264,23 @@ export default function PreviewPage() {
       setPalClosing(false);
     }, 320);
   }
+  // Notify demo (notifyOnQuickAdd default on): Toast follows addedIds,
+  // auto-dismisses in 3s. Production assembler owns the same effect —
+  // the Toast holds no timers itself.
+  const [toast, setToast] = useState<{ title: string; message: string } | null>(null);
+  const addedCountRef = useRef(0);
+  useEffect(() => {
+    if (paletteQuickAdd.addedIds.length > addedCountRef.current) {
+      const id = paletteQuickAdd.addedIds[paletteQuickAdd.addedIds.length - 1];
+      const row = DEMO_CATALOG.find((p) => p.id === id);
+      setToast({ title: "Added to bag", message: row ? row.name : "" });
+      const t = setTimeout(() => setToast(null), 3000);
+      addedCountRef.current = paletteQuickAdd.addedIds.length;
+      return () => clearTimeout(t);
+    }
+    addedCountRef.current = paletteQuickAdd.addedIds.length;
+    return undefined;
+  }, [paletteQuickAdd.addedIds]);
 
   return (
     <div className="min-h-screen">
@@ -743,6 +761,13 @@ export default function PreviewPage() {
           onClose={() => closePaletteDemo()}
         />
       )}
+      <Toast
+        open={toast !== null}
+        title={toast?.title ?? ""}
+        message={toast?.message}
+        icon={<Icon name="check" size={16} />}
+        onClose={() => setToast(null)}
+      />
     </div>
   );
 }
