@@ -4,13 +4,16 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  ArrowUpRight,
   Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
+  Clock,
   Eye,
   EyeOff,
+  Flame,
   Heart,
   Menu,
   Minus,
@@ -45,6 +48,7 @@ export const ICON_NAMES = [
   "arrow-right",
   "arrow-up",
   "arrow-down",
+  "arrow-up-right",
   "chevron-left",
   "chevron-right",
   "chevron-up",
@@ -66,6 +70,8 @@ export const ICON_NAMES = [
   "eye",
   "eye-off",
   "share",
+  "flame",
+  "clock",
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];
@@ -77,6 +83,7 @@ const MAP: Record<IconName, LucideIcon> = {
   "arrow-right": ArrowRight,
   "arrow-up": ArrowUp,
   "arrow-down": ArrowDown,
+  "arrow-up-right": ArrowUpRight,
   "chevron-left": ChevronLeft,
   "chevron-right": ChevronRight,
   "chevron-up": ChevronUp,
@@ -100,6 +107,8 @@ const MAP: Record<IconName, LucideIcon> = {
   // same-stroke sibling of eye, no new look invented.
   "eye-off": EyeOff,
   share: Share2,
+  flame: Flame,
+  clock: Clock,
 };
 
 export interface IconProps {
