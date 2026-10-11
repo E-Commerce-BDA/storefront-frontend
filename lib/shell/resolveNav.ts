@@ -23,6 +23,7 @@ import {
   type NavLink,
   type NavPageOverrides,
   type NavSettings,
+  type PaletteOverlayField,
   type ResolvedNavLink,
   type ResolvedNavSettings,
 } from "./navSettings";
@@ -102,13 +103,15 @@ export function resolveNavSettings(input: ResolveNavInput, now: number = Date.no
   // ms+easing, clamped + allowlisted) — generic merge would pass presets
   // through raw, so the partial key is excluded here and set concrete
   // below. One instance per variant; settings never leak across variants.
-  type SearchNoMotion = Omit<NavPageOverrides["search"], "sheetAnimation" | "editorial">;
+  type SearchNoMotion = Omit<NavPageOverrides["search"], "sheetAnimation" | "editorial" | "palette">;
   type EditorialNoMotion = Omit<EditorialOverlayField, "editorialAnimation">;
+  type PaletteNoMotion = Omit<PaletteOverlayField, "paletteAnimation">;
   const stripMotion = (s: NavPageOverrides["search"]): SearchNoMotion | undefined => {
     if (!s) return undefined;
-    const { sheetAnimation: _dropSheet, editorial: _dropEdGroup, ...rest } = s;
+    const { sheetAnimation: _dropSheet, editorial: _dropEdGroup, palette: _dropPalGroup, ...rest } = s;
     void _dropSheet;
     void _dropEdGroup;
+    void _dropPalGroup;
     return rest;
   };
   // Editorial merges per-KEY (not per-object): a shared { bg } must not wipe
@@ -124,9 +127,10 @@ export function resolveNavSettings(input: ResolveNavInput, now: number = Date.no
   const cleanStr = (v: unknown, fallback: string): string =>
     typeof v === "string" && v !== "" ? v : fallback;
   const searchBase = mergeGroup(D.search, stripMotion(global?.search), stripMotion(shared?.search));
-  const { sheetAnimation: _builtinSheet, editorial: _builtinEdGroup, ...searchRest } = searchBase;
+  const { sheetAnimation: _builtinSheet, editorial: _builtinEdGroup, palette: _builtinPalGroup, ...searchRest } = searchBase;
   void _builtinSheet;
   void _builtinEdGroup;
+  void _builtinPalGroup;
   const edBase = mergeGroup(
     D.search.editorial,
     stripEdMotion(global?.search?.editorial),
@@ -135,6 +139,23 @@ export function resolveNavSettings(input: ResolveNavInput, now: number = Date.no
   const { editorialAnimation: _builtinEd, ...edRest } = edBase;
   void _builtinEd;
   const ed = D.search.editorial;
+  // Palette merges per-KEY like editorial (same miss/clean/clamp rules).
+  // Nested groups never merge per-object: a shared { cardBg } must not
+  // wipe a global quickAddText.
+  const stripPalMotion = (p: PaletteOverlayField | undefined): PaletteNoMotion | undefined => {
+    if (!p) return undefined;
+    const { paletteAnimation: _dropPal, ...rest } = p;
+    void _dropPal;
+    return rest;
+  };
+  const palBase = mergeGroup(
+    D.search.palette,
+    stripPalMotion(global?.search?.palette),
+    stripPalMotion(shared?.search?.palette),
+  );
+  const { paletteAnimation: _builtinPal, ...palRest } = palBase;
+  void _builtinPal;
+  const pal = D.search.palette;
   const search = {
     ...searchRest,
     sheetAnimation: resolveOverlayMotion(
@@ -171,6 +192,40 @@ export function resolveNavSettings(input: ResolveNavInput, now: number = Date.no
       editorialAnimation: resolveOverlayMotion(
         shared?.search?.editorial?.editorialAnimation ?? global?.search?.editorial?.editorialAnimation ?? undefined,
         ed.editorialAnimation,
+      ),
+    },
+    palette: {
+      cardBg: cleanStr(palRest.cardBg, pal.cardBg),
+      backdrop: cleanStr(palRest.backdrop, pal.backdrop),
+      backdropAlpha: clampInt(palRest.backdropAlpha, L.bgAlpha.min, L.bgAlpha.max, pal.backdropAlpha),
+      blur: palRest.blur,
+      blurPx: clampInt(palRest.blurPx, L.blurPx.min, L.blurPx.max, pal.blurPx),
+      inputColor: cleanStr(palRest.inputColor, pal.inputColor),
+      placeholderColor: cleanStr(palRest.placeholderColor, pal.placeholderColor),
+      iconColor: cleanStr(palRest.iconColor, pal.iconColor),
+      closeColor: cleanStr(palRest.closeColor, pal.closeColor),
+      mutedColor: cleanStr(palRest.mutedColor, pal.mutedColor),
+      headingColor: cleanStr(palRest.headingColor, pal.headingColor),
+      nameColor: cleanStr(palRest.nameColor, pal.nameColor),
+      priceColor: cleanStr(palRest.priceColor, pal.priceColor),
+      ratingColor: cleanStr(palRest.ratingColor, pal.ratingColor),
+      deptColor: cleanStr(palRest.deptColor, pal.deptColor),
+      pillActiveBg: cleanStr(palRest.pillActiveBg, pal.pillActiveBg),
+      pillActiveText: cleanStr(palRest.pillActiveText, pal.pillActiveText),
+      pillText: cleanStr(palRest.pillText, pal.pillText),
+      pillBorder: cleanStr(palRest.pillBorder, pal.pillBorder),
+      pillChipBg: cleanStr(palRest.pillChipBg, pal.pillChipBg),
+      quickAddBg: cleanStr(palRest.quickAddBg, pal.quickAddBg),
+      quickAddText: cleanStr(palRest.quickAddText, pal.quickAddText),
+      quickAddedBg: cleanStr(palRest.quickAddedBg, pal.quickAddedBg),
+      quickAddedText: cleanStr(palRest.quickAddedText, pal.quickAddedText),
+      // v1-only union: unknown members are misses (later cards extend
+      // this check, never loosen it).
+      cardType: palRest.cardType === "row" ? palRest.cardType : pal.cardType,
+      thumbRadius: clampInt(palRest.thumbRadius, L.cardRadius.min, L.cardRadius.max, pal.thumbRadius),
+      paletteAnimation: resolveOverlayMotion(
+        shared?.search?.palette?.paletteAnimation ?? global?.search?.palette?.paletteAnimation ?? undefined,
+        pal.paletteAnimation,
       ),
     },
   };
