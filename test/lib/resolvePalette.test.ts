@@ -74,6 +74,42 @@ describe("resolveNavSettings palette", () => {
     });
   });
 
+  it("clamps admin geometry, passes toggles, checks rowAction (sf-028)", () => {
+    const r = resolveNavSettings(
+      {
+        settings: {
+          shared: {
+            search: {
+              palette: {
+                cardMaxWidth: 9999,
+                rowsMaxHeight: 10,
+                thumbSize: 1,
+                inputSize: 99,
+                nameSize: 0,
+                pillRadius: 5000,
+                showFooter: false,
+                rowAction: "both" as unknown as "quick-add",
+                notifyOnQuickAdd: false,
+              },
+            },
+          },
+        },
+      },
+      NOW,
+    );
+    const pal = r.search.palette;
+    expect(pal.cardMaxWidth).toBe(960);
+    expect(pal.rowsMaxHeight).toBe(160);
+    expect(pal.thumbSize).toBe(48);
+    expect(pal.inputSize).toBe(24);
+    expect(pal.nameSize).toBe(14);
+    expect(pal.pillRadius).toBe(999);
+    expect(pal.showFooter).toBe(false);
+    expect(pal.showFilters).toBe(true);
+    expect(pal.rowAction).toBe("quick-add");
+    expect(pal.notifyOnQuickAdd).toBe(false);
+  });
+
   it("palette motion never leaks into sheet or editorial", () => {
     const r = resolveNavSettings(
       { settings: { shared: { search: { palette: { paletteAnimation: { preset: "flat" } } } } } },
