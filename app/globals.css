@@ -1339,6 +1339,11 @@ body {
   max-width: 720px;
   max-height: calc(100dvh - 64px);
   overflow-y: auto;
+  /* Flex column + auto top margin (below): the footer pins flush to the
+     card bottom whether content is short (auto absorbs free space) or
+     tall (sticky holds it while scrolling) — no padding math to rot. */
+  display: flex;
+  flex-direction: column;
   background: var(--pl-card, #ffffff);
   border-radius: 20px;
   padding: 20px 22px 16px;
@@ -1531,6 +1536,13 @@ body {
   max-height: 300px;
   overflow-y: auto;
   padding: 2px;
+  /* Flex child of the column card: takes its capped height, never shoves
+     the footer (min-height: 0 lets the internal scroll engage). */
+  flex: 1 1 auto;
+  min-height: 0;
+  /* Gap above the footer (the footer's own top margin is auto, which
+     collapses to 0 when content is tall — this keeps the 12px rhythm). */
+  margin-bottom: 12px;
 }
 .sf-searchpalette__row {
   display: flex;
@@ -1641,7 +1653,10 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin: 12px -22px -16px;
+  /* auto top: absorbs free space when content is short (flush by
+     construction, not by 12px-vs-padding arithmetic); sticky holds it
+     when the card scrolls. Side/bottom negatives meet the card edge. */
+  margin: auto -22px -16px;
   padding: 12px 22px 16px;
   border-top: 1px solid var(--border);
 }
@@ -1678,7 +1693,7 @@ body {
   }
   /* Footer margins track the narrower card padding above. */
   .sf-searchpalette__footer {
-    margin: 12px -16px -16px;
+    margin: auto -16px -16px;
     padding: 12px 16px 16px;
   }
   .sf-searchpalette__columns {
