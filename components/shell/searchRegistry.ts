@@ -2,7 +2,7 @@
  * Search overlay registry — one dynamic import per BUILT variant, so
  * unselected overlays never enter the client bundle. Unbuilt variants
  * resolve to null (caller falls back to classic), never to a wrong
- * variant. Palette → editorial add their lines as they land.
+ * variant. Palette adds its line when it lands (editorial first).
  * Verify in build output: unselected variant chunks absent.
  */
 import type { ComponentType } from "react";
@@ -15,6 +15,7 @@ type AnyOverlay = ComponentType<Record<string, unknown>>;
 // modules, never renders them; props are checked at the call site.
 const registry: Partial<Record<SearchOverlayId, () => Promise<{ default: AnyOverlay }>>> = {
   sheet: (() => import("./SearchSheet")) as unknown as () => Promise<{ default: AnyOverlay }>,
+  editorial: (() => import("./SearchEditorial")) as unknown as () => Promise<{ default: AnyOverlay }>,
 };
 
 export function resolveSearchOverlay(id: SearchOverlayId): (() => Promise<{ default: AnyOverlay }>) | null {
