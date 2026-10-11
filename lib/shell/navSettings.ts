@@ -45,7 +45,39 @@ export const NAV_LIMITS = {
   maxItems: { min: 3, max: 8 },
   badgeCap: { min: 1, max: 99 },
   breakpoint: { min: 640, max: 1024 },
+  bgAlpha: { min: 0, max: 100 },
+  blurPx: { min: 0, max: 24 },
+  cardRadius: { min: 0, max: 24 },
 } as const;
+
+/** Resolved editorial settings: all required (produced by resolveNav.ts). */
+export interface ResolvedEditorialSettings {
+  bg: string;
+  bgAlpha: number;
+  blur: boolean;
+  blurPx: number;
+  eyebrow: string;
+  eyebrowColor: string;
+  archiveEyebrow: string;
+  archiveColor: string;
+  inputColor: string;
+  placeholderColor: string;
+  underlineColor: string;
+  title: string;
+  titleColor: string;
+  mutedColor: string;
+  closeIconColor: string;
+  tabTextColor: string;
+  tabActiveBg: string;
+  tabActiveText: string;
+  tabShape: EditorialTabShape;
+  cardType: EditorialCardType;
+  cardRadius: number;
+  deptColor: string;
+  nameColor: string;
+  priceColor: string;
+  editorialAnimation: ResolvedOverlayMotion;
+}
 
 /* Admin-facing fields: all optional (absent = inherit). */
 
@@ -90,6 +122,61 @@ export interface NavLinksField {
 
 export type SearchOverlayVariant = "classic" | "palette" | "sheet" | "editorial";
 
+/**
+ * Editorial card skin. v1 ships one ("standard" = photo: tall image, tag
+ * badge, dept eyebrow, name, price). Later cards extend this union —
+ * additive, stored admin values keep working.
+ */
+export type EditorialCardType = "standard";
+/**
+ * Curated-tab shape. v1 ships one ("pill" = ink pill on active, text on
+ * rest). Underline/segmented variants extend this union later.
+ */
+export type EditorialTabShape = "pill";
+
+/**
+ * Editorial-takeover paint + copy knobs (admin-facing: all optional,
+ * absent = inherit). One nested group — not fifteen flat fields — because
+ * flat search.* already holds behavior knobs and a second flat crowd would
+ * collide with future palette/editorial siblings. Colors are raw strings
+ * (validated as non-empty at resolve; garbage falls back to builtins).
+ */
+export interface EditorialOverlayField {
+  bg?: string;
+  /** Overlay wash alpha 0–100 (100 = fully opaque bg). */
+  bgAlpha?: number;
+  /** True = backdrop-filter blur over the page behind the wash. */
+  blur?: boolean;
+  /** Blur radius px (only read when blur is true). */
+  blurPx?: number;
+  eyebrow?: string;
+  eyebrowColor?: string;
+  archiveEyebrow?: string;
+  archiveColor?: string;
+  inputColor?: string;
+  placeholderColor?: string;
+  underlineColor?: string;
+  title?: string;
+  titleColor?: string;
+  mutedColor?: string;
+  closeIconColor?: string;
+  tabTextColor?: string;
+  tabActiveBg?: string;
+  tabActiveText?: string;
+  tabShape?: EditorialTabShape;
+  cardType?: EditorialCardType;
+  /** Card image corner radius px. */
+  cardRadius?: number;
+  deptColor?: string;
+  nameColor?: string;
+  priceColor?: string;
+  /**
+   * Editorial-variant motion (per-variant instance of the shared
+   * OverlayMotionField shape — settings never leak across variants).
+   */
+  editorialAnimation?: OverlayMotionField;
+}
+
 export interface NavSearchField {
   enabled?: boolean;
   /** Which overlay ships to the client (registry dynamic-imports only this). */
@@ -100,6 +187,8 @@ export interface NavSearchField {
    * OverlayMotionField shape — other overlays get their own instances).
    */
   sheetAnimation?: OverlayMotionField;
+  /** Editorial-takeover paint + copy (nested group, see above). */
+  editorial?: EditorialOverlayField;
 }
 
 export interface NavAccountField {
@@ -189,6 +278,7 @@ export interface ResolvedNavSettings {
     overlayVariant: SearchOverlayVariant;
     placeholder: string;
     sheetAnimation: ResolvedOverlayMotion;
+    editorial: ResolvedEditorialSettings;
   };
   account: { enabled: boolean; items: AccountItem[] };
   cart: { enabled: boolean; destination: CartDestination; dedicatedPage: boolean; badgeCap: number };
@@ -232,6 +322,41 @@ export const DEFAULT_NAV_SETTINGS: ResolvedNavSettings = {
     overlayVariant: "classic",
     placeholder: "Search products…",
     sheetAnimation: { enabled: true, durationMs: 240, easing: "ease-out", travel: "full" },
+    // Photo defaults: pale section wash, ink text, accent archive eyebrow,
+    // oceanic takeover motion. bg mirrors --color-section-bg (user verdict:
+    // reuse the token value, mint a token only on a second consumer).
+    editorial: {
+      bg: "#f5fafc",
+      bgAlpha: 100,
+      blur: false,
+      blurPx: 8,
+      eyebrow: "Atelier editorial search",
+      eyebrowColor: "#5b7286",
+      archiveEyebrow: "Search the atelier archive",
+      archiveColor: "#0077b6",
+      inputColor: "#0a2540",
+      placeholderColor: "#93a3b1",
+      underlineColor: "#0a2540",
+      title: "Curated this season",
+      titleColor: "#0a2540",
+      mutedColor: "#5b7286",
+      closeIconColor: "#0a2540",
+      tabTextColor: "#5b7286",
+      tabActiveBg: "#0a2540",
+      tabActiveText: "#ffffff",
+      tabShape: "pill",
+      cardType: "standard",
+      cardRadius: 16,
+      deptColor: "#5b7286",
+      nameColor: "#0a2540",
+      priceColor: "#0a2540",
+      editorialAnimation: {
+        enabled: true,
+        durationMs: 320,
+        easing: "cubic-bezier(0.32, 0.72, 0.32, 1)",
+        travel: "full",
+      },
+    },
   },
   account: { enabled: true, items: ["orders", "addresses", "wishlist", "signout"] },
   cart: { enabled: true, destination: "drawer", dedicatedPage: false, badgeCap: 9 },
