@@ -7,8 +7,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import SearchSheet from "@/components/shell/SearchSheet";
+import SearchEditorial from "@/components/shell/SearchEditorial";
 import { useSearch } from "@/app/hooks/useSearch";
-import { createDemoSource } from "@/lib/search/demoSource";
+import { createDemoSource, DEMO_CATALOG } from "@/lib/search/demoSource";
 import {
   Button,
   Input,
@@ -161,7 +162,9 @@ function SearchDemoOverlay({
   );
 }
 
-const DEMO_CATALOG: DemoResult[] = [
+// Local stub catalog for the §13 trap-vs-light feel-test (name/price
+// strings — NOT the SearchResult DEMO_CATALOG imported for §16).
+const DEMO_STUB_CATALOG: DemoResult[] = [
   { name: "Ocean Linen Shirt", price: "$48" },
   { name: "Court Sneaker", price: "$89" },
   { name: "Trail Runner", price: "$120" },
@@ -192,6 +195,14 @@ export default function PreviewPage() {
     () => ["All", "Shirts", "Pants", "Outerwear", "Footwear", "Accessories"],
     [],
   );
+  // Editorial runs its OWN hook instance (never shares liveSearch state —
+  // the §14 sheet demo and this takeover stay independently drivable).
+  const editorialSearch = useSearch(searchSource);
+  const [edOpen, setEdOpen] = useState(false);
+  const [edActive, setEdActive] = useState(0);
+  const [edClosing, setEdClosing] = useState(false);
+  // Photo tabs (no Accessories — the curated season has five rails).
+  const edDepartments = useMemo(() => ["All", "Shirts", "Pants", "Outerwear", "Footwear"], []);
 
   // Demo-grade two-phase closes (mirror HomeChrome pattern): closing class
   // plays the exit, unmount follows after the motion duration. Instant
@@ -213,6 +224,19 @@ export default function PreviewPage() {
       setSheetOpen(false);
       setSheetClosing(false);
     }, 240);
+  }
+  function closeEditorialDemo() {
+    // 320ms = oceanic builtin (the editorial default); keep beside the
+    // knob, not magic — if the default changes, this follows.
+    if (prefersInstant()) {
+      setEdOpen(false);
+      return;
+    }
+    setEdClosing(true);
+    setTimeout(() => {
+      setEdOpen(false);
+      setEdClosing(false);
+    }, 320);
   }
 
   return (
@@ -541,7 +565,7 @@ export default function PreviewPage() {
               <b>Sheet</b> <span className="text-[var(--text-muted)]">— live above (§14): slide-down panel, departments, cards</span>
             </p>
             <p className="m-0 text-[var(--color-ink)]">
-              <b>Editorial takeover</b> <span className="text-[var(--text-muted)]">— coming: full-white, serif input, curated grid</span>
+              <b>Editorial takeover</b> <span className="text-[var(--text-muted)]">— live below (§16): scrollable takeover, serif input, curated grid</span>
             </p>
             <p className="m-0 text-[var(--color-ink)]">
               <b>Inspect split</b> <span className="text-[var(--text-muted)]">— coming: hover inspect, lazy preview, size select</span>
@@ -551,6 +575,28 @@ export default function PreviewPage() {
               dynamic-imports, build output proves the rest absent).
             </p>
           </div>
+        </Card>
+
+        <H2>16. Search editorial — live takeover variant</H2>
+        <Card>
+          <p className="mb-3 text-sm text-[var(--text-muted)]">
+            Production <code>SearchEditorial</code> on its own <code>useSearch</code> instance + demo source
+            (same locked discipline: 300ms debounce, min-2 gate, stale-kill). Empty query shows the curated
+            grid; 2+ characters switch to live results. Trap + Esc + focus return, oceanic arrival.
+          </p>
+          <Row>
+            <Button
+              onClick={() => {
+                editorialSearch.setQuery("");
+                editorialSearch.setDept("All");
+                setEdActive(0);
+                setEdClosing(false);
+                setEdOpen(true);
+              }}
+            >
+              Open editorial search
+            </Button>
+          </Row>
         </Card>
 
       </main>
@@ -567,7 +613,7 @@ export default function PreviewPage() {
             // TODO(hook-era): replace stub filter with the search source.
             searchQuery.trim().length < 2
               ? []
-              : DEMO_CATALOG.filter((p) => p.name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+              : DEMO_STUB_CATALOG.filter((p) => p.name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
           }
           onClose={() => {
             setSearchOpen(false);
@@ -593,6 +639,26 @@ export default function PreviewPage() {
           onActive={setSheetActive}
           onSelect={() => closeSheetDemo()}
           onClose={() => closeSheetDemo()}
+        />
+      )}
+      {edOpen && (
+        <SearchEditorial
+          query={editorialSearch.query}
+          results={editorialSearch.results}
+          status={editorialSearch.status}
+          dept={editorialSearch.dept}
+          departments={edDepartments}
+          curated={DEMO_CATALOG}
+          activeIndex={edActive}
+          closing={edClosing}
+          onQuery={(q) => {
+            editorialSearch.setQuery(q);
+            setEdActive(0);
+          }}
+          onDept={editorialSearch.setDept}
+          onActive={setEdActive}
+          onSelect={() => closeEditorialDemo()}
+          onClose={() => closeEditorialDemo()}
         />
       )}
     </div>
