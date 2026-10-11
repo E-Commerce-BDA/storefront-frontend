@@ -223,6 +223,22 @@ export function resolveNavSettings(input: ResolveNavInput, now: number = Date.no
       // this check, never loosen it).
       cardType: palRest.cardType === "row" ? palRest.cardType : pal.cardType,
       thumbRadius: clampInt(palRest.thumbRadius, L.cardRadius.min, L.cardRadius.max, pal.thumbRadius),
+      cardMaxWidth: clampInt(palRest.cardMaxWidth, L.cardMaxWidth.min, L.cardMaxWidth.max, pal.cardMaxWidth),
+      rowsMaxHeight: clampInt(palRest.rowsMaxHeight, L.rowsMaxHeight.min, L.rowsMaxHeight.max, pal.rowsMaxHeight),
+      thumbSize: clampInt(palRest.thumbSize, L.thumbSize.min, L.thumbSize.max, pal.thumbSize),
+      inputSize: clampInt(palRest.inputSize, L.inputSize.min, L.inputSize.max, pal.inputSize),
+      nameSize: clampInt(palRest.nameSize, L.nameSize.min, L.nameSize.max, pal.nameSize),
+      pillRadius: clampInt(palRest.pillRadius, L.pillRadius.min, L.pillRadius.max, pal.pillRadius),
+      showFilters: palRest.showFilters,
+      showTrending: palRest.showTrending,
+      showRecent: palRest.showRecent,
+      showRatings: palRest.showRatings,
+      showTags: palRest.showTags,
+      showDept: palRest.showDept,
+      showFooter: palRest.showFooter,
+      // v1-only union: view/both extend this check with the onView prop.
+      rowAction: palRest.rowAction === "quick-add" ? palRest.rowAction : pal.rowAction,
+      notifyOnQuickAdd: palRest.notifyOnQuickAdd,
       paletteAnimation: resolveOverlayMotion(
         shared?.search?.palette?.paletteAnimation ?? global?.search?.palette?.paletteAnimation ?? undefined,
         pal.paletteAnimation,
