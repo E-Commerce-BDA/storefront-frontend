@@ -1235,7 +1235,7 @@ body {
 
 /* Pill — the one interactive pill (components/ui/Pill). Paint resolves
    through --pill-* vars (parent overlays inline their theme; fallbacks
-   mirror Oceanic tokens). State via data-variant/data-active/data-state
+   mirror Oceanic tokens). State via data-pill/data-active/data-state
    only. No transitions by design (instant state swap, nothing to kill
    under reduced-motion). Disabled faces are explicit solids — opacity
    would destroy contrast (hard-ban). */
