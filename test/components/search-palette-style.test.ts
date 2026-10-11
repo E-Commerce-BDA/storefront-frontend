@@ -61,6 +61,25 @@ describe("search palette style contract", () => {
     expect(css).toMatch(/\[data-closing="true"\] \.sf-searchpalette__card\s*\{[^}]*opacity:\s*0/);
   });
 
+  it("reads admin geometry through vars (sf-028)", () => {
+    for (const prop of [
+      /max-width:\s*var\(--pl-maxw/,
+      /max-height:\s*var\(--pl-rows-max/,
+      /width:\s*var\(--pl-thumb-size/,
+      /font-size:\s*var\(--pl-input-size/,
+      /font-size:\s*var\(--pl-name-size/,
+      /border-radius:\s*var\(--pill-radius/,
+    ]) {
+      expect(palCss, `palette geometry must resolve ${prop} through a var`).toMatch(prop);
+    }
+  });
+
+  it("pins the footer flush in both short and tall cases (sf-028)", () => {
+    expect(css).toMatch(/\.sf-searchpalette__card\s*\{[^}]*flex-direction:\s*column/);
+    expect(css).toMatch(/\.sf-searchpalette__rows\s*\{[^}]*flex:\s*1 1 auto/);
+    expect(css).toMatch(/\.sf-searchpalette__footer\s*\{[^}]*margin:\s*auto -22px -16px/);
+  });
+
   it("scrolls rows internally and collapses columns on narrow screens", () => {
     expect(palCss).toMatch(/max-height:\s*300px/);
     expect(palCss).toMatch(/overflow-y:\s*auto/);
