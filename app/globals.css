@@ -1228,4 +1228,63 @@ body {
   color: var(--ed-muted, #5b7286);
 }
 
+/* Pill — the one interactive pill (components/ui/Pill). Paint resolves
+   through --pill-* vars (parent overlays inline their theme; fallbacks
+   mirror Oceanic tokens). State via data-variant/data-active/data-state
+   only. No transitions by design (instant state swap, nothing to kill
+   under reduced-motion). Disabled faces are explicit solids — opacity
+   would destroy contrast (hard-ban). */
+.sf-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 999px;
+  padding: 8px 18px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--pill-text, #0a2540);
+  white-space: nowrap;
+}
+.sf-pill:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.sf-pill[data-variant="filter"][data-active="true"] {
+  background: var(--pill-bg, #0a2540);
+  color: var(--pill-active-text, #ffffff);
+  font-weight: 600;
+}
+.sf-pill[data-variant="filter"]:not([data-active="true"]),
+.sf-pill[data-variant="chip"] {
+  border-color: var(--pill-border, var(--border));
+  background: var(--pill-chip-bg, #ffffff);
+}
+/*:hover on the active filter would repaint ink-on-ink — scope hover to
+  everything except the active face (bare :hover matches all). */
+.sf-pill:not([data-active="true"]):not([disabled]):hover {
+  border-color: var(--color-accent);
+}
+.sf-pill[data-variant="action"] {
+  background: var(--pill-action-bg, var(--color-accent-50));
+  color: var(--pill-action-text, #0a2540);
+  font-weight: 600;
+  padding: 8px 16px;
+}
+.sf-pill[data-variant="action"][data-state="added"] {
+  background: var(--pill-added-bg, var(--color-success-bg));
+  color: var(--pill-added-text, var(--color-success));
+}
+.sf-pill[disabled] {
+  cursor: not-allowed;
+  background: var(--color-section-bg);
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+
 
