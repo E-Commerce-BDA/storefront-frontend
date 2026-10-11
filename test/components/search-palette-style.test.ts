@@ -30,9 +30,17 @@ describe("search palette style contract", () => {
   it("is a centered modal on a dim wash (never a sheet slide)", () => {
     expect(palCss).toMatch(/position:\s*fixed/);
     expect(palCss).toMatch(/inset:\s*0/);
-    expect(palCss).toMatch(/max-width:\s*860px/);
+    expect(palCss).toMatch(/max-width:\s*720px/);
     expect(palCss).toMatch(/border-radius:\s*20px/);
     expect(palCss).toMatch(/margin:\s*auto/);
+  });
+
+  it("fits the viewport (sf-027: card backstop, sticky footer, compact rows)", () => {
+    expect(css).toMatch(/\.sf-searchpalette__card\s*\{[^}]*max-height:\s*calc\(100dvh/);
+    expect(css).toMatch(/\.sf-searchpalette__card\s*\{[^}]*overflow-y:\s*auto/);
+    expect(css).toMatch(/\.sf-searchpalette__footer\s*\{[^}]*position:\s*sticky/);
+    expect(css).toMatch(/\.sf-searchpalette__footer\s*\{[^}]*bottom:\s*0/);
+    expect(css).toMatch(/\.sf-searchpalette__thumb\s*\{[^}]*width:\s*64px/);
   });
 
   it("drives blur, card variant and keyboard-active rows through data hooks", () => {
@@ -54,7 +62,7 @@ describe("search palette style contract", () => {
   });
 
   it("scrolls rows internally and collapses columns on narrow screens", () => {
-    expect(palCss).toMatch(/max-height:\s*380px/);
+    expect(palCss).toMatch(/max-height:\s*300px/);
     expect(palCss).toMatch(/overflow-y:\s*auto/);
     expect(css).toMatch(/max-width:\s*640px[\s\S]*?\.sf-searchpalette__columns\s*\{[^}]*grid-template-columns:\s*1fr/);
   });
