@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { useEffect, useRef } from "react";
-import { Icon } from "@/components/ui";
+import { Icon, Pill } from "@/components/ui";
 import type { SearchResult } from "@/lib/search/source";
 import type { SearchStatus } from "@/app/hooks/useSearch";
 import type { ResolvedOverlayMotion } from "@/lib/search/motion";
@@ -158,15 +158,18 @@ export default function SearchSheet({
         <div className="sf-searchsheet__depts" role="group" aria-label="Department">
           <span className="sf-searchsheet__depts-label">Department:</span>
           {departments.map((d) => (
-            <button
+            // Pill retrofit (sf-024): native button passes through, so the
+            // .sf-searchsheet__depts selectors still match; Pill only adds
+            // the shared focus ring the sheet was missing.
+            <Pill
               key={d}
-              type="button"
-              data-active={d === dept}
+              variant="filter"
+              active={d === dept}
               onClick={() => onDept?.(d)}
               aria-pressed={d === dept}
             >
               {d}
-            </button>
+            </Pill>
           ))}
         </div>
         <div className="sf-searchsheet__meta">
