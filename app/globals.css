@@ -780,6 +780,11 @@ body {
     animation: none;
     transition: none;
   }
+  .sf-editorial__panel,
+  [data-motion] .sf-editorial__panel {
+    animation: none;
+    transition: none;
+  }
 }
 
 /* Search sheet — overlay variant "sheet" (components/shell/SearchSheet).
@@ -965,6 +970,262 @@ body {
 .sf-searchsheet__tag {
   font-weight: 500;
   color: var(--color-success);
+}
+
+/* Search editorial — overlay variant "editorial"
+   (components/shell/SearchEditorial). Scrollable full-screen takeover.
+   Paint resolves through --ed-* vars (inlined from resolved editorial
+   settings); fallbacks mirror DEFAULT_NAV_SETTINGS.search.editorial.
+   State via data-* hooks only. Wash: solid fallback first, color-mix
+   alpha second (progressive enhancement — older browsers keep the solid
+   wash, never transparent text soup). Motion is fade + small rise: a
+   takeover covers the screen, so a sheet-slide would misread as a panel;
+   reduced-motion kills it in the guard above. */
+.sf-editorial {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow-y: auto;
+  background: var(--ed-bg, #f5fafc);
+  background: color-mix(in srgb, var(--ed-bg, #f5fafc) var(--ed-alpha, 100%), transparent);
+  color: var(--ed-title, #0a2540);
+}
+.sf-editorial[data-blur="true"] {
+  backdrop-filter: blur(var(--ed-blur-px, 8px));
+  -webkit-backdrop-filter: blur(var(--ed-blur-px, 8px));
+}
+@keyframes sf-editorial-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.sf-editorial__panel {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 48px 64px;
+}
+[data-motion="on"] .sf-editorial__panel {
+  animation: sf-editorial-in var(--ed-duration, 320ms) var(--ed-easing, cubic-bezier(0.32, 0.72, 0.32, 1));
+  transition:
+    opacity var(--ed-duration, 320ms) var(--ed-easing, cubic-bezier(0.32, 0.72, 0.32, 1)),
+    transform var(--ed-duration, 320ms) var(--ed-easing, cubic-bezier(0.32, 0.72, 0.32, 1));
+}
+[data-motion="off"] .sf-editorial__panel {
+  animation: none;
+  transition: none;
+}
+[data-closing="true"] .sf-editorial__panel {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.sf-editorial__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.sf-editorial__eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ed-eyebrow, #5b7286);
+}
+.sf-editorial__close-cluster {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sf-editorial__esc {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--ed-muted, #5b7286);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  background: transparent;
+}
+.sf-editorial__body {
+  padding-top: 48px;
+}
+.sf-editorial__archive {
+  margin: 0 0 16px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ed-archive, #0077b6);
+}
+.sf-editorial__input {
+  width: 100%;
+  border: 0;
+  border-bottom: 2px solid var(--ed-underline, #0a2540);
+  background: transparent;
+  outline: 0;
+  font-family: var(--font-display);
+  font-size: clamp(40px, 6vw, 72px);
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--ed-input, #0a2540);
+  padding: 0 0 16px;
+}
+/* The underline IS the focus indicator (persistent, 2px ink on pale —
+   an extra ring would break the photo). It thickens on focus so the
+   focus state reads as a change, not a restyle. */
+.sf-editorial__input:focus-visible {
+  border-bottom-width: 3px;
+  padding-bottom: 15px;
+}
+.sf-editorial__input::placeholder {
+  color: var(--ed-placeholder, #93a3b1);
+  opacity: 1;
+}
+.sf-editorial__curated-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 56px 0 28px;
+}
+.sf-editorial__title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ed-title, #0a2540);
+}
+.sf-editorial__tabs {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.sf-editorial__tabs button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ed-tab, #5b7286);
+}
+/*:hover on the active pill would ink white text invisible — scope the
+   hover recolor to inactive tabs only (bare :hover matches everything). */
+.sf-editorial__tabs button:not([data-active="true"]):hover {
+  color: var(--ed-title, #0a2540);
+}
+/* Pill shape is variant-hooked: later tabShape members add their own
+   [data-tabshape] rules alongside, never inside, this one. */
+.sf-editorial[data-tabshape="pill"] .sf-editorial__tabs button[data-active="true"] {
+  background: var(--ed-tab-bg, #0a2540);
+  color: var(--ed-tab-text, #ffffff);
+  border-radius: 999px;
+  padding: 8px 20px;
+  font-weight: 600;
+}
+.sf-editorial__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px 24px;
+}
+/* Photo is 4-up; tablets keep 2-up so cards stay legible, phones go
+   single column rather than shrinking the tall media to a sliver. */
+@media (max-width: 1024px) {
+  .sf-editorial__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .sf-editorial__grid {
+    grid-template-columns: 1fr;
+  }
+  .sf-editorial__panel {
+    padding: 24px 20px 48px;
+  }
+}
+.sf-editorial__card {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+.sf-editorial__card:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+}
+.sf-editorial__media {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--ed-radius, 16px);
+  background: var(--color-image-bg);
+  overflow: hidden;
+}
+.sf-editorial__initial {
+  font-family: var(--font-display);
+  font-size: 64px;
+  color: var(--ed-muted, #5b7286);
+}
+.sf-editorial__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sf-editorial__media .sf-editorial__badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+}
+.sf-editorial__card[data-active="true"] .sf-editorial__media {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+.sf-editorial__dept {
+  display: block;
+  margin-top: 16px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ed-dept, #5b7286);
+}
+.sf-editorial__name {
+  display: block;
+  margin-top: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ed-name, #0a2540);
+}
+.sf-editorial__price {
+  display: block;
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ed-price, #0a2540);
+}
+.sf-editorial__empty {
+  padding: 48px 0;
+  font-size: 15px;
+  color: var(--ed-muted, #5b7286);
+}
+.sf-editorial__count {
+  margin: 40px 0 0;
+  font-size: 13px;
+  color: var(--ed-muted, #5b7286);
 }
 
 

@@ -256,7 +256,11 @@ export default function SearchEditorial({
                     ) : (
                       <span className="sf-editorial__initial">{r.name.charAt(0)}</span>
                     )}
-                    {r.tag && <Badge tone={tagTone(r.tag)}>{r.tag}</Badge>}
+                    {r.tag && (
+                      <Badge tone={tagTone(r.tag)} className="sf-editorial__badge">
+                        {r.tag}
+                      </Badge>
+                    )}
                   </span>
                   <span className="sf-editorial__dept">{r.category}</span>
                   <span className="sf-editorial__name">{r.name}</span>
