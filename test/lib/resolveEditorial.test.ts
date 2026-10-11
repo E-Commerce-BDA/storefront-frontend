@@ -67,7 +67,14 @@ describe("resolveNavSettings editorial", () => {
     expect(ed.eyebrow).toBe(ED.eyebrow);
     expect(ed.tabShape).toBe("pill");
     expect(ed.cardType).toBe("standard");
-    expect(ed.editorialAnimation).toEqual({ enabled: true, durationMs: 500, easing: "ease-out", travel: "full" });
+    // Bogus easing inherits the oceanic builtin (per-variant cascade —
+    // the sheet equivalent inherits ease-out; same rule, other builtin).
+    expect(ed.editorialAnimation).toEqual({
+      enabled: true,
+      durationMs: 500,
+      easing: "cubic-bezier(0.32, 0.72, 0.32, 1)",
+      travel: "full",
+    });
   });
 
   it("sheet and editorial motions never leak across variants", () => {
