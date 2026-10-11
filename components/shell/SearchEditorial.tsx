@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { useEffect, useRef } from "react";
-import { Badge, Icon, IconButton } from "@/components/ui";
+import { Badge, Icon, IconButton, Pill } from "@/components/ui";
 import type { SearchResult } from "@/lib/search/source";
 import { tagTone } from "@/lib/search/tagTone";
 import type { SearchStatus } from "@/app/hooks/useSearch";
@@ -212,15 +212,17 @@ export default function SearchEditorial({
             <h2 className="sf-editorial__title">{title ?? theme.title}</h2>
             <div className="sf-editorial__tabs" role="group" aria-label="Filter by department">
               {departments.map((d) => (
-                <button
+                // Pill retrofit (sf-024): see SearchSheet — selectors still
+                // match, shared focus ring added.
+                <Pill
                   key={d}
-                  type="button"
-                  data-active={d === dept}
+                  variant="filter"
+                  active={d === dept}
                   onClick={() => onDept?.(d)}
                   aria-pressed={d === dept}
                 >
                   {d}
-                </button>
+                </Pill>
               ))}
             </div>
           </div>
