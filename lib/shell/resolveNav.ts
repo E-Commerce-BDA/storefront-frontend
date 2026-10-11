@@ -18,6 +18,7 @@
 import {
   NAV_LIMITS,
   DEFAULT_NAV_SETTINGS,
+  type EditorialOverlayField,
   type LinkSchedule,
   type NavLink,
   type NavPageOverrides,
@@ -101,22 +102,77 @@ export function resolveNavSettings(input: ResolveNavInput, now: number = Date.no
   // ms+easing, clamped + allowlisted) — generic merge would pass presets
   // through raw, so the partial key is excluded here and set concrete
   // below. One instance per variant; settings never leak across variants.
-  type SearchNoMotion = Omit<NavPageOverrides["search"], "sheetAnimation">;
+  type SearchNoMotion = Omit<NavPageOverrides["search"], "sheetAnimation" | "editorial">;
+  type EditorialNoMotion = Omit<EditorialOverlayField, "editorialAnimation">;
   const stripMotion = (s: NavPageOverrides["search"]): SearchNoMotion | undefined => {
     if (!s) return undefined;
-    const { sheetAnimation: _dropSheet, ...rest } = s;
+    const { sheetAnimation: _dropSheet, editorial: _dropEdGroup, ...rest } = s;
     void _dropSheet;
+    void _dropEdGroup;
     return rest;
   };
+  // Editorial merges per-KEY (not per-object): a shared { bg } must not wipe
+  // a global tabShape. Motion is excluded from the merge and resolved below.
+  const stripEdMotion = (e: EditorialOverlayField | undefined): EditorialNoMotion | undefined => {
+    if (!e) return undefined;
+    const { editorialAnimation: _dropEd, ...rest } = e;
+    void _dropEd;
+    return rest;
+  };
+  // Non-empty strings only — "" or wrong-typed admin values are misses
+  // (builtins render, never blank/injected garbage).
+  const cleanStr = (v: unknown, fallback: string): string =>
+    typeof v === "string" && v !== "" ? v : fallback;
   const searchBase = mergeGroup(D.search, stripMotion(global?.search), stripMotion(shared?.search));
-  const { sheetAnimation: _builtinSheet, ...searchRest } = searchBase;
+  const { sheetAnimation: _builtinSheet, editorial: _builtinEdGroup, ...searchRest } = searchBase;
   void _builtinSheet;
+  void _builtinEdGroup;
+  const edBase = mergeGroup(
+    D.search.editorial,
+    stripEdMotion(global?.search?.editorial),
+    stripEdMotion(shared?.search?.editorial),
+  );
+  const { editorialAnimation: _builtinEd, ...edRest } = edBase;
+  void _builtinEd;
+  const ed = D.search.editorial;
   const search = {
     ...searchRest,
     sheetAnimation: resolveOverlayMotion(
       shared?.search?.sheetAnimation ?? global?.search?.sheetAnimation ?? undefined,
       D.search.sheetAnimation,
     ),
+    editorial: {
+      bg: cleanStr(edRest.bg, ed.bg),
+      bgAlpha: clampInt(edRest.bgAlpha, L.bgAlpha.min, L.bgAlpha.max, ed.bgAlpha),
+      blur: edRest.blur,
+      blurPx: clampInt(edRest.blurPx, L.blurPx.min, L.blurPx.max, ed.blurPx),
+      eyebrow: cleanStr(edRest.eyebrow, ed.eyebrow),
+      eyebrowColor: cleanStr(edRest.eyebrowColor, ed.eyebrowColor),
+      archiveEyebrow: cleanStr(edRest.archiveEyebrow, ed.archiveEyebrow),
+      archiveColor: cleanStr(edRest.archiveColor, ed.archiveColor),
+      inputColor: cleanStr(edRest.inputColor, ed.inputColor),
+      placeholderColor: cleanStr(edRest.placeholderColor, ed.placeholderColor),
+      underlineColor: cleanStr(edRest.underlineColor, ed.underlineColor),
+      title: cleanStr(edRest.title, ed.title),
+      titleColor: cleanStr(edRest.titleColor, ed.titleColor),
+      mutedColor: cleanStr(edRest.mutedColor, ed.mutedColor),
+      closeIconColor: cleanStr(edRest.closeIconColor, ed.closeIconColor),
+      tabTextColor: cleanStr(edRest.tabTextColor, ed.tabTextColor),
+      tabActiveBg: cleanStr(edRest.tabActiveBg, ed.tabActiveBg),
+      tabActiveText: cleanStr(edRest.tabActiveText, ed.tabActiveText),
+      // v1-only unions: unknown members are misses (later variants extend
+      // these checks, never loosen them).
+      tabShape: edRest.tabShape === "pill" ? edRest.tabShape : ed.tabShape,
+      cardType: edRest.cardType === "standard" ? edRest.cardType : ed.cardType,
+      cardRadius: clampInt(edRest.cardRadius, L.cardRadius.min, L.cardRadius.max, ed.cardRadius),
+      deptColor: cleanStr(edRest.deptColor, ed.deptColor),
+      nameColor: cleanStr(edRest.nameColor, ed.nameColor),
+      priceColor: cleanStr(edRest.priceColor, ed.priceColor),
+      editorialAnimation: resolveOverlayMotion(
+        shared?.search?.editorial?.editorialAnimation ?? global?.search?.editorial?.editorialAnimation ?? undefined,
+        ed.editorialAnimation,
+      ),
+    },
   };
   const account = mergeGroup(D.account, global?.account, shared?.account);
   const cart = mergeGroup(D.cart, global?.cart, shared?.cart);
