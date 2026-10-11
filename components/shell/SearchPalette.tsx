@@ -169,6 +169,12 @@ export default function SearchPalette({
     "--pill-added-bg": theme.quickAddedBg,
     "--pill-added-text": theme.quickAddedText,
     "--pl-thumb": `${theme.thumbRadius}px`,
+    "--pl-maxw": `${theme.cardMaxWidth}px`,
+    "--pl-rows-max": `${theme.rowsMaxHeight}px`,
+    "--pl-thumb-size": `${theme.thumbSize}px`,
+    "--pl-input-size": `${theme.inputSize}px`,
+    "--pl-name-size": `${theme.nameSize}px`,
+    "--pill-radius": `${theme.pillRadius}px`,
     ...(anim.enabled
       ? {
           "--pl-duration": `${anim.durationMs}ms`,
@@ -177,7 +183,11 @@ export default function SearchPalette({
       : {}),
   } as CSSProperties;
 
-  const showColumns = !typing && (trending.length > 0 || recent.length > 0);
+  // Admin visibility gates (all default true — absent regions simply
+  // don't render; the grid + footer absorb the space, no placeholders).
+  const showColumns =
+    !typing &&
+    ((theme.showTrending && trending.length > 0) || (theme.showRecent && recent.length > 0));
 
   return (
     <div
@@ -233,23 +243,25 @@ export default function SearchPalette({
             <Icon name="x" size={20} />
           </button>
         </div>
-        <div className="sf-searchpalette__filters" role="group" aria-label="Filter by department">
-          <span className="sf-searchpalette__filters-label">Filters:</span>
-          {departments.map((d) => (
-            <Pill
-              key={d}
-              variant="filter"
-              active={d === dept}
-              aria-pressed={d === dept}
-              onClick={() => onDept?.(d)}
-            >
-              {d}
-            </Pill>
-          ))}
-        </div>
+        {theme.showFilters && (
+          <div className="sf-searchpalette__filters" role="group" aria-label="Filter by department">
+            <span className="sf-searchpalette__filters-label">Filters:</span>
+            {departments.map((d) => (
+              <Pill
+                key={d}
+                variant="filter"
+                active={d === dept}
+                aria-pressed={d === dept}
+                onClick={() => onDept?.(d)}
+              >
+                {d}
+              </Pill>
+            ))}
+          </div>
+        )}
         {showColumns && (
           <div className="sf-searchpalette__columns">
-            {trending.length > 0 && (
+            {theme.showTrending && trending.length > 0 && (
               <div className="sf-searchpalette__col">
                 <p className="sf-searchpalette__colhead">
                   <Icon name="flame" size={15} />
@@ -265,7 +277,7 @@ export default function SearchPalette({
                 </div>
               </div>
             )}
-            {recent.length > 0 && (
+            {theme.showRecent && recent.length > 0 && (
               <div className="sf-searchpalette__col">
                 <div className="sf-searchpalette__recenthead">
                   <p className="sf-searchpalette__colhead">Recent searches</p>
@@ -337,13 +349,13 @@ export default function SearchPalette({
                     </span>
                     <span className="sf-searchpalette__meta">
                       <span className="sf-searchpalette__tagrow">
-                        {r.tag && <Badge tone={tagTone(r.tag)}>{r.tag}</Badge>}
-                        <span className="sf-searchpalette__dept">{r.category}</span>
+                        {theme.showTags && r.tag && <Badge tone={tagTone(r.tag)}>{r.tag}</Badge>}
+                        {theme.showDept && <span className="sf-searchpalette__dept">{r.category}</span>}
                       </span>
                       <span className="sf-searchpalette__name">{r.name}</span>
                       <span className="sf-searchpalette__pricerow">
                         <span>${r.price}</span>
-                        {r.rating !== undefined && (
+                        {theme.showRatings && r.rating !== undefined && (
                           <span className="sf-searchpalette__rating">
                             <Icon name="star" size={13} filled />
                             {r.rating.toFixed(1)}
@@ -353,37 +365,44 @@ export default function SearchPalette({
                       </span>
                     </span>
                   </button>
-                  <Pill
-                    variant="action"
-                    state={added ? "added" : undefined}
-                    disabled={pending}
-                    onClick={() => onQuickAdd?.(r)}
-                    aria-label={added ? `${r.name} added to bag` : `Quick add ${r.name} to bag`}
-                  >
-                    {added && <Icon name="check" size={14} />}
-                    {added ? "Added" : "Quick Add"}
-                  </Pill>
+                  {/* rowAction v1 = quick-add only; view/both branches
+                      land with the onView prop (locked decision) — no dead
+                      branch for a future union member lives here. */}
+                  {theme.rowAction === "quick-add" && (
+                    <Pill
+                      variant="action"
+                      state={added ? "added" : undefined}
+                      disabled={pending}
+                      onClick={() => onQuickAdd?.(r)}
+                      aria-label={added ? `${r.name} added to bag` : `Quick add ${r.name} to bag`}
+                    >
+                      {added && <Icon name="check" size={14} />}
+                      {added ? "Added" : "Quick Add"}
+                    </Pill>
+                  )}
                 </div>
               );
             })}
           </div>
         )}
-        <div className="sf-searchpalette__footer">
-          <p className="sf-searchpalette__kbd-hints">
-            <span>
-              <kbd>↵</kbd> Select
-            </span>
-            <span>
-              <kbd>↑↓</kbd> Navigate
-            </span>
-            <span>
-              <kbd>Tab</kbd> Cycle
-            </span>
-          </p>
-          <p className="sf-searchpalette__count">
-            {pool.length} available {pool.length === 1 ? "item" : "items"}
-          </p>
-        </div>
+        {theme.showFooter && (
+          <div className="sf-searchpalette__footer">
+            <p className="sf-searchpalette__kbd-hints">
+              <span>
+                <kbd>↵</kbd> Select
+              </span>
+              <span>
+                <kbd>↑↓</kbd> Navigate
+              </span>
+              <span>
+                <kbd>Tab</kbd> Cycle
+              </span>
+            </p>
+            <p className="sf-searchpalette__count">
+              {pool.length} available {pool.length === 1 ? "item" : "items"}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
