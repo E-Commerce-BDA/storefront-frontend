@@ -30,17 +30,18 @@ describe("search palette style contract", () => {
   it("is a centered modal on a dim wash (never a sheet slide)", () => {
     expect(palCss).toMatch(/position:\s*fixed/);
     expect(palCss).toMatch(/inset:\s*0/);
-    expect(palCss).toMatch(/max-width:\s*720px/);
+    expect(palCss).toMatch(/max-width:\s*var\(--pl-maxw/);
     expect(palCss).toMatch(/border-radius:\s*20px/);
     expect(palCss).toMatch(/margin:\s*auto/);
   });
 
   it("fits the viewport (sf-027: card backstop, sticky footer, compact rows)", () => {
+    expect(palCss).toMatch(/max-width:\s*var\(--pl-maxw/);
     expect(css).toMatch(/\.sf-searchpalette__card\s*\{[^}]*max-height:\s*calc\(100dvh/);
     expect(css).toMatch(/\.sf-searchpalette__card\s*\{[^}]*overflow-y:\s*auto/);
     expect(css).toMatch(/\.sf-searchpalette__footer\s*\{[^}]*position:\s*sticky/);
     expect(css).toMatch(/\.sf-searchpalette__footer\s*\{[^}]*bottom:\s*0/);
-    expect(css).toMatch(/\.sf-searchpalette__thumb\s*\{[^}]*width:\s*64px/);
+    expect(css).toMatch(/\.sf-searchpalette__thumb\s*\{[^}]*width:\s*var\(--pl-thumb-size/);
   });
 
   it("drives blur, card variant and keyboard-active rows through data hooks", () => {
@@ -62,13 +63,13 @@ describe("search palette style contract", () => {
   });
 
   it("reads admin geometry through vars (sf-028)", () => {
+    // --pill-radius lives in the .sf-pill block (Pill owns it; the palette
+    // only inlines the value — asserted in the contract test instead).
     for (const prop of [
-      /max-width:\s*var\(--pl-maxw/,
       /max-height:\s*var\(--pl-rows-max/,
       /width:\s*var\(--pl-thumb-size/,
       /font-size:\s*var\(--pl-input-size/,
       /font-size:\s*var\(--pl-name-size/,
-      /border-radius:\s*var\(--pill-radius/,
     ]) {
       expect(palCss, `palette geometry must resolve ${prop} through a var`).toMatch(prop);
     }
@@ -81,7 +82,7 @@ describe("search palette style contract", () => {
   });
 
   it("scrolls rows internally and collapses columns on narrow screens", () => {
-    expect(palCss).toMatch(/max-height:\s*300px/);
+    expect(palCss).toMatch(/max-height:\s*var\(--pl-rows-max/);
     expect(palCss).toMatch(/overflow-y:\s*auto/);
     expect(css).toMatch(/max-width:\s*640px[\s\S]*?\.sf-searchpalette__columns\s*\{[^}]*grid-template-columns:\s*1fr/);
   });
