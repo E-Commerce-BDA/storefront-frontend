@@ -50,6 +50,37 @@ export const NAV_LIMITS = {
   cardRadius: { min: 0, max: 24 },
 } as const;
 
+/** Resolved palette settings: all required (produced by resolveNav.ts). */
+export interface ResolvedPaletteSettings {
+  cardBg: string;
+  backdrop: string;
+  backdropAlpha: number;
+  blur: boolean;
+  blurPx: number;
+  inputColor: string;
+  placeholderColor: string;
+  iconColor: string;
+  closeColor: string;
+  mutedColor: string;
+  headingColor: string;
+  nameColor: string;
+  priceColor: string;
+  ratingColor: string;
+  deptColor: string;
+  pillActiveBg: string;
+  pillActiveText: string;
+  pillText: string;
+  pillBorder: string;
+  pillChipBg: string;
+  quickAddBg: string;
+  quickAddText: string;
+  quickAddedBg: string;
+  quickAddedText: string;
+  cardType: PaletteCardType;
+  thumbRadius: number;
+  paletteAnimation: ResolvedOverlayMotion;
+}
+
 /** Resolved editorial settings: all required (produced by resolveNav.ts). */
 export interface ResolvedEditorialSettings {
   bg: string;
@@ -177,6 +208,55 @@ export interface EditorialOverlayField {
   editorialAnimation?: OverlayMotionField;
 }
 
+/**
+ * Palette card skin. v1 ships one ("row" = photo: thumb, badge+dept,
+ * name, price+rating, quick-add). Later cards extend this union.
+ */
+export type PaletteCardType = "row";
+
+/**
+ * Palette-modal paint knobs (admin-facing: all optional, absent =
+ * inherit). Nested group like editorial — flat search.* stays behavioral.
+ * Pill faces map 1:1 onto --pill-* vars (see components/ui/Pill).
+ */
+export interface PaletteOverlayField {
+  cardBg?: string;
+  backdrop?: string;
+  /** Backdrop wash alpha 0–100. */
+  backdropAlpha?: number;
+  /** True = backdrop-filter blur over the page behind the wash. */
+  blur?: boolean;
+  /** Blur radius px (only read when blur is true). */
+  blurPx?: number;
+  inputColor?: string;
+  placeholderColor?: string;
+  iconColor?: string;
+  closeColor?: string;
+  mutedColor?: string;
+  headingColor?: string;
+  nameColor?: string;
+  priceColor?: string;
+  ratingColor?: string;
+  deptColor?: string;
+  pillActiveBg?: string;
+  pillActiveText?: string;
+  pillText?: string;
+  pillBorder?: string;
+  pillChipBg?: string;
+  quickAddBg?: string;
+  quickAddText?: string;
+  quickAddedBg?: string;
+  quickAddedText?: string;
+  cardType?: PaletteCardType;
+  /** Thumbnail corner radius px. */
+  thumbRadius?: number;
+  /**
+   * Palette-variant motion (per-variant instance of the shared
+   * OverlayMotionField shape — settings never leak across variants).
+   */
+  paletteAnimation?: OverlayMotionField;
+}
+
 export interface NavSearchField {
   enabled?: boolean;
   /** Which overlay ships to the client (registry dynamic-imports only this). */
@@ -189,6 +269,8 @@ export interface NavSearchField {
   sheetAnimation?: OverlayMotionField;
   /** Editorial-takeover paint + copy (nested group, see above). */
   editorial?: EditorialOverlayField;
+  /** Palette-modal paint (nested group, see above). */
+  palette?: PaletteOverlayField;
 }
 
 export interface NavAccountField {
@@ -279,6 +361,7 @@ export interface ResolvedNavSettings {
     placeholder: string;
     sheetAnimation: ResolvedOverlayMotion;
     editorial: ResolvedEditorialSettings;
+    palette: ResolvedPaletteSettings;
   };
   account: { enabled: boolean; items: AccountItem[] };
   cart: { enabled: boolean; destination: CartDestination; dedicatedPage: boolean; badgeCap: number };
@@ -351,6 +434,43 @@ export const DEFAULT_NAV_SETTINGS: ResolvedNavSettings = {
       nameColor: "#0a2540",
       priceColor: "#0a2540",
       editorialAnimation: {
+        enabled: true,
+        durationMs: 320,
+        easing: "cubic-bezier(0.32, 0.72, 0.32, 1)",
+        travel: "full",
+      },
+    },
+    // Photo defaults: white card on a navy wash (0.72alpha + blur),
+    // accent search glyph, muted close, gold ratings, ink pills.
+    // Literals mirror Oceanic tokens (this file is the one legal home).
+    palette: {
+      cardBg: "#ffffff",
+      backdrop: "#0a2540",
+      backdropAlpha: 72,
+      blur: true,
+      blurPx: 8,
+      inputColor: "#0a2540",
+      placeholderColor: "#93a3b1",
+      iconColor: "#0077b6",
+      closeColor: "#5b7286",
+      mutedColor: "#5b7286",
+      headingColor: "#0a2540",
+      nameColor: "#0a2540",
+      priceColor: "#0a2540",
+      ratingColor: "#f79009",
+      deptColor: "#5b7286",
+      pillActiveBg: "#0a2540",
+      pillActiveText: "#ffffff",
+      pillText: "#0a2540",
+      pillBorder: "#dce8ee",
+      pillChipBg: "#ffffff",
+      quickAddBg: "#e6f7fb",
+      quickAddText: "#0a2540",
+      quickAddedBg: "#ecfdf3",
+      quickAddedText: "#0e9f6e",
+      cardType: "row",
+      thumbRadius: 14,
+      paletteAnimation: {
         enabled: true,
         durationMs: 320,
         easing: "cubic-bezier(0.32, 0.72, 0.32, 1)",
