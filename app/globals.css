@@ -1246,7 +1246,9 @@ body {
   gap: 6px;
   border: 1px solid transparent;
   background: transparent;
-  border-radius: 999px;
+  /* 999px = stadium; admin pillRadius retunes (later shape presets ride
+     this var). Sheet/editorial never set it — fallback keeps them. */
+  border-radius: var(--pill-radius, 999px);
   padding: 8px 18px;
   cursor: pointer;
   font-family: var(--font-sans);
@@ -1336,7 +1338,7 @@ body {
   position: relative;
   margin: auto;
   width: 100%;
-  max-width: 720px;
+  max-width: var(--pl-maxw, 720px);
   max-height: calc(100dvh - 64px);
   overflow-y: auto;
   /* Flex column + auto top margin (below): the footer pins flush to the
@@ -1379,7 +1381,7 @@ body {
   border: 0;
   outline: 0;
   background: transparent;
-  font-size: 16px;
+  font-size: var(--pl-input-size, 16px);
   color: var(--pl-input, #0a2540);
 }
 .sf-searchpalette__input::placeholder {
@@ -1533,7 +1535,7 @@ body {
 .sf-searchpalette__rows {
   display: grid;
   gap: 10px;
-  max-height: 300px;
+  max-height: var(--pl-rows-max, 300px);
   overflow-y: auto;
   padding: 2px;
   /* Flex child of the column card: takes its capped height, never shoves
@@ -1577,8 +1579,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
+  width: var(--pl-thumb-size, 64px);
+  height: var(--pl-thumb-size, 64px);
   border-radius: var(--pl-thumb, 14px);
   background: var(--color-image-bg);
   overflow: hidden;
@@ -1611,7 +1613,7 @@ body {
   color: var(--pl-dept, #5b7286);
 }
 .sf-searchpalette__name {
-  font-size: 17px;
+  font-size: var(--pl-name-size, 17px);
   font-weight: 700;
   color: var(--pl-name, #0a2540);
   white-space: nowrap;
@@ -1699,9 +1701,11 @@ body {
   .sf-searchpalette__columns {
     grid-template-columns: 1fr;
   }
+  /* Phone floor respects the admin size (min, not override — a 48px
+     admin thumb stays 48px; larger ones clamp to 56px). */
   .sf-searchpalette__thumb {
-    width: 56px;
-    height: 56px;
+    width: min(var(--pl-thumb-size, 64px), 56px);
+    height: min(var(--pl-thumb-size, 64px), 56px);
   }
 }
 
