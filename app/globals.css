@@ -25,6 +25,11 @@
   --color-error: #d92d20;
   --color-error-bg: #fef3f2;
   --color-error-border: #fecdca;
+  /* Lilac trio (sf-023 editorial "Trending" badge — photo lavender). :root
+     is the token home; components read these through Badge, never raw. */
+  --color-lilac: #6941c6;
+  --color-lilac-bg: #f4f0ff;
+  --color-lilac-border: #d9d0ff;
   --border: #dce8ee;
   --text-muted: #5b7286;
   --focus-ring: #0077b633;
