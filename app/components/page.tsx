@@ -16,6 +16,7 @@ import { useSelectOptions } from "@/app/hooks/useSelectOptions";
 import { createDemoOptions } from "@/lib/select/demoOptions";
 import { createDemoSource, DEMO_CATALOG, DEMO_TRENDING } from "@/lib/search/demoSource";
 import { createDemoQuickAdd } from "@/lib/cart/quickAdd";
+import { DEFAULT_THEME } from "@/lib/cms/themeSettings";
 import {
   Button,
   Input,
@@ -331,6 +332,15 @@ export default function PreviewPage() {
               <Button animation={{ waveOrigin: "left" }}>Rise left</Button>
               <Button animation={{ animationKind: "fade" }}>Fade</Button>
               <Button hoverBorderColor="#023E8A">Custom hover border</Button>
+            </Row>
+            <Row>
+              {/* House-style proof (sf-038): theme object alone retunes an
+                  uncustomized button — sale variant + lg via theme. */}
+              <Button
+                theme={{ ...DEFAULT_THEME.button, defaultVariant: "sale", defaultSize: "lg" }}
+              >
+                House style via theme
+              </Button>
             </Row>
           </div>
         </Card>
