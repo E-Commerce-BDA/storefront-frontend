@@ -1361,6 +1361,13 @@ body {
   outline-offset: 2px;
 }
 
+/* Textarea themed focus (components/ui/Textarea): state through data
+   attr; beats the Tailwind accent default only when custom focus is set
+   (higher specificity, same :focus moment — no double ring). */
+.sf-textarea[data-focus="custom"]:focus {
+  border-color: var(--ta-focus, var(--color-accent));
+}
+
 /* Search palette — overlay variant "palette"
    (components/shell/SearchPalette). Centered modal card on a dim wash.
    Paint resolves through --pl-* vars (inlined from resolved palette

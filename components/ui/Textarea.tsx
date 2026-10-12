@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, type CSSProperties } from "react";
 
 /** Dumb Textarea — controlled-only, same validation language as Input. */
 export interface TextareaProps extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "onChange" | "value"> {
@@ -9,10 +9,14 @@ export interface TextareaProps extends Omit<React.TextareaHTMLAttributes<HTMLTex
   error?: string;
   radius?: number;
   borderColor?: string;
+  /** House paint (theme feeds; flat wins). Absent = component tokens. */
+  bg?: string;
+  textColor?: string;
+  focusBorderColor?: string;
 }
 
 const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
-  { value, onChange, label, helper, error, radius = 10, borderColor, rows = 4, id, disabled = false, required = false, className = "", style = {}, ...rest },
+  { value, onChange, label, helper, error, radius = 10, borderColor, bg, textColor, focusBorderColor, rows = 4, id, disabled = false, required = false, className = "", style = {}, ...rest },
   ref,
 ) {
   const invalid = error != null && error !== "";
@@ -28,10 +32,17 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textare
       <textarea
         ref={ref}
         id={fieldId}
-        className="w-full bg-white px-3 py-2.5 text-sm text-[var(--color-ink)] outline-0 placeholder:text-[var(--text-muted)] focus:border-[var(--color-accent)] focus:shadow-[0_0_0_3px_var(--focus-ring)]"
+        // sf-textarea hook: themed focus border paints through --ta-focus
+        // (data attr, never class toggle). Absent = Tailwind accent default.
+        className="sf-textarea w-full px-3 py-2.5 text-sm text-[var(--color-ink)] outline-0 placeholder:text-[var(--text-muted)] focus:border-[var(--color-accent)] focus:shadow-[0_0_0_3px_var(--focus-ring)]"
+        data-focus={focusBorderColor ? "custom" : "default"}
         style={{
           border: `1px solid ${invalid ? "var(--color-error)" : (borderColor ?? "var(--border)")}`,
           borderRadius: radius,
+          // White-surface token reuse (Toast precedent) — identical render.
+          background: bg ?? "var(--color-navbar-bg, #ffffff)",
+          color: textColor,
+          ...(focusBorderColor ? ({ "--ta-focus": focusBorderColor } as CSSProperties) : {}),
           opacity: disabled ? 0.6 : undefined,
         }}
         value={value}
