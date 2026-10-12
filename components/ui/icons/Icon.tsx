@@ -114,6 +114,12 @@ const MAP: Record<IconName, LucideIcon> = {
 export interface IconProps {
   /** Kebab-case icon key. Unknown CMS-driven strings fail closed (null + warn). */
   name: IconName;
+  /**
+   * Stroke ink (default currentColor — the rule stays; theme override is
+   * the stated exception). Fed through CSS color so stroke="currentColor"
+   * mechanics never change; caller style still wins when both arrive.
+   */
+  color?: string;
   /** Pixel box; lucide scales stroke proportionally. Default 20 (40px IconButton). */
   size?: number;
   /** Filled silhouette (active wishlist heart, rated star). Default outline. */
@@ -133,6 +139,7 @@ export default function Icon({
   strokeWidth = 2,
   title,
   className,
+  color = "currentColor",
   style,
 }: IconProps) {
   const Cmp = MAP[name];
@@ -150,7 +157,7 @@ export default function Icon({
       aria-hidden={title ? undefined : true}
       role={title ? "img" : undefined}
       className={className}
-      style={style}
+      style={{ color, ...style }}
     >
       {title ? <title>{title}</title> : null}
     </Cmp>
