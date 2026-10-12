@@ -14,8 +14,10 @@
  */
 
 import type { ButtonAnimationField } from "./buttonAnimation";
+import { resolveOverlayMotion, type OverlayMotionField, type ResolvedOverlayMotion } from "@/lib/search/motion";
 import type { ButtonSize, ButtonVariant } from "@/components/ui/Button";
 import type { BadgeBorderStyle } from "@/components/ui/Badge";
+import type { SelectVariant } from "@/components/ui/Select";
 
 /** Numeric limits for every ranged knob (clamped in resolveTheme). */
 export const THEME_LIMITS = {
@@ -28,6 +30,8 @@ export const THEME_LIMITS = {
   iconSize: { min: 16, max: 32 },
   iconStroke: { min: 1, max: 3 },
   textareaRows: { min: 2, max: 12 },
+  arrowPadding: { min: 4, max: 24 },
+  optionPadding: { min: 4, max: 16 },
 } as const;
 
 /* Admin-facing fields: all optional (absent = inherit). */
@@ -105,6 +109,32 @@ export interface ThemeTextareaField {
   rows?: number;
 }
 
+export type SelectBranch = SelectVariant;
+
+export interface ThemeSelectField {
+  variant?: SelectBranch;
+  bg?: string;
+  textColor?: string;
+  borderColor?: string;
+  focusBorderColor?: string;
+  borderRadius?: number;
+  /** Custom-only faces (documented-ignored on native — OS chrome law). */
+  selectedBg?: string;
+  selectedText?: string;
+  hoverBg?: string;
+  hoverText?: string;
+  /** Option vertical padding px (horizontal aligns with trigger text). */
+  optionPaddingY?: number;
+  arrowPadding?: number;
+  /** CMS media URL (empty = chevron glyph; broken falls back at render). */
+  arrowIconUrl?: string;
+  /**
+   * Popup motion (per-variant instance of the shared OverlayMotionField
+   * shape — sixth instance of the solved problem; builtin = subtle fade).
+   */
+  dropdownAnimation?: OverlayMotionField;
+}
+
 /** Admin input: global theme scope (per-instance flat props still win). */
 export interface ThemeSettings {
   button?: ThemeButtonField;
@@ -114,6 +144,7 @@ export interface ThemeSettings {
   badges?: ThemeBadgesField;
   icon?: ThemeIconField;
   textarea?: ThemeTextareaField;
+  select?: ThemeSelectField;
 }
 
 /* Resolved types: all required (produced by resolveTheme below). */
@@ -181,6 +212,23 @@ export interface ResolvedThemeTextarea {
   rows: number;
 }
 
+export interface ResolvedThemeSelect {
+  variant: SelectBranch;
+  bg: string;
+  textColor: string;
+  borderColor: string;
+  focusBorderColor: string;
+  borderRadius: number;
+  selectedBg: string;
+  selectedText: string;
+  hoverBg: string;
+  hoverText: string;
+  optionPaddingY: number;
+  arrowPadding: number;
+  arrowIconUrl: string;
+  dropdownAnimation: ResolvedOverlayMotion;
+}
+
 export interface ResolvedThemeSettings {
   button: ResolvedThemeButton;
   input: ResolvedThemeInput;
@@ -189,6 +237,7 @@ export interface ResolvedThemeSettings {
   badges: ResolvedThemeBadges;
   icon: ResolvedThemeIcon;
   textarea: ResolvedThemeTextarea;
+  select: ResolvedThemeSelect;
 }
 
 /* Builtins: today's look = final fallback. */
@@ -227,6 +276,24 @@ export const DEFAULT_THEME: ResolvedThemeSettings = {
   badges: { custom: [] },
   icon: { size: 20, strokeWidth: 2, filled: false, color: "" },
   textarea: { bg: "", textColor: "", borderColor: "", focusBorderColor: "", borderRadius: 10, rows: 4 },
+  // Native branch, today's paint, subtle fast fade (180ms — dropdowns
+  // that pop feel broken; admin kills it via enabled: false).
+  select: {
+    variant: "native",
+    bg: "",
+    textColor: "",
+    borderColor: "",
+    focusBorderColor: "",
+    borderRadius: 10,
+    selectedBg: "",
+    selectedText: "",
+    hoverBg: "",
+    hoverText: "",
+    optionPaddingY: 8,
+    arrowPadding: 12,
+    arrowIconUrl: "",
+    dropdownAnimation: { enabled: true, durationMs: 180, easing: "ease-out", travel: "minimal" },
+  },
 };
 
 const clampInt = (v: unknown, min: number, max: number, fallback: number): number => {
@@ -261,6 +328,7 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
   const bd = s?.badges ?? undefined;
   const ic = s?.icon ?? undefined;
   const ta = s?.textarea ?? undefined;
+  const se = s?.select ?? undefined;
   const D = DEFAULT_THEME;
   const L = THEME_LIMITS;
   const clampFloat = (v: unknown, min: number, max: number, fallback: number): number => {
@@ -327,6 +395,22 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
       focusBorderColor: cleanColor(ta?.focusBorderColor, D.textarea.focusBorderColor),
       borderRadius: clampInt(ta?.borderRadius, L.radius.min, L.radius.max, D.textarea.borderRadius),
       rows: clampInt(ta?.rows, L.textareaRows.min, L.textareaRows.max, D.textarea.rows),
+    },
+    select: {
+      variant: se?.variant === "custom" || se?.variant === "native" ? se.variant : D.select.variant,
+      bg: cleanColor(se?.bg, D.select.bg),
+      textColor: cleanColor(se?.textColor, D.select.textColor),
+      borderColor: cleanColor(se?.borderColor, D.select.borderColor),
+      focusBorderColor: cleanColor(se?.focusBorderColor, D.select.focusBorderColor),
+      borderRadius: clampInt(se?.borderRadius, L.radius.min, L.radius.max, D.select.borderRadius),
+      selectedBg: cleanColor(se?.selectedBg, D.select.selectedBg),
+      selectedText: cleanColor(se?.selectedText, D.select.selectedText),
+      hoverBg: cleanColor(se?.hoverBg, D.select.hoverBg),
+      hoverText: cleanColor(se?.hoverText, D.select.hoverText),
+      optionPaddingY: clampInt(se?.optionPaddingY, L.optionPadding.min, L.optionPadding.max, D.select.optionPaddingY),
+      arrowPadding: clampInt(se?.arrowPadding, L.arrowPadding.min, L.arrowPadding.max, D.select.arrowPadding),
+      arrowIconUrl: cleanColor(se?.arrowIconUrl, D.select.arrowIconUrl),
+      dropdownAnimation: resolveOverlayMotion(se?.dropdownAnimation ?? undefined, D.select.dropdownAnimation),
     },
   };
 }
