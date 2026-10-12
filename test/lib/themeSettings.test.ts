@@ -83,6 +83,46 @@ describe("resolveThemeSettings", () => {
     expect(r.textarea.bg).toBe("#111111");
   });
 
+  it("resolves productCard builtins, clamps columns, filters CTAs (sf-039)", () => {
+    const empty = resolveThemeSettings({});
+    expect(empty.productCard).toMatchObject({
+      mediaRatio: "4:5",
+      badgePosition: "left",
+      hoverMode: "actions",
+      ctaPosition: "center",
+      colsDesktop: 4,
+      colsTablet: 3,
+      colsPhone: 2,
+    });
+    const r = resolveThemeSettings({
+      settings: {
+        productCard: {
+          mediaRatio: "9:16" as never,
+          badgePosition: "center" as never,
+          hoverMode: "zoom" as never,
+          ctaSet: ["share", "bogus" as never, "wishlist", "add-to-cart", "quick-view"],
+          ctaPosition: "top" as never,
+          colsDesktop: 9,
+          colsTablet: 1,
+          colsPhone: 9,
+          nameSize: 99,
+          borderRadius: -5,
+        },
+      },
+    });
+    const pc = r.productCard;
+    expect(pc.mediaRatio).toBe("4:5");
+    expect(pc.badgePosition).toBe("left");
+    expect(pc.hoverMode).toBe("actions");
+    expect(pc.ctaSet).toEqual(["share", "wishlist", "add-to-cart"]);
+    expect(pc.ctaPosition).toBe("center");
+    expect(pc.colsDesktop).toBe(5);
+    expect(pc.colsTablet).toBe(2);
+    expect(pc.colsPhone).toBe(2);
+    expect(pc.nameSize).toBe(22);
+    expect(pc.borderRadius).toBe(0);
+  });
+
   it("resolves select builtins, clamps, checks the branch union (sf-033)", () => {
     const empty = resolveThemeSettings({});
     expect(empty.select.variant).toBe("native");
