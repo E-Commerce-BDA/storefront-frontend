@@ -10,6 +10,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import Button, { type ButtonSize, type ButtonVariant } from "@/components/ui/Button";
+import { DEFAULT_THEME } from "@/lib/cms/themeSettings";
 
 afterEach(cleanup);
 
@@ -126,5 +127,44 @@ describe("Button render contract", () => {
     expect((busy as HTMLButtonElement).disabled).toBe(true);
     // Label is retained next to the spinner (screen readers get both).
     expect(busy.textContent).toContain("Busy");
+  });
+});
+
+describe("Button theme object (sf-038 — trio-lowest precedence)", () => {
+  const saleTheme = { ...DEFAULT_THEME.button, defaultVariant: "sale" as const };
+
+  it("retunes an uncustomized button from theme alone", () => {
+    render(<Button theme={saleTheme}>Themed</Button>);
+    const el = screen.getByRole("button", { name: "Themed" });
+    expect(el.style.getPropertyValue("--btn-bg")).toBe("#FF6B4A");
+  });
+
+  it("flat variant and paint win over theme (sf-038)", () => {
+    const { unmount } = render(
+      <Button variant="light" theme={saleTheme}>
+        Flat variant
+      </Button>,
+    );
+    // Light face, not sale — flat variant beats house default.
+    expect(screen.getByRole("button", { name: "Flat variant" }).style.getPropertyValue("--btn-bg")).toBe("#FFFFFF");
+    unmount();
+    render(
+      <Button bg="#111111" theme={saleTheme}>
+        Flat paint
+      </Button>,
+    );
+    expect(screen.getByRole("button", { name: "Flat paint" }).style.getPropertyValue("--btn-bg")).toBe("#111111");
+  });
+
+  it("theme animation global flows into wave vars (sf-038)", () => {
+    render(<Button theme={{ ...DEFAULT_THEME.button, animation: { durationMs: 500 } }}>Timed</Button>);
+    expect(screen.getByRole("button", { name: "Timed" }).style.getPropertyValue("--wave-duration")).toBe("500ms");
+  });
+
+  it("renders identically without theme (sf-038 — no behavior change)", () => {
+    render(<Button>Plain</Button>);
+    const el = screen.getByRole("button", { name: "Plain" });
+    expect(el.style.getPropertyValue("--btn-bg")).toBe("var(--color-button-bg, #0077B6)");
+    expect(el.style.getPropertyValue("--btn-radius")).toBe("8px");
   });
 });
