@@ -83,6 +83,38 @@ describe("resolveThemeSettings", () => {
     expect(r.textarea.bg).toBe("#111111");
   });
 
+  it("resolves select builtins, clamps, checks the branch union (sf-033)", () => {
+    const empty = resolveThemeSettings({});
+    expect(empty.select.variant).toBe("native");
+    expect(empty.select).toMatchObject({ borderRadius: 10, optionPaddingY: 8, arrowPadding: 12 });
+    expect(empty.select.dropdownAnimation).toEqual({
+      enabled: true,
+      durationMs: 180,
+      easing: "ease-out",
+      travel: "minimal",
+    });
+    const r = resolveThemeSettings({
+      settings: {
+        select: {
+          variant: "drawer" as unknown as "native",
+          borderRadius: 99,
+          optionPaddingY: 0,
+          arrowPadding: 999,
+          arrowIconUrl: 42 as unknown as string,
+          dropdownAnimation: { preset: "oceanic" },
+        },
+      },
+    });
+    expect(r.select.variant).toBe("native");
+    expect(r.select.borderRadius).toBe(24);
+    expect(r.select.optionPaddingY).toBe(4);
+    expect(r.select.arrowPadding).toBe(24);
+    expect(r.select.arrowIconUrl).toBe("");
+    expect(r.select.dropdownAnimation.durationMs).toBe(320);
+    const custom = resolveThemeSettings({ settings: { select: { variant: "custom" } } });
+    expect(custom.select.variant).toBe("custom");
+  });
+
   it("applies admin values and forwards animation unresolved", () => {
     const r = resolveThemeSettings({
       settings: {
