@@ -54,7 +54,8 @@ describe("Icon contract", () => {
 
   it("passes stroke ink through CSS color (currentColor default, caller wins)", () => {
     const { unmount } = render(<Icon name="x" />);
-    expect((document.querySelector("svg") as HTMLElement).style.color).toBe("currentColor");
+    // jsdom lowercases the keyword; browsers preserve author case.
+    expect((document.querySelector("svg") as HTMLElement).style.color.toLowerCase()).toBe("currentcolor");
     unmount();
     render(<Icon name="x" color="#123456" style={{ color: "#654321" }} />);
     expect((document.querySelector("svg") as HTMLElement).style.color).toBe("rgb(101, 67, 33)");
