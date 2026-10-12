@@ -47,6 +47,42 @@ describe("resolveThemeSettings", () => {
     expect(r.toggle.height).toBe(32);
   });
 
+  it("filters custom badges (incomplete = miss), caps, defaults border/style", () => {
+    const r = resolveThemeSettings({
+      settings: {
+        badges: {
+          custom: [
+            { id: "vip", bg: "#111111", textColor: "#222222", borderStyle: "dashed" },
+            { id: "", bg: "#111111", textColor: "#222222" },
+            { id: "half", bg: "#111111" },
+            { id: "wavy", bg: "#111111", textColor: "#222222", borderStyle: "wavy" as never },
+          ],
+        },
+      },
+    });
+    expect(r.badges.custom).toEqual([
+      { id: "vip", label: "vip", bg: "#111111", textColor: "#222222", borderColor: "#111111", borderStyle: "dashed" },
+      { id: "wavy", label: "wavy", bg: "#111111", textColor: "#222222", borderColor: "#111111", borderStyle: "solid" },
+    ]);
+  });
+
+  it("resolves icon house defaults and textarea group with clamps", () => {
+    const empty = resolveThemeSettings({});
+    expect(empty.badges).toEqual({ custom: [] });
+    expect(empty.icon).toEqual({ size: 20, strokeWidth: 2, filled: false, color: "" });
+    expect(empty.textarea).toMatchObject({ borderRadius: 10, rows: 4 });
+    const r = resolveThemeSettings({
+      settings: {
+        icon: { size: 999, strokeWidth: 0.2, filled: true, color: "#123456" },
+        textarea: { borderRadius: 99, rows: 0, bg: "#111111" },
+      },
+    });
+    expect(r.icon).toEqual({ size: 32, strokeWidth: 1, filled: true, color: "#123456" });
+    expect(r.textarea.borderRadius).toBe(24);
+    expect(r.textarea.rows).toBe(2);
+    expect(r.textarea.bg).toBe("#111111");
+  });
+
   it("applies admin values and forwards animation unresolved", () => {
     const r = resolveThemeSettings({
       settings: {
