@@ -38,12 +38,15 @@ describe("ProductCard", () => {
   it("opens via media/name buttons (never nested), actions stop propagation", () => {
     const onOpen = vi.fn();
     const onQuickAdd = vi.fn();
-    render(<ProductCard product={P} onOpen={onOpen} onQuickAdd={onQuickAdd} />);
+    const { container } = render(<ProductCard product={P} onOpen={onOpen} onQuickAdd={onQuickAdd} />);
     // No button inside a button (illegal nesting).
-    document.querySelectorAll("button").forEach((b) => {
+    container.querySelectorAll("button").forEach((b) => {
       expect(b.querySelector("button")).toBeNull();
     });
-    fireEvent.click(screen.getByRole("button", { name: "Ocean Linen Shirt, $48" }));
+    // Media + name share the label (both open) — click the first.
+    const openers = screen.getAllByRole("button", { name: "Ocean Linen Shirt, $48" });
+    expect(openers.length).toBe(2);
+    fireEvent.click(openers[0]);
     expect(onOpen).toHaveBeenCalledWith(P);
     fireEvent.click(screen.getByRole("button", { name: "Add Ocean Linen Shirt to bag" }));
     expect(onQuickAdd).toHaveBeenCalledWith(P);
@@ -77,15 +80,16 @@ describe("ProductCard", () => {
   });
 
   it("flips wishlist heart when wishlisted; hover-image mode renders swap", () => {
-    const { unmount } = render(<ProductCard product={{ ...P, wishlisted: true }} />);
-    expect(screen.getByRole("button", { name: "Add Ocean Linen Shirt to wishlist" }).getAttribute("aria-pressed")).toBe(
-      "true",
-    );
-    unmount();
-    render(<ProductCard product={{ ...P, hoverImage: "h.jpg", hoverMode: "image" }} />);
-    expect(document.querySelector("article")?.getAttribute("data-hover")).toBe("image");
-    expect(document.querySelector(".sf-productcard__hoverimg")).not.toBeNull();
+    const first = render(<ProductCard product={{ ...P, wishlisted: true }} />);
+    expect(
+      first.container.querySelector('[aria-label="Add Ocean Linen Shirt to wishlist"]')?.getAttribute("aria-pressed"),
+    ).toBe("true");
+    first.unmount();
+    const second = render(<ProductCard product={{ ...P, hoverImage: "h.jpg" }} hoverMode="image" />);
+    expect(second.container.firstElementChild?.getAttribute("data-hover")).toBe("image");
+    expect(second.container.querySelector(".sf-productcard__hoverimg")).not.toBeNull();
     expect(screen.queryByRole("group", { name: "Actions for Ocean Linen Shirt" })).toBeNull();
+    second.unmount();
   });
 
   it("hides badge/ratings/dept on gates; reserved props stay inert", () => {
