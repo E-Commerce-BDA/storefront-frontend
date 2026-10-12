@@ -18,6 +18,12 @@ import { resolveOverlayMotion, type OverlayMotionField, type ResolvedOverlayMoti
 import type { ButtonSize, ButtonVariant } from "@/components/ui/Button";
 import type { BadgeBorderStyle } from "@/components/ui/Badge";
 import type { SelectVariant } from "@/components/ui/Select";
+import {
+  DEFAULT_TOOLTIP_STYLE,
+  TOOLTIP_LIMITS,
+  type TooltipAnimation,
+  type TooltipStyleField,
+} from "@/components/ui/Tooltip";
 
 /** Numeric limits for every ranged knob (clamped in resolveTheme). */
 export const THEME_LIMITS = {
@@ -32,6 +38,12 @@ export const THEME_LIMITS = {
   textareaRows: { min: 2, max: 12 },
   arrowPadding: { min: 4, max: 24 },
   optionPadding: { min: 4, max: 16 },
+  overlayAlpha: { min: 0, max: 100 },
+  dialogRadius: { min: 0, max: 24 },
+  dialogMaxWidth: { min: 320, max: 720 },
+  dialogTitleSize: { min: 14, max: 24 },
+  dialogBodySize: { min: 12, max: 16 },
+  dialogBodyWeight: { min: 400, max: 700 },
 } as const;
 
 /* Admin-facing fields: all optional (absent = inherit). */
@@ -135,6 +147,31 @@ export interface ThemeSelectField {
   dropdownAnimation?: OverlayMotionField;
 }
 
+/**
+ * Tooltip house style. Same shape as the component's style object by
+ * design — resolved output feeds Tooltip's `styleOverrides` prop (its
+ * documented lowest-precedence slot), so theming needs zero component
+ * change. Own micro-motion kept (never shared presets).
+ */
+export type ThemeTooltipField = TooltipStyleField;
+
+export interface ThemeDialogField {
+  overlayColor?: string;
+  /** Overlay wash alpha 0–100. */
+  overlayAlpha?: number;
+  panelBg?: string;
+  borderColor?: string;
+  borderRadius?: number;
+  /** Panel width cap px. */
+  maxWidth?: number;
+  titleColor?: string;
+  titleSize?: number;
+  /** Inherited panel defaults (owner direct styles win automatically). */
+  bodySize?: number;
+  bodyWeight?: number;
+  bodyColor?: string;
+}
+
 /** Admin input: global theme scope (per-instance flat props still win). */
 export interface ThemeSettings {
   button?: ThemeButtonField;
@@ -145,6 +182,8 @@ export interface ThemeSettings {
   icon?: ThemeIconField;
   textarea?: ThemeTextareaField;
   select?: ThemeSelectField;
+  tooltip?: ThemeTooltipField;
+  dialog?: ThemeDialogField;
 }
 
 /* Resolved types: all required (produced by resolveTheme below). */
@@ -229,6 +268,23 @@ export interface ResolvedThemeSelect {
   dropdownAnimation: ResolvedOverlayMotion;
 }
 
+/** Resolved tooltip style: all concrete (feeds styleOverrides as-is). */
+export type ResolvedThemeTooltip = Required<TooltipStyleField>;
+
+export interface ResolvedThemeDialog {
+  overlayColor: string;
+  overlayAlpha: number;
+  panelBg: string;
+  borderColor: string;
+  borderRadius: number;
+  maxWidth: number;
+  titleColor: string;
+  titleSize: number;
+  bodySize: number;
+  bodyWeight: number;
+  bodyColor: string;
+}
+
 export interface ResolvedThemeSettings {
   button: ResolvedThemeButton;
   input: ResolvedThemeInput;
@@ -238,6 +294,8 @@ export interface ResolvedThemeSettings {
   icon: ResolvedThemeIcon;
   textarea: ResolvedThemeTextarea;
   select: ResolvedThemeSelect;
+  tooltip: ResolvedThemeTooltip;
+  dialog: ResolvedThemeDialog;
 }
 
 /* Builtins: today's look = final fallback. */
@@ -294,6 +352,24 @@ export const DEFAULT_THEME: ResolvedThemeSettings = {
     arrowIconUrl: "",
     dropdownAnimation: { enabled: true, durationMs: 180, easing: "ease-out", travel: "minimal" },
   },
+  // Tooltip builtins mirror DEFAULT_TOOLTIP_STYLE exactly (same source —
+  // imported, not duplicated, so they can't drift).
+  tooltip: { ...DEFAULT_TOOLTIP_STYLE },
+  // Dialog builtins mirror today's hardcoded look: ink wash at half,
+  // white panel, radius-card 12, max-w-md 448, ink title 18.
+  dialog: {
+    overlayColor: "#0a2540",
+    overlayAlpha: 50,
+    panelBg: "#ffffff",
+    borderColor: "",
+    borderRadius: 12,
+    maxWidth: 448,
+    titleColor: "",
+    titleSize: 18,
+    bodySize: 14,
+    bodyWeight: 400,
+    bodyColor: "",
+  },
 };
 
 const clampInt = (v: unknown, min: number, max: number, fallback: number): number => {
@@ -329,6 +405,8 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
   const ic = s?.icon ?? undefined;
   const ta = s?.textarea ?? undefined;
   const se = s?.select ?? undefined;
+  const tt = s?.tooltip ?? undefined;
+  const dg = s?.dialog ?? undefined;
   const D = DEFAULT_THEME;
   const L = THEME_LIMITS;
   const clampFloat = (v: unknown, min: number, max: number, fallback: number): number => {
@@ -411,6 +489,33 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
       arrowPadding: clampInt(se?.arrowPadding, L.arrowPadding.min, L.arrowPadding.max, D.select.arrowPadding),
       arrowIconUrl: cleanColor(se?.arrowIconUrl, D.select.arrowIconUrl),
       dropdownAnimation: resolveOverlayMotion(se?.dropdownAnimation ?? undefined, D.select.dropdownAnimation),
+    },
+    // Tooltip resolves through its own limits (imported — same source as
+    // the component, so admin ranges can never disagree with it).
+    tooltip: {
+      bg: cleanColor(tt?.bg, D.tooltip.bg),
+      textColor: cleanColor(tt?.textColor, D.tooltip.textColor),
+      borderColor: cleanColor(tt?.borderColor, D.tooltip.borderColor),
+      borderWidth: clampInt(tt?.borderWidth, TOOLTIP_LIMITS.borderWidth.min, TOOLTIP_LIMITS.borderWidth.max, D.tooltip.borderWidth),
+      radius: clampInt(tt?.radius, TOOLTIP_LIMITS.radius.min, TOOLTIP_LIMITS.radius.max, D.tooltip.radius),
+      fontSize: clampInt(tt?.fontSize, TOOLTIP_LIMITS.fontSize.min, TOOLTIP_LIMITS.fontSize.max, D.tooltip.fontSize),
+      fontWeight: clampInt(tt?.fontWeight ?? undefined, 400, 700, D.tooltip.fontWeight),
+      animation: tt?.animation === "slide" || tt?.animation === "fade" || tt?.animation === "none" ? tt.animation : D.tooltip.animation,
+      durationMs: clampInt(tt?.durationMs, TOOLTIP_LIMITS.durationMs.min, TOOLTIP_LIMITS.durationMs.max, D.tooltip.durationMs),
+      offset: clampInt(tt?.offset, TOOLTIP_LIMITS.offset.min, TOOLTIP_LIMITS.offset.max, D.tooltip.offset),
+    },
+    dialog: {
+      overlayColor: cleanColor(dg?.overlayColor, D.dialog.overlayColor),
+      overlayAlpha: clampInt(dg?.overlayAlpha, L.overlayAlpha.min, L.overlayAlpha.max, D.dialog.overlayAlpha),
+      panelBg: cleanColor(dg?.panelBg, D.dialog.panelBg),
+      borderColor: cleanColor(dg?.borderColor, D.dialog.borderColor),
+      borderRadius: clampInt(dg?.borderRadius, L.dialogRadius.min, L.dialogRadius.max, D.dialog.borderRadius),
+      maxWidth: clampInt(dg?.maxWidth, L.dialogMaxWidth.min, L.dialogMaxWidth.max, D.dialog.maxWidth),
+      titleColor: cleanColor(dg?.titleColor, D.dialog.titleColor),
+      titleSize: clampInt(dg?.titleSize, L.dialogTitleSize.min, L.dialogTitleSize.max, D.dialog.titleSize),
+      bodySize: clampInt(dg?.bodySize, L.dialogBodySize.min, L.dialogBodySize.max, D.dialog.bodySize),
+      bodyWeight: clampInt(dg?.bodyWeight, 400, 700, D.dialog.bodyWeight),
+      bodyColor: cleanColor(dg?.bodyColor, D.dialog.bodyColor),
     },
   };
 }
