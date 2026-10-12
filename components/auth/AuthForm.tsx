@@ -1,5 +1,6 @@
 import type { FormEvent, ReactNode } from "react";
 import type { ErrorStyle } from "@/lib/auth/settings";
+import type { ResolvedThemeButton } from "@/lib/cms/themeSettings";
 import Button from "@/components/ui/Button";
 
 /**
@@ -23,6 +24,8 @@ export interface AuthFormProps {
   onSubmit: (e: FormEvent) => void;
   footer?: ReactNode;
   className?: string;
+  /** House button theme (resolved `theme.button`; assembler feeds). */
+  buttonTheme?: ResolvedThemeButton;
 }
 
 export default function AuthForm({
@@ -35,6 +38,7 @@ export default function AuthForm({
   onSubmit,
   footer,
   className = "",
+  buttonTheme,
 }: AuthFormProps) {
   return (
     <div className={`sf-auth__card ${className}`}>
@@ -51,7 +55,7 @@ export default function AuthForm({
             <code>{error.code}</code> {error.message}
           </p>
         )}
-        <Button type="submit" loading={loading}>
+        <Button type="submit" loading={loading} theme={buttonTheme}>
           {submitLabel}
         </Button>
         {error && errorStyle === "inline" && (
