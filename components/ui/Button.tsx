@@ -6,11 +6,15 @@ import {
   type ButtonAnimationField,
   type WaveOrigin,
 } from "@/lib/cms/buttonAnimation";
+// Type-only (tagTone precedent): the theme shape lives in lib, the Button
+// only borrows its type — no runtime dependency into CMS code.
+import type { ResolvedThemeButton } from "@/lib/cms/themeSettings";
 
 /**
  * Dumb Button — Oceanic Blue v1.0 (Documentation/design-system/storefront.md §7.1)
  * props -> JSX only. Parent resolves P>S>G and passes final bg/textColor/border*
- * + animation (future: ctas[].animation payload). No fetch here.
+ * + animation (future: ctas[].animation payload), or one resolved `theme`
+ * object (lowest precedence — flat props still win). No fetch here.
  * Solid fills only, wave hover, min-h 44px.
  */
 export type ButtonVariant = "primary" | "light" | "ghost-ink" | "sale" | "success" | "error";
@@ -77,6 +81,13 @@ export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonE
    * Highest precedence; flat props above win over keys inside this object.
    */
   animation?: ButtonAnimationField;
+  /**
+   * House theme (resolved `theme.button`, sf-038) — lowest precedence:
+   * flat props win, then this object, then variant/defaults. Lets one
+   * admin group retune every uncustomized button without touching call
+   * sites. `""` paint means no override (variant applies).
+   */
+  theme?: ResolvedThemeButton;
   size?: ButtonSize;
   fullWidth?: boolean;
   href?: string;
@@ -89,12 +100,13 @@ const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(fu
   {
     children,
     text,
-    variant = "primary",
+    variant,
     bg,
     textColor,
     borderColor,
     borderWidth = 1,
-    borderRadius = 8,
+    borderRadius,
+    theme,
     waveBg,
     waveText,
     hoverBorderColor,
@@ -117,7 +129,7 @@ const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(fu
     pressedTranslateY,
     pressedShadow,
     animation,
-    size = "md",
+    size,
     fullWidth = false,
     href,
     type = "button",
@@ -131,14 +143,19 @@ const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(fu
   },
   ref,
 ) {
-  const v = VARIANTS[variant] ?? VARIANTS.primary;
-  const s = SIZES[size] ?? SIZES.md;
+  // Trio precedence: flat props > theme object > variant/defaults.
+  // "" theme paint means no override (variant applies) — never blank.
+  const effVariant = variant ?? theme?.defaultVariant ?? "primary";
+  const effSize = size ?? theme?.defaultSize ?? "md";
+  const v = VARIANTS[effVariant] ?? VARIANTS.primary;
+  const s = SIZES[effSize] ?? SIZES.md;
   const isDisabled = disabled || loading;
 
-  // Variable-driven animation: cta=flat props > animation object > DEFAULT.
-  // (Future: resolveButtonAnimation({ cta, section, global, colors }) with
-  // network payloads; section/global are undefined until the DB exists.)
+  // Variable-driven animation: cta=flat props > animation object > global
+  // theme layer > DEFAULT. The `global` slot waited for the DB since day
+  // one — theme.button.animation fills it (sf-038).
   const resolved = resolveButtonAnimation({
+    global: theme?.animation,
     cta: {
       ...animation,
       hoverBg: waveBg ?? animation?.hoverBg,
@@ -172,12 +189,13 @@ const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(fu
     colors: { hoverBg: v.waveBg, hoverText: v.waveText },
   });
 
+  const effRadius = borderRadius ?? theme?.borderRadius ?? 8;
   const cssVars = {
-    "--btn-bg": bg ?? v.bg,
-    "--btn-text": textColor ?? v.text,
-    "--btn-border": borderColor ?? v.border,
+    "--btn-bg": bg ?? (theme?.bg || undefined) ?? v.bg,
+    "--btn-text": textColor ?? (theme?.textColor || undefined) ?? v.text,
+    "--btn-border": borderColor ?? (theme?.borderColor || undefined) ?? v.border,
     "--btn-bw": `${borderWidth}px`,
-    "--btn-radius": borderRadius >= 999 ? "9999px" : `${borderRadius}px`,
+    "--btn-radius": effRadius >= 999 ? "9999px" : `${effRadius}px`,
     ...buttonAnimationCssVars(resolved),
     minHeight: s.minHeight,
     padding: s.padding,
