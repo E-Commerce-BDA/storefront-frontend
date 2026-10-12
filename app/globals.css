@@ -788,6 +788,10 @@ body {
   .sf-toast {
     animation: none;
   }
+  .sf-select__list {
+    animation: none;
+  }
+}
   .sf-searchpalette__card,
   [data-motion] .sf-searchpalette__card {
     animation: none;
@@ -1366,6 +1370,93 @@ body {
    (higher specificity, same :focus moment — no double ring). */
 .sf-textarea[data-focus="custom"]:focus {
   border-color: var(--ta-focus, var(--color-accent));
+}
+
+/* Select (components/ui/Select) — native + custom branches share the
+   wrap/arrow/focus paint; the popup below is custom-only. List-interior
+   faces resolve through --se-* vars (theme feeds; fallbacks mirror
+   DEFAULT_THEME.select). */
+.sf-selectwrap {
+  position: relative;
+}
+/* Arrow layer never intercepts clicks (decorative — control labelled). */
+.sf-select__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.sf-select__arrow img {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  max-width: 20px;
+  max-height: 20px;
+  object-fit: contain;
+  background: var(--color-navbar-bg, #ffffff);
+}
+.sf-select[data-focus="custom"]:focus {
+  border-color: var(--se-focus, var(--color-accent));
+}
+@keyframes sf-select-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.sf-select__list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--color-navbar-bg, #ffffff);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(10, 37, 64, 0.16);
+  /* borderRadius rides inline (matches the trigger). */
+}
+.sf-select__list[data-motion="on"] {
+  animation: sf-select-in var(--se-list-duration, 180ms) var(--se-list-easing, ease-out);
+}
+.sf-select__list[data-motion="off"] {
+  animation: none;
+}
+.sf-select__option {
+  padding: var(--se-opt-pad, 8px 12px);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--se-opt-text, var(--color-ink));
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sf-select__option[data-active="true"] {
+  background: var(--se-hover-bg, var(--color-section-bg));
+  color: var(--se-hover-text, var(--color-ink));
+}
+.sf-select__option[data-selected="true"] {
+  background: var(--se-selected-bg, var(--color-accent-50));
+  color: var(--se-selected-text, var(--color-ink));
+  font-weight: 600;
+}
+.sf-select__empty {
+  padding: var(--se-opt-pad, 8px 12px);
+  font-size: 14px;
+  color: var(--text-muted);
 }
 
 /* Search palette — overlay variant "palette"
