@@ -42,7 +42,7 @@ describe("select style contract", () => {
     const frames = css.match(/@keyframes sf-select-in\s*\{[\s\S]*?\n\}/)?.[0] ?? "";
     expect(frames).toMatch(/opacity/);
     expect(frames).toMatch(/translateY\(4px\)/);
-    expect(css).toMatch(/\[data-motion="on"\] \.sf-select__list\s*\{[^}]*animation:\s*sf-select-in var\(--se-list-duration/);
+    expect(css).toMatch(/\.sf-select__list\[data-motion="on"\]\s*\{[^}]*animation:\s*sf-select-in var\(--se-list-duration/);
     expect(css).toMatch(/\.sf-select__list\[data-motion="off"\]\s*\{[^}]*animation:\s*none/);
   });
 
