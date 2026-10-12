@@ -48,7 +48,12 @@ docs defer to this section where wording differs.)
 1. **`props → JSX`.** No fetch, no store, no CMS imports in `components/ui`
    — ever.
 2. **Controlled-only; parent owns all state.** Exits require an allowlist
-   entry here with a documented reason. Allowlist today: *(empty)*.
+   entry here with a documented reason. Allowlist today:
+   - `Select` custom-branch popup open-state (sf-033): the browser owns a
+     native select's popup internally, so a drop-in replacement must own
+     it too when the parent doesn't (controlled `open`/`onOpenChange`
+     props still win when provided). Value itself stays strictly
+     controlled either way — only the disclosure is exempt, never data.
    Note: `Dialog`'s Escape/overlay handling is NOT an exit — `open` state
    and `onClose` stay parent-owned; Escape/overlay merely *call* the
    parent's callback.
