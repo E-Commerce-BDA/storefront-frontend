@@ -15,6 +15,7 @@
 
 import type { ButtonAnimationField } from "./buttonAnimation";
 import type { ButtonSize, ButtonVariant } from "@/components/ui/Button";
+import type { BadgeBorderStyle } from "@/components/ui/Badge";
 
 /** Numeric limits for every ranged knob (clamped in resolveTheme). */
 export const THEME_LIMITS = {
@@ -23,6 +24,10 @@ export const THEME_LIMITS = {
   checkboxRadius: { min: 0, max: 12 },
   toggleWidth: { min: 32, max: 64 },
   toggleHeight: { min: 20, max: 32 },
+  customBadges: { min: 0, max: 20 },
+  iconSize: { min: 16, max: 32 },
+  iconStroke: { min: 1, max: 3 },
+  textareaRows: { min: 2, max: 12 },
 } as const;
 
 /* Admin-facing fields: all optional (absent = inherit). */
@@ -65,12 +70,50 @@ export interface ThemeToggleField {
   knobColor?: string;
 }
 
+/**
+ * Admin-created badge face (custom badge creator). id + bg + textColor
+ * required (incomplete entries are misses, dropped at resolve);
+ * borderColor defaults to bg, borderStyle to solid.
+ */
+export interface CustomBadgeField {
+  id?: string;
+  label?: string;
+  bg?: string;
+  textColor?: string;
+  borderColor?: string;
+  borderStyle?: BadgeBorderStyle;
+}
+
+export interface ThemeBadgesField {
+  custom?: CustomBadgeField[];
+}
+
+export interface ThemeIconField {
+  size?: number;
+  strokeWidth?: number;
+  filled?: boolean;
+  /** "" = currentColor behavior (no house override). */
+  color?: string;
+}
+
+export interface ThemeTextareaField {
+  bg?: string;
+  textColor?: string;
+  borderColor?: string;
+  focusBorderColor?: string;
+  borderRadius?: number;
+  rows?: number;
+}
+
 /** Admin input: global theme scope (per-instance flat props still win). */
 export interface ThemeSettings {
   button?: ThemeButtonField;
   input?: ThemeInputField;
   checkbox?: ThemeCheckboxField;
   toggle?: ThemeToggleField;
+  badges?: ThemeBadgesField;
+  icon?: ThemeIconField;
+  textarea?: ThemeTextareaField;
 }
 
 /* Resolved types: all required (produced by resolveTheme below). */
@@ -109,11 +152,43 @@ export interface ResolvedThemeToggle {
   knobColor: string;
 }
 
+export interface ResolvedCustomBadge {
+  id: string;
+  label: string;
+  bg: string;
+  textColor: string;
+  borderColor: string;
+  borderStyle: BadgeBorderStyle;
+}
+
+export interface ResolvedThemeBadges {
+  custom: ResolvedCustomBadge[];
+}
+
+export interface ResolvedThemeIcon {
+  size: number;
+  strokeWidth: number;
+  filled: boolean;
+  color: string;
+}
+
+export interface ResolvedThemeTextarea {
+  bg: string;
+  textColor: string;
+  borderColor: string;
+  focusBorderColor: string;
+  borderRadius: number;
+  rows: number;
+}
+
 export interface ResolvedThemeSettings {
   button: ResolvedThemeButton;
   input: ResolvedThemeInput;
   checkbox: ResolvedThemeCheckbox;
   toggle: ResolvedThemeToggle;
+  badges: ResolvedThemeBadges;
+  icon: ResolvedThemeIcon;
+  textarea: ResolvedThemeTextarea;
 }
 
 /* Builtins: today's look = final fallback. */
@@ -149,6 +224,9 @@ export const DEFAULT_THEME: ResolvedThemeSettings = {
     offColor: "",
     knobColor: "#FFFFFF",
   },
+  badges: { custom: [] },
+  icon: { size: 20, strokeWidth: 2, filled: false, color: "" },
+  textarea: { bg: "", textColor: "", borderColor: "", focusBorderColor: "", borderRadius: 10, rows: 4 },
 };
 
 const clampInt = (v: unknown, min: number, max: number, fallback: number): number => {
@@ -180,8 +258,30 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
   const i = s?.input ?? undefined;
   const c = s?.checkbox ?? undefined;
   const t = s?.toggle ?? undefined;
+  const bd = s?.badges ?? undefined;
+  const ic = s?.icon ?? undefined;
+  const ta = s?.textarea ?? undefined;
   const D = DEFAULT_THEME;
   const L = THEME_LIMITS;
+  const clampFloat = (v: unknown, min: number, max: number, fallback: number): number => {
+    const n = typeof v === "number" && Number.isFinite(v) ? v : fallback;
+    return Math.min(max, Math.max(min, n));
+  };
+  const nonEmpty = (v: unknown): v is string => typeof v === "string" && v !== "";
+  // Custom badges: id + bg + textColor required (incomplete = miss);
+  // border defaults to bg, style union-checked to solid. Capped (sanity).
+  const STYLES: BadgeBorderStyle[] = ["solid", "dashed", "dotted"];
+  const custom: ResolvedCustomBadge[] = (Array.isArray(bd?.custom) ? bd.custom : [])
+    .filter((e) => e && nonEmpty(e.id) && nonEmpty(e.bg) && nonEmpty(e.textColor))
+    .slice(0, L.customBadges.max)
+    .map((e) => ({
+      id: e.id as string,
+      label: nonEmpty(e.label) ? (e.label as string) : (e.id as string),
+      bg: e.bg as string,
+      textColor: e.textColor as string,
+      borderColor: nonEmpty(e.borderColor) ? (e.borderColor as string) : (e.bg as string),
+      borderStyle: e.borderStyle && STYLES.includes(e.borderStyle) ? e.borderStyle : "solid",
+    }));
   return {
     button: {
       defaultVariant: b?.defaultVariant && VARIANTS.includes(b.defaultVariant) ? b.defaultVariant : D.button.defaultVariant,
@@ -212,6 +312,21 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
       onColor: cleanColor(t?.onColor, D.toggle.onColor),
       offColor: cleanColor(t?.offColor, D.toggle.offColor),
       knobColor: cleanColor(t?.knobColor, D.toggle.knobColor),
+    },
+    badges: { custom },
+    icon: {
+      size: clampInt(ic?.size, L.iconSize.min, L.iconSize.max, D.icon.size),
+      strokeWidth: clampFloat(ic?.strokeWidth, L.iconStroke.min, L.iconStroke.max, D.icon.strokeWidth),
+      filled: ic?.filled ?? D.icon.filled,
+      color: cleanColor(ic?.color, D.icon.color),
+    },
+    textarea: {
+      bg: cleanColor(ta?.bg, D.textarea.bg),
+      textColor: cleanColor(ta?.textColor, D.textarea.textColor),
+      borderColor: cleanColor(ta?.borderColor, D.textarea.borderColor),
+      focusBorderColor: cleanColor(ta?.focusBorderColor, D.textarea.focusBorderColor),
+      borderRadius: clampInt(ta?.borderRadius, L.radius.min, L.radius.max, D.textarea.borderRadius),
+      rows: clampInt(ta?.rows, L.textareaRows.min, L.textareaRows.max, D.textarea.rows),
     },
   };
 }
