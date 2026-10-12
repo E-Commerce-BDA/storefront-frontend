@@ -272,9 +272,12 @@ function SelectListbox({
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Active option scrolls into view (nearest — never yanks the page).
+  // Optional call: jsdom and old browsers lack scrollIntoView.
   useEffect(() => {
     if (!open || active == null) return;
-    rootRef.current?.querySelector(`[data-value="${CSS.escape(active)}"]`)?.scrollIntoView({ block: "nearest" });
+    rootRef.current
+      ?.querySelector(`[data-value="${CSS.escape(active)}"]`)
+      ?.scrollIntoView?.({ block: "nearest" });
   }, [open, active]);
 
   const selected = options.find((o) => o.value === value);
