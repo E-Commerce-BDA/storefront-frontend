@@ -1435,7 +1435,8 @@ body {
   animation: none;
 }
 .sf-select__option {
-  padding: var(--se-opt-pad, 8px 12px);
+  /* Vertical pad is admin-tunable; horizontal aligns with trigger text. */
+  padding: var(--se-opt-pad-y, 8px) 12px;
   border-radius: 8px;
   font-size: 14px;
   color: var(--se-opt-text, var(--color-ink));
@@ -1454,7 +1455,7 @@ body {
   font-weight: 600;
 }
 .sf-select__empty {
-  padding: var(--se-opt-pad, 8px 12px);
+  padding: var(--se-opt-pad-y, 8px) 12px;
   font-size: 14px;
   color: var(--text-muted);
 }

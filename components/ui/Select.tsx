@@ -52,6 +52,18 @@ export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectE
    * Disabled motion renders no vars (CSS fallbacks stay instant-safe).
    */
   listMotion?: ResolvedOverlayMotion;
+  /**
+   * Popup faces (custom branch only). Non-empty values inline as --se-*
+   * vars; absent faces stay token-backed (empty vars would void the
+   * paint — never inlined, see header). Theme feeds at the owner.
+   */
+  listTheme?: {
+    selectedBg?: string;
+    selectedText?: string;
+    hoverBg?: string;
+    hoverText?: string;
+    optionPaddingY?: number;
+  };
 }
 
 /**
@@ -77,7 +89,7 @@ function ArrowGlyph({ url }: { url?: string }) {
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
-  { value, onChange, options, label, helper, error, placeholder = "Select…", radius = 10, borderColor, bg, textColor, focusBorderColor, variant = "native", arrowIconUrl, arrowPadding = 12, open: controlledOpen, onOpenChange, listMotion = { enabled: true, durationMs: 180, easing: "ease-out", travel: "minimal" }, id, disabled = false, required = false, className = "", style = {}, ...rest },
+  { value, onChange, options, label, helper, error, placeholder = "Select…", radius = 10, borderColor, bg, textColor, focusBorderColor, variant = "native", arrowIconUrl, arrowPadding = 12,   open: controlledOpen, onOpenChange, listMotion = { enabled: true, durationMs: 180, easing: "ease-out", travel: "minimal" }, listTheme, id, disabled = false, required = false, className = "", style = {}, ...rest },
   ref,
 ) {
   const invalid = error != null && error !== "";
@@ -117,6 +129,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
           controlledOpen={controlledOpen}
           onOpenChange={onOpenChange}
           listMotion={listMotion}
+          listTheme={listTheme}
           onValue={(v) => onChange?.(v)}
         />
         {footNode}
@@ -199,6 +212,15 @@ interface SelectListboxProps {
   controlledOpen: boolean | undefined;
   onOpenChange: ((open: boolean) => void) | undefined;
   listMotion: ResolvedOverlayMotion;
+  listTheme:
+    | {
+        selectedBg?: string;
+        selectedText?: string;
+        hoverBg?: string;
+        hoverText?: string;
+        optionPaddingY?: number;
+      }
+    | undefined;
   onValue: (v: string) => void;
 }
 
@@ -219,6 +241,7 @@ function SelectListbox({
   controlledOpen,
   onOpenChange,
   listMotion,
+  listTheme,
   onValue,
 }: SelectListboxProps) {
   const [internalOpen, setInternalOpen] = useState(false);
@@ -358,6 +381,15 @@ function SelectListbox({
                   "--se-list-duration": `${listMotion.durationMs}ms`,
                   "--se-list-easing": listMotion.easing,
                 }
+              : {}),
+            // Empty faces never inline (an empty var voids the paint —
+            // token fallbacks hold instead).
+            ...(listTheme?.selectedBg ? { "--se-selected-bg": listTheme.selectedBg } : {}),
+            ...(listTheme?.selectedText ? { "--se-selected-text": listTheme.selectedText } : {}),
+            ...(listTheme?.hoverBg ? { "--se-hover-bg": listTheme.hoverBg } : {}),
+            ...(listTheme?.hoverText ? { "--se-hover-text": listTheme.hoverText } : {}),
+            ...(typeof listTheme?.optionPaddingY === "number"
+              ? { "--se-opt-pad-y": `${listTheme.optionPaddingY}px` }
               : {}),
           } as CSSProperties}
         >
