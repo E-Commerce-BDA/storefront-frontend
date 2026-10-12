@@ -12,6 +12,8 @@ import SearchPalette from "@/components/shell/SearchPalette";
 import { useSearch } from "@/app/hooks/useSearch";
 import { useRecentSearches } from "@/app/hooks/useRecentSearches";
 import { useQuickAdd } from "@/app/hooks/useQuickAdd";
+import { useSelectOptions } from "@/app/hooks/useSelectOptions";
+import { createDemoOptions } from "@/lib/select/demoOptions";
 import { createDemoSource, DEMO_CATALOG, DEMO_TRENDING } from "@/lib/search/demoSource";
 import { createDemoQuickAdd } from "@/lib/cart/quickAdd";
 import {
@@ -193,6 +195,12 @@ export default function PreviewPage() {
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
   const searchSource = useMemo(() => createDemoSource(), []);
   const paletteQuickAddPort = useMemo(() => createDemoQuickAdd(), []);
+  // §9 select demos run their OWN options hook (never share list state —
+  // same own-instance rule as the overlay demos).
+  const demoOptionsSource = useMemo(() => createDemoOptions(), []);
+  const asyncCountries = useSelectOptions(demoOptionsSource);
+  const [asyncCountry, setAsyncCountry] = useState("");
+  const [themedCountry, setThemedCountry] = useState("de");
   const liveSearch = useSearch(searchSource);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetActive, setSheetActive] = useState(0);
@@ -457,6 +465,26 @@ export default function PreviewPage() {
               helper="Shipping destination"
             />
             <Select label="Error demo" value="" onChange={() => {}} options={[]} error="Required field" />
+            <Select
+              label="Country (async custom)"
+              value={asyncCountry}
+              onChange={setAsyncCountry}
+              placeholder={asyncCountries.status === "loading" ? "Loading countries…" : "Select country…"}
+              options={asyncCountries.options}
+              variant="custom"
+              helper={`Port status: ${asyncCountries.status} (stale-killed, unmount-safe)`}
+            />
+            <Select
+              label="Country (themed custom, instant)"
+              value={themedCountry}
+              onChange={setThemedCountry}
+              placeholder="Select country…"
+              options={asyncCountries.options}
+              variant="custom"
+              listTheme={{ selectedBg: "#0077b6", selectedText: "#ffffff", hoverBg: "#e6f7fb", optionPaddingY: 10 }}
+              listMotion={{ enabled: false, durationMs: 180, easing: "ease-out", travel: "minimal" }}
+              helper="Custom faces + animation off via props (theme feeds at the owner)"
+            />
           </div>
         </Card>
 
