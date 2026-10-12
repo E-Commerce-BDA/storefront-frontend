@@ -15,6 +15,13 @@
 
 import type { ButtonAnimationField } from "./buttonAnimation";
 import { resolveOverlayMotion, type OverlayMotionField, type ResolvedOverlayMotion } from "@/lib/search/motion";
+import type {
+  BadgePosition,
+  CtaPosition,
+  HoverMode,
+  MediaRatio,
+  QuickAction,
+} from "@/lib/commerce/productCard";
 import type { ButtonSize, ButtonVariant } from "@/components/ui/Button";
 import type { BadgeBorderStyle } from "@/components/ui/Badge";
 import type { SelectVariant } from "@/components/ui/Select";
@@ -44,6 +51,10 @@ export const THEME_LIMITS = {
   dialogTitleSize: { min: 14, max: 24 },
   dialogBodySize: { min: 12, max: 16 },
   dialogBodyWeight: { min: 400, max: 700 },
+  cardRadius: { min: 0, max: 24 },
+  nameSize: { min: 12, max: 22 },
+  priceSize: { min: 12, max: 22 },
+  gridCols: { min: 1, max: 5 },
 } as const;
 
 /* Admin-facing fields: all optional (absent = inherit). */
@@ -121,6 +132,32 @@ export interface ThemeTextareaField {
   rows?: number;
 }
 
+/**
+ * Product-card house style (product.md §9). Columns are listing-level
+ * (the card never knows siblings) — desktop/tablet/phone each clamped
+ * to their legibility ranges (5/3/2 caps: 4-up tablet and 3-up phone
+ * squeeze cards illegible, so the resolver caps, never the CSS).
+ */
+export interface ThemeProductCardField {
+  cardBg?: string;
+  borderColor?: string;
+  borderRadius?: number;
+  mediaRatio?: MediaRatio;
+  badgePosition?: BadgePosition;
+  showBadge?: boolean;
+  showRatings?: boolean;
+  showDept?: boolean;
+  hoverMode?: HoverMode;
+  ctaSet?: QuickAction[];
+  ctaPosition?: CtaPosition;
+  showActionsOnTouch?: boolean;
+  nameSize?: number;
+  priceSize?: number;
+  colsDesktop?: number;
+  colsTablet?: number;
+  colsPhone?: number;
+}
+
 export type SelectBranch = SelectVariant;
 
 export interface ThemeSelectField {
@@ -184,6 +221,7 @@ export interface ThemeSettings {
   select?: ThemeSelectField;
   tooltip?: ThemeTooltipField;
   dialog?: ThemeDialogField;
+  productCard?: ThemeProductCardField;
 }
 
 /* Resolved types: all required (produced by resolveTheme below). */
@@ -285,6 +323,26 @@ export interface ResolvedThemeDialog {
   bodyColor: string;
 }
 
+export interface ResolvedThemeProductCard {
+  cardBg: string;
+  borderColor: string;
+  borderRadius: number;
+  mediaRatio: MediaRatio;
+  badgePosition: BadgePosition;
+  showBadge: boolean;
+  showRatings: boolean;
+  showDept: boolean;
+  hoverMode: HoverMode;
+  ctaSet: QuickAction[];
+  ctaPosition: CtaPosition;
+  showActionsOnTouch: boolean;
+  nameSize: number;
+  priceSize: number;
+  colsDesktop: number;
+  colsTablet: number;
+  colsPhone: number;
+}
+
 export interface ResolvedThemeSettings {
   button: ResolvedThemeButton;
   input: ResolvedThemeInput;
@@ -296,6 +354,7 @@ export interface ResolvedThemeSettings {
   select: ResolvedThemeSelect;
   tooltip: ResolvedThemeTooltip;
   dialog: ResolvedThemeDialog;
+  productCard: ResolvedThemeProductCard;
 }
 
 /* Builtins: today's look = final fallback. */
@@ -370,6 +429,27 @@ export const DEFAULT_THEME: ResolvedThemeSettings = {
     bodyWeight: 400,
     bodyColor: "",
   },
+  // Card builtins mirror today's component defaults: transparent card,
+  // 4:5 media, left badge, actions-center, 15px info faces.
+  productCard: {
+    cardBg: "",
+    borderColor: "",
+    borderRadius: 0,
+    mediaRatio: "4:5",
+    badgePosition: "left",
+    showBadge: true,
+    showRatings: true,
+    showDept: true,
+    hoverMode: "actions",
+    ctaSet: ["quick-view", "wishlist", "add-to-cart"],
+    ctaPosition: "center",
+    showActionsOnTouch: false,
+    nameSize: 15,
+    priceSize: 15,
+    colsDesktop: 4,
+    colsTablet: 3,
+    colsPhone: 2,
+  },
 };
 
 const clampInt = (v: unknown, min: number, max: number, fallback: number): number => {
@@ -407,6 +487,7 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
   const se = s?.select ?? undefined;
   const tt = s?.tooltip ?? undefined;
   const dg = s?.dialog ?? undefined;
+  const pc = s?.productCard ?? undefined;
   const D = DEFAULT_THEME;
   const L = THEME_LIMITS;
   const clampFloat = (v: unknown, min: number, max: number, fallback: number): number => {
@@ -516,6 +597,37 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
       bodySize: clampInt(dg?.bodySize, L.dialogBodySize.min, L.dialogBodySize.max, D.dialog.bodySize),
       bodyWeight: clampInt(dg?.bodyWeight, 400, 700, D.dialog.bodyWeight),
       bodyColor: cleanColor(dg?.bodyColor, D.dialog.bodyColor),
+    },
+    // Columns clamp to legibility ranges (5/3/2 caps — CSS never sees an
+    // absurd count; ctaSet clamps to 3 with unknown actions dropped).
+    productCard: {
+      cardBg: cleanColor(pc?.cardBg, D.productCard.cardBg),
+      borderColor: cleanColor(pc?.borderColor, D.productCard.borderColor),
+      borderRadius: clampInt(pc?.borderRadius, L.cardRadius.min, L.cardRadius.max, D.productCard.borderRadius),
+      mediaRatio:
+        pc?.mediaRatio === "3:4" ||
+        pc?.mediaRatio === "4:3" ||
+        pc?.mediaRatio === "4:5" ||
+        pc?.mediaRatio === "1:1" ||
+        pc?.mediaRatio === "16:9"
+          ? pc.mediaRatio
+          : D.productCard.mediaRatio,
+      badgePosition: pc?.badgePosition === "right" ? "right" : D.productCard.badgePosition,
+      showBadge: pc?.showBadge ?? D.productCard.showBadge,
+      showRatings: pc?.showRatings ?? D.productCard.showRatings,
+      showDept: pc?.showDept ?? D.productCard.showDept,
+      hoverMode: pc?.hoverMode === "image" || pc?.hoverMode === "actions" ? pc.hoverMode : D.productCard.hoverMode,
+      ctaSet: (Array.isArray(pc?.ctaSet) ? pc.ctaSet : D.productCard.ctaSet)
+        .filter((c): c is QuickAction => c === "quick-view" || c === "wishlist" || c === "add-to-cart" || c === "share")
+        .slice(0, 3),
+      ctaPosition:
+        pc?.ctaPosition === "left" || pc?.ctaPosition === "right" ? pc.ctaPosition : D.productCard.ctaPosition,
+      showActionsOnTouch: pc?.showActionsOnTouch ?? D.productCard.showActionsOnTouch,
+      nameSize: clampInt(pc?.nameSize, L.nameSize.min, L.nameSize.max, D.productCard.nameSize),
+      priceSize: clampInt(pc?.priceSize, L.nameSize.min, L.nameSize.max, D.productCard.priceSize),
+      colsDesktop: clampInt(pc?.colsDesktop, 3, 5, D.productCard.colsDesktop),
+      colsTablet: clampInt(pc?.colsTablet, 2, 3, D.productCard.colsTablet),
+      colsPhone: clampInt(pc?.colsPhone, 1, 2, D.productCard.colsPhone),
     },
   };
 }
