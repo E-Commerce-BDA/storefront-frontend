@@ -52,6 +52,14 @@ describe("Icon contract", () => {
     expect(screen.getByTitle("Our flagship store")).not.toBeNull();
   });
 
+  it("passes stroke ink through CSS color (currentColor default, caller wins)", () => {
+    const { unmount } = render(<Icon name="x" />);
+    expect((document.querySelector("svg") as HTMLElement).style.color).toBe("currentColor");
+    unmount();
+    render(<Icon name="x" color="#123456" style={{ color: "#654321" }} />);
+    expect((document.querySelector("svg") as HTMLElement).style.color).toBe("rgb(101, 67, 33)");
+  });
+
   it("fails closed on unknown names (renders nothing, warns in dev)", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const { container } = render(
