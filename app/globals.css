@@ -791,6 +791,13 @@ body {
   .sf-select__list {
     animation: none;
   }
+  .sf-productcard__hoverimg,
+  .sf-productcard__ctas {
+    transition: none;
+  }
+  .sf-productcard[data-hover="image"] .sf-productcard__media:hover .sf-productcard__hoverimg {
+    opacity: 1;
+  }
   /* In-guard (sf-033 fix): these lines sat orphaned outside the query
      with a stray brace — the palette animation was dead unconditionally.
      Now the arrival plays, and reduced-motion kills it as designed. */
@@ -1462,6 +1469,211 @@ body {
   padding: var(--se-opt-pad-y, 8px) 12px;
   font-size: 14px;
   color: var(--text-muted);
+}
+
+/* ProductCard (components/commerce/ProductCard, product.md §1–8).
+   Article root: media (cover + hover swap + badge + CTA layer) + info.
+   Paint resolves through --pc-* vars (theme feeds at build); fallbacks
+   mirror palette-row faces. State via data-* hooks only. Hover layer is
+   hover-only: touch hides CTAs unless data-touch-actions="true". Out of
+   stock disables actions + dims via explicit solids (never opacity). */
+.sf-productcard {
+  display: grid;
+  gap: 12px;
+  background: var(--pc-bg, transparent);
+  border: 1px solid var(--pc-border, transparent);
+  border-radius: var(--pc-radius, 0);
+  padding: var(--pc-pad, 0);
+}
+.sf-productcard__media {
+  position: relative;
+  border-radius: var(--pc-media-radius, var(--pc-radius, 0));
+  overflow: hidden;
+  background: var(--color-image-bg);
+  aspect-ratio: var(--pc-ratio, 4 / 5);
+}
+.sf-productcard__open {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+.sf-productcard__open:disabled {
+  cursor: default;
+}
+.sf-productcard__open:focus-visible,
+.sf-productcard__name:focus-visible,
+.sf-productcard__cta:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.sf-productcard__cover,
+.sf-productcard__hoverimg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sf-productcard__hoverimg {
+  opacity: 0;
+  transition: opacity 160ms ease-out;
+}
+.sf-productcard[data-hover="image"] .sf-productcard__media:hover .sf-productcard__hoverimg {
+  opacity: 1;
+}
+.sf-productcard__initial {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 48px;
+  color: var(--text-muted);
+}
+.sf-productcard__badge {
+  position: absolute;
+  top: 12px;
+}
+.sf-productcard[data-badgepos="left"] .sf-productcard__badge {
+  left: 12px;
+}
+.sf-productcard[data-badgepos="right"] .sf-productcard__badge {
+  right: 12px;
+}
+.sf-productcard__ctas {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 160ms ease-out;
+  pointer-events: none;
+}
+.sf-productcard[data-ctapos="left"] .sf-productcard__ctas {
+  justify-content: flex-start;
+}
+.sf-productcard[data-ctapos="center"] .sf-productcard__ctas {
+  justify-content: center;
+}
+.sf-productcard[data-ctapos="right"] .sf-productcard__ctas {
+  justify-content: flex-end;
+}
+.sf-productcard[data-hover="actions"] .sf-productcard__media:hover .sf-productcard__ctas,
+.sf-productcard[data-hover="actions"] .sf-productcard__media:focus-within .sf-productcard__ctas {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* Touch (hover: none): CTAs hide unless the admin opts in — tap opens. */
+@media (hover: none) {
+  .sf-productcard[data-touch-actions="false"] .sf-productcard__ctas {
+    display: none;
+  }
+  .sf-productcard[data-touch-actions="true"] .sf-productcard__ctas {
+    opacity: 1;
+    pointer-events: auto;
+    position: static;
+    padding: 8px 0 0;
+  }
+}
+.sf-productcard__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--color-navbar-bg, #ffffff);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.sf-productcard__cta:not([disabled]):hover {
+  border-color: var(--color-accent);
+}
+.sf-productcard__cta[disabled] {
+  cursor: default;
+  background: var(--color-section-bg);
+  color: var(--text-muted);
+}
+.sf-productcard__soldout {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--color-ink);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+.sf-productcard[data-stock="out"] .sf-productcard__cover,
+.sf-productcard[data-stock="out"] .sf-productcard__initial {
+  filter: saturate(0.4);
+}
+.sf-productcard__info {
+  display: grid;
+  gap: 4px;
+}
+.sf-productcard__dept {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pc-dept, var(--text-muted));
+}
+.sf-productcard__name {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  font-size: var(--pc-name-size, 15px);
+  font-weight: 600;
+  color: var(--pc-name, var(--color-ink));
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.sf-productcard__name:disabled {
+  cursor: default;
+}
+.sf-productcard__pricerow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: var(--pc-price-size, 15px);
+  font-weight: 700;
+  color: var(--pc-price, var(--color-ink));
+}
+.sf-productcard__compare {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.sf-productcard__rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-warning);
+}
+.sf-productcard__rating span {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.sf-productcard__lowstock {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-warning);
 }
 
 /* Search palette — overlay variant "palette"
