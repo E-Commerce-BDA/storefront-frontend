@@ -791,7 +791,9 @@ body {
   .sf-select__list {
     animation: none;
   }
-}
+  /* In-guard (sf-033 fix): these lines sat orphaned outside the query
+     with a stray brace — the palette animation was dead unconditionally.
+     Now the arrival plays, and reduced-motion kills it as designed. */
   .sf-searchpalette__card,
   [data-motion] .sf-searchpalette__card {
     animation: none;
@@ -1380,10 +1382,12 @@ body {
   position: relative;
 }
 /* Arrow layer never intercepts clicks (decorative — control labelled). */
+/* Centering without translate (wave-park guard bans bare-% parks):
+   stretched absolute + flex centers the glyph at any trigger height. */
 .sf-select__arrow {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
+  bottom: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
