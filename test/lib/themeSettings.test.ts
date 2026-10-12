@@ -115,6 +115,50 @@ describe("resolveThemeSettings", () => {
     expect(custom.select.variant).toBe("custom");
   });
 
+  it("resolves tooltip through its own model (sf-037)", () => {
+    const empty = resolveThemeSettings({});
+    expect(empty.tooltip).toEqual({
+      bg: "#0a2540",
+      textColor: "#ffffff",
+      borderColor: "transparent",
+      borderWidth: 0,
+      radius: 8,
+      fontSize: 12,
+      fontWeight: 500,
+      animation: "slide",
+      durationMs: 160,
+      offset: 8,
+    });
+    const r = resolveThemeSettings({
+      settings: {
+        tooltip: { bg: "#111111", borderWidth: 99, radius: -5, fontSize: 99, animation: "spin" as never, durationMs: 9999, offset: 0 },
+      },
+    });
+    expect(r.tooltip.bg).toBe("#111111");
+    expect(r.tooltip.borderWidth).toBe(2);
+    expect(r.tooltip.radius).toBe(0);
+    expect(r.tooltip.fontSize).toBe(14);
+    expect(r.tooltip.animation).toBe("slide");
+    expect(r.tooltip.durationMs).toBe(500);
+    expect(r.tooltip.offset).toBe(4);
+  });
+
+  it("resolves dialog paint with clamps and union-safe defaults (sf-037)", () => {
+    const empty = resolveThemeSettings({});
+    expect(empty.dialog).toMatchObject({ overlayAlpha: 50, borderRadius: 12, maxWidth: 448, titleSize: 18 });
+    const r = resolveThemeSettings({
+      settings: {
+        dialog: { overlayAlpha: 999, borderRadius: -1, maxWidth: 10, titleSize: 99, bodyWeight: 100, panelBg: "#111111" },
+      },
+    });
+    expect(r.dialog.overlayAlpha).toBe(100);
+    expect(r.dialog.borderRadius).toBe(0);
+    expect(r.dialog.maxWidth).toBe(320);
+    expect(r.dialog.titleSize).toBe(24);
+    expect(r.dialog.bodyWeight).toBe(400);
+    expect(r.dialog.panelBg).toBe("#111111");
+  });
+
   it("applies admin values and forwards animation unresolved", () => {
     const r = resolveThemeSettings({
       settings: {
