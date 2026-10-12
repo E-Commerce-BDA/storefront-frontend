@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useRef, useState, type CSSProperties } from "react";
 import { Icon } from "./icons";
+import type { ResolvedOverlayMotion } from "@/lib/search/motion";
 
 /**
  * Dumb Select — native branch by default (custom listbox via
@@ -45,6 +46,12 @@ export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectE
    */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /**
+   * Popup motion (custom branch only). Default mirrors the builtin
+   * (subtle fast fade); theme.dropdownAnimation feeds this at the owner.
+   * Disabled motion renders no vars (CSS fallbacks stay instant-safe).
+   */
+  listMotion?: ResolvedOverlayMotion;
 }
 
 /**
@@ -70,7 +77,7 @@ function ArrowGlyph({ url }: { url?: string }) {
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
-  { value, onChange, options, label, helper, error, placeholder = "Select…", radius = 10, borderColor, bg, textColor, focusBorderColor, variant = "native", arrowIconUrl, arrowPadding = 12, open: controlledOpen, onOpenChange, id, disabled = false, required = false, className = "", style = {}, ...rest },
+  { value, onChange, options, label, helper, error, placeholder = "Select…", radius = 10, borderColor, bg, textColor, focusBorderColor, variant = "native", arrowIconUrl, arrowPadding = 12, open: controlledOpen, onOpenChange, listMotion = { enabled: true, durationMs: 180, easing: "ease-out", travel: "minimal" }, id, disabled = false, required = false, className = "", style = {}, ...rest },
   ref,
 ) {
   const invalid = error != null && error !== "";
@@ -109,6 +116,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
           arrowPadding={arrowPadding}
           controlledOpen={controlledOpen}
           onOpenChange={onOpenChange}
+          listMotion={listMotion}
           onValue={(v) => onChange?.(v)}
         />
         {footNode}
@@ -190,6 +198,7 @@ interface SelectListboxProps {
   arrowPadding: number;
   controlledOpen: boolean | undefined;
   onOpenChange: ((open: boolean) => void) | undefined;
+  listMotion: ResolvedOverlayMotion;
   onValue: (v: string) => void;
 }
 
@@ -209,6 +218,7 @@ function SelectListbox({
   arrowPadding,
   controlledOpen,
   onOpenChange,
+  listMotion,
   onValue,
 }: SelectListboxProps) {
   const [internalOpen, setInternalOpen] = useState(false);
@@ -339,9 +349,17 @@ function SelectListbox({
           role="listbox"
           aria-label={fieldId ?? "Options"}
           aria-activedescendant={active ? `sf-opt-${active}` : undefined}
-          data-motion="on"
+          data-motion={listMotion.enabled ? "on" : "off"}
           className="sf-select__list"
-          style={{ borderRadius: radius } as CSSProperties}
+          style={{
+            borderRadius: radius,
+            ...(listMotion.enabled
+              ? {
+                  "--se-list-duration": `${listMotion.durationMs}ms`,
+                  "--se-list-easing": listMotion.easing,
+                }
+              : {}),
+          } as CSSProperties}
         >
           {options.length === 0 && (
             <li role="option" aria-selected="false" aria-disabled="true" className="sf-select__empty">
