@@ -634,7 +634,8 @@ body {
 /* Hide-on-scroll: mount slides the bar away (transitioned, instant
    under reduced-motion via the sheet-style guard pattern below). */
 .sf-navbar[data-hidden="true"] {
-  transform: translateY(-100%);
+  /* Buffered travel (wave-park physics — bare -100% bleeds at zoom). */
+  transform: translateY(calc(-100% - 8px));
   transition: transform 200ms ease-out;
 }
 .sf-navbar__spacer {
