@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Fraunces, Outfit } from "next/font/google";
 import "./globals.css";
+import { resolveNavSettings } from "@/lib/shell/resolveNav";
+import { DEMO_NAV_INPUT } from "@/lib/shell/demoNavInput";
+import NavbarMount from "./_components/NavbarMount";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -21,10 +24,19 @@ export const metadata: Metadata = {
   description: "Dumb UI primitives preview for the e-commerce storefront.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+/**
+ * Root layout — server resolves nav once per request (admin values flow
+ * as concrete props; client never sees knob names), NavbarMount owns
+ * interaction state below. DEMO input until cms-svc lands (one-line swap).
+ */
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const nav = resolveNavSettings({ settings: DEMO_NAV_INPUT, global: null });
   return (
     <html lang="en" className={`${fraunces.variable} ${outfit.variable}`}>
-      <body>{children}</body>
+      <body>
+        <NavbarMount nav={nav} />
+        {children}
+      </body>
     </html>
   );
 }
