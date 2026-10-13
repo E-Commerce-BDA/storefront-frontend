@@ -17,6 +17,9 @@ import { createDemoOptions } from "@/lib/select/demoOptions";
 import { createDemoSource, DEMO_CATALOG, DEMO_TRENDING } from "@/lib/search/demoSource";
 import { createDemoQuickAdd } from "@/lib/cart/quickAdd";
 import { DEFAULT_THEME } from "@/lib/cms/themeSettings";
+import { resolveNavSettings } from "@/lib/shell/resolveNav";
+import { DEMO_NAV_INPUT } from "@/lib/shell/demoNavInput";
+import NavbarMount from "@/app/_components/NavbarMount";
 import {
   Button,
   Input,
@@ -196,6 +199,9 @@ export default function PreviewPage() {
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
   const searchSource = useMemo(() => createDemoSource(), []);
   const paletteQuickAddPort = useMemo(() => createDemoQuickAdd(), []);
+  // §18 navbar demo resolves its OWN nav (never shares the layout
+  // chrome's object — same own-instance rule as the overlay demos).
+  const demoNav = useMemo(() => resolveNavSettings({ settings: DEMO_NAV_INPUT, global: null }), []);
   // §9 select demos run their OWN options hook (never share list state —
   // same own-instance rule as the overlay demos).
   const demoOptionsSource = useMemo(() => createDemoOptions(), []);
@@ -701,6 +707,17 @@ export default function PreviewPage() {
               Open palette search
             </Button>
           </Row>
+        </Card>
+
+        <H2>18. Navbar — live chrome mount (demo instance)</H2>
+        <Card>
+          <p className="mb-3 text-sm text-[var(--text-muted)]">
+            Production <code>NavbarMount</code> on demo-resolved settings —
+            own mount instance (never shares state with the layout chrome
+            above). Announcement, links, search overlay and drawer all live.
+            Production mounts once in <code>app/layout.tsx</code>.
+          </p>
+          <NavbarMount nav={demoNav} />
         </Card>
 
       </main>
