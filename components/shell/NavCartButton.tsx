@@ -11,14 +11,16 @@ export interface NavCartButtonProps {
   badgeCap?: number;
   onCart: () => void;
   label?: string;
+  /** Preview mode (cart slice lands later): visibly disabled, never a dead click. */
+  disabled?: boolean;
 }
 
 const NavCartButton = forwardRef<HTMLButtonElement, NavCartButtonProps>(
-  function NavCartButton({ count = 0, badgeCap = 9, onCart, label = "Cart" }, ref) {
+  function NavCartButton({ count = 0, badgeCap = 9, onCart, label = "Cart", disabled = false }, ref) {
     const shown = count > badgeCap ? `${badgeCap}+` : `${count}`;
     return (
       <span className="sf-navcart">
-        <IconButton ref={ref} label={count > 0 ? `${label}, ${shown} items` : label} onClick={onCart}>
+        <IconButton ref={ref} label={count > 0 ? `${label}, ${shown} items` : label} onClick={onCart} disabled={disabled}>
           <Icon name="shopping-bag" size={20} />
         </IconButton>
         {count > 0 && (
