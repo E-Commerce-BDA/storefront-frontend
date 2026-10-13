@@ -631,6 +631,16 @@ body {
 .sf-navbar[data-shadow="none"] {
   border-bottom: 0;
 }
+/* Hide-on-scroll: mount slides the bar away (transitioned, instant
+   under reduced-motion via the sheet-style guard pattern below). */
+.sf-navbar[data-hidden="true"] {
+  transform: translateY(-100%);
+  transition: transform 200ms ease-out;
+}
+.sf-navbar__spacer {
+  flex: 1 1 auto;
+  min-width: 8px;
+}
 .sf-navlogo {
   display: inline-flex;
   align-items: center;
@@ -916,6 +926,10 @@ body {
   .sf-mobiledrawer,
   [data-side] .sf-mobiledrawer {
     animation: none;
+  }
+  .sf-navbar[data-hidden="true"] {
+    transform: none;
+    transition: none;
   }
   .sf-productcard__hoverimg,
   .sf-productcard__ctas {
