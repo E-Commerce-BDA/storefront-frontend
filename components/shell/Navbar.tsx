@@ -4,6 +4,9 @@ import AnnouncementBar, { type AnnouncementItem } from "./AnnouncementBar";
 import NavLinks from "./NavLinks";
 import NavLogo from "./NavLogo";
 import NavSearchTrigger from "./NavSearchTrigger";
+import NavAccountButton from "./NavAccountButton";
+import NavWishlistButton from "./NavWishlistButton";
+import NavCartButton from "./NavCartButton";
 import MobileDrawer from "./MobileDrawer";
 import type {
   BarShadow,
@@ -35,6 +38,9 @@ export interface NavbarProps {
     logo: boolean;
     links: boolean;
     search: boolean;
+    account: boolean;
+    wishlist: boolean;
+    cart: boolean;
   };
   logo: { imageUrl: string; height: number; wordmark: string };
   bar: { height: number; sticky: StickyMode; shadow: BarShadow; hidden: boolean };
@@ -120,11 +126,25 @@ export default function Navbar({
         )}
         {regions.links && !isMobile && <NavLinks links={links} />}
         <span className="sf-navbar__spacer" aria-hidden="true" />
-        {regions.search && (
-          <span onMouseEnter={onSearchPreload} onFocus={onSearchPreload}>
-            <NavSearchTrigger onOpen={onSearchOpen} />
-          </span>
-        )}
+        <span className="sf-navbar__actions">
+          {regions.search && (
+            <span onMouseEnter={onSearchPreload} onFocus={onSearchPreload}>
+              <NavSearchTrigger onOpen={onSearchOpen} />
+            </span>
+          )}
+          {/* Preview icons (sf-047): present but disabled with coming-soon
+              labels — never a dead click. Noops never fire while disabled;
+              slices replace them with real handlers. */}
+          {regions.account && (
+            <NavAccountButton onAccount={() => {}} label="Account (coming soon)" disabled />
+          )}
+          {regions.wishlist && (
+            <NavWishlistButton onWishlist={() => {}} label="Wishlist (coming soon)" disabled />
+          )}
+          {regions.cart && (
+            <NavCartButton onCart={() => {}} label="Cart (coming soon)" disabled />
+          )}
+        </span>
       </div>
       <MobileDrawer
         open={mobileOpen}

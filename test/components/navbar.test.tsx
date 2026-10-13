@@ -16,7 +16,7 @@ import MobileDrawer from "@/components/shell/MobileDrawer";
 afterEach(cleanup);
 
 const BASE: NavbarProps = {
-  regions: { announcement: false, logo: true, links: true, search: true },
+  regions: { announcement: false, logo: true, links: true, search: true, account: true, wishlist: true, cart: true },
   logo: { imageUrl: "", height: 24, wordmark: "SHOP" },
   bar: { height: 64, sticky: "always", shadow: "border", hidden: false },
   colors: {
@@ -125,6 +125,21 @@ describe("Navbar", () => {
     expect(screen.queryByRole("button", { name: "Search" })).toBeNull();
   });
 
+  it("mounts preview icons disabled with coming-soon labels (sf-047)", () => {
+    render(<Navbar {...BASE} />);
+    for (const name of ["Account (coming soon)", "Wishlist (coming soon)", "Cart (coming soon)"]) {
+      const btn = screen.getByRole("button", { name }) as HTMLButtonElement;
+      expect(btn.disabled).toBe(true);
+    }
+  });
+
+  it("hides preview icons when their regions are off (sf-047)", () => {
+    render(<Navbar {...BASE} regions={{ ...BASE.regions, account: false, wishlist: false, cart: false }} />);
+    expect(screen.queryByRole("button", { name: "Account (coming soon)" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Wishlist (coming soon)" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Cart (coming soon)" })).toBeNull();
+  });
+
   it("shows hamburger on mobile, links on desktop; preloads on trigger hover", () => {
     const onMenuOpen = vi.fn();
     const onPreload = vi.fn();
@@ -138,8 +153,12 @@ describe("Navbar", () => {
     expect(screen.queryByRole("button", { name: "Open menu" })).toBeNull();
   });
 
-  it("renders no cart (scope lock — cart slice owns it)", () => {
-    const { container } = render(<Navbar {...BASE} />);
-    expect(container.querySelector(".sf-navcart")).toBeNull();
+  it("mounts cart as disabled preview only (functional wiring stays cart-slice)", () => {
+    const onCart = vi.fn();
+    render(<Navbar {...BASE} />);
+    const btn = screen.getByRole("button", { name: "Cart (coming soon)" }) as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    fireEvent.click(btn);
+    expect(onCart).not.toHaveBeenCalled();
   });
 });
