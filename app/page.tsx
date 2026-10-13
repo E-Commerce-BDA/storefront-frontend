@@ -1,45 +1,10 @@
-import { resolveNavSettings } from "@/lib/shell/resolveNav";
-import type { NavSettings } from "@/lib/shell/navSettings";
-import HomeChrome from "./_components/HomeChrome";
-
 /**
- * Home route (/) — mounts chrome explicitly (per-page mount: auth routes
- * stay chromeless). Interim: section index below chrome until hero lands.
- *
- * TODO(cms-svc): replace DEMO_NAV_INPUT with the CMS read (same shape the
- * service returns) so the real resolver runs on live data. Demo content
- * below is visibly-marked scaffolding, not copy — never translate it,
- * never A/B test against it.
+ * Home route (/) — chrome arrives from the root layout (NavbarMount,
+ * server-resolved). Interim: section index below chrome until hero lands.
  */
-const DEMO_NAV_INPUT: NavSettings = {
-  shared: {
-    announcement: {
-      items: [
-        { text: "Free shipping over $75", cta: { label: "Details", href: "/shipping" } },
-        { text: "Diwali sale is live", cta: { label: "Shop the drop", href: "/sale" } },
-      ],
-      showArrows: true,
-      dismissible: true,
-    },
-    links: {
-      maxItems: 5,
-      items: [
-        { kind: "custom", label: "New in", href: "/new" },
-        { kind: "custom", label: "Clothing", href: "/clothing" },
-        { kind: "custom", label: "Shoes", href: "/shoes" },
-        { kind: "custom", label: "Brands", href: "/brands" },
-        { kind: "custom", label: "Sale", href: "/sale", highlight: "sale" },
-      ],
-    },
-  },
-};
-
 export default function HomePage() {
-  const resolved = resolveNavSettings({ settings: DEMO_NAV_INPUT, global: null });
-
   return (
     <div className="min-h-screen">
-      <HomeChrome announcement={resolved.announcement} links={resolved.links.items} />
       <main style={{ maxWidth: 960, margin: "0 auto", padding: "28px 24px" }}>
         <h1 className="font-display text-2xl text-[var(--color-ink)]">Storefront home (under construction)</h1>
         <p className="mt-2 text-sm text-[var(--text-muted)]">
