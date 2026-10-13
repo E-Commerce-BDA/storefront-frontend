@@ -10,14 +10,16 @@ export interface NavWishlistButtonProps {
   badgeCap?: number;
   onWishlist: () => void;
   label?: string;
+  /** Preview mode (wishlist slice lands later): visibly disabled, never a dead click. */
+  disabled?: boolean;
 }
 
 const NavWishlistButton = forwardRef<HTMLButtonElement, NavWishlistButtonProps>(
-  function NavWishlistButton({ count = 0, badgeCap = 9, onWishlist, label = "Wishlist" }, ref) {
+  function NavWishlistButton({ count = 0, badgeCap = 9, onWishlist, label = "Wishlist", disabled = false }, ref) {
     const shown = count > badgeCap ? `${badgeCap}+` : `${count}`;
     return (
       <span className="sf-navcart">
-        <IconButton ref={ref} label={count > 0 ? `${label}, ${shown} items` : label} onClick={onWishlist}>
+        <IconButton ref={ref} label={count > 0 ? `${label}, ${shown} items` : label} onClick={onWishlist} disabled={disabled}>
           <Icon name="heart" size={20} />
         </IconButton>
         {count > 0 && (
