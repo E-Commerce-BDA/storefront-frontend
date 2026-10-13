@@ -642,6 +642,17 @@ body {
   flex: 1 1 auto;
   min-width: 8px;
 }
+/* Trigger row: links read as a row, actions as a tight icon group. */
+.sf-navlinks {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.sf-navbar__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 .sf-navlogo {
   display: inline-flex;
   align-items: center;

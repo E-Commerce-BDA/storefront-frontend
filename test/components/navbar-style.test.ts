@@ -30,6 +30,13 @@ describe("navbar style contract", () => {
     }
   });
 
+  it("lays links out as a row and actions as a tight group (sf-047)", () => {
+    expect(css).toMatch(/\.sf-navlinks\s*\{[^}]*display:\s*flex/);
+    expect(css).toMatch(/\.sf-navlinks\s*\{[^}]*gap:\s*24px/);
+    expect(css).toMatch(/\.sf-navbar__actions\s*\{[^}]*display:\s*inline-flex/);
+    expect(css).toMatch(/\.sf-navbar__actions\s*\{[^}]*gap:\s*8px/);
+  });
+
   it("drives sticky/shadow/hidden/side through data hooks", () => {
     expect(css).toMatch(/\.sf-navbar\[data-sticky="always"\]/);
     expect(css).toMatch(/\.sf-navbar\[data-shadow="float"\]/);
