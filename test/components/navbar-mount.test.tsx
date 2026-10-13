@@ -5,9 +5,20 @@
  * next/navigation mocked (pathname per test); matchMedia stubbed.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, fireEvent, act } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent, act, waitFor } from "@testing-library/react";
 import NavbarMount from "@/app/_components/NavbarMount";
 import { DEFAULT_NAV_SETTINGS } from "@/lib/shell/navSettings";
+
+const ANNOUNCED_NAV = {
+  ...DEFAULT_NAV_SETTINGS,
+  announcement: {
+    ...DEFAULT_NAV_SETTINGS.announcement,
+    items: [
+      { text: "Free shipping over $75", cta: { label: "Details", href: "/shipping" }, countdownTo: "" },
+      { text: "Diwali sale is live", cta: null, countdownTo: "" },
+    ],
+  },
+};
 
 afterEach(cleanup);
 
@@ -64,13 +75,22 @@ describe("NavbarMount", () => {
     expect(await screen.findByRole("dialog", { name: "Search" })).not.toBeNull();
   });
 
-  it("dismisses the announcement bar", () => {
-    vi.useFakeTimers();
-    render(<NavbarMount nav={DEFAULT_NAV_SETTINGS} />);
-    // Demo input carries no announcement items; empty renders nothing —
-    // dismissal path covered at the AnnouncementBar level instead.
-    expect(screen.queryByRole("button", { name: "Dismiss announcement" })).toBeNull();
-    vi.useRealTimers();
+  it("dismiss collapses then removes the bar, arrows flip slides (ex-HomeChrome)", async () => {
+    render(<NavbarMount nav={ANNOUNCED_NAV} />);
+    expect(screen.getByText(/Free shipping/)).not.toBeNull();
+    expect(screen.getByRole("navigation", { name: "Primary" })).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Next announcement" }));
+    expect(screen.getByText(/Diwali sale/)).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss announcement" }));
+    // Collapsing phase: bar still mounted with the attr (CSS animates it).
+    expect(document.querySelector('[data-collapsed="true"]')).not.toBeNull();
+    await waitFor(
+      () => {
+        expect(screen.queryByText(/Diwali sale/)).toBeNull();
+        expect(screen.queryByText(/Free shipping/)).toBeNull();
+      },
+      { timeout: 3000 },
+    );
   });
 
   it("hides the bar on scroll only in hide-on-scroll mode", () => {
