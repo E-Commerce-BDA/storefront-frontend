@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@ecom/contracts':
+        specifier: file:../../ecom-contracts/ecom-contracts-1.0.0.tgz
+        version: file:../../ecom-contracts/ecom-contracts-1.0.0.tgz(zod@4.6.7)
       lucide-react:
         specifier: ^1.46.0
         version: 1.47.0(react@19.2.8)
@@ -20,6 +23,9 @@ importers:
       react-dom:
         specifier: 19.2.8
         version: 19.2.8(react@19.2.8)
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@tailwindcss/postcss':
         specifier: 4.3.3
@@ -123,6 +129,13 @@ packages:
   '@csstools/css-tokenizer@4.0.0':
     resolution: {integrity: sha512-QxULHAm7cNu72w97JUNCBFODFaXpbDg+dP8b/oWFAZ2MTRppA3U00Y2L1HqaS4J6yBqxwa/Y3nMBaxVKbB/NsA==}
     engines: {node: '>=20.19.0'}
+
+  '@ecom/contracts@file:../../ecom-contracts/ecom-contracts-1.0.0.tgz':
+    resolution: {integrity: sha512-XwLqtMkfxtWMUhB6/N81JCoXo2zTV6vLK5lZ0fb3FgUi5ufTNOUJtru1ytJoYuJ/W3/Q4eWWCWKiQDH8UTloIA==, tarball: file:../../ecom-contracts/ecom-contracts-1.0.0.tgz}
+    version: 1.0.0
+    engines: {node: '>=22'}
+    peerDependencies:
+      zod: '>=4 <5'
 
   '@emnapi/runtime@1.11.3':
     resolution: {integrity: sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA==}
@@ -1243,6 +1256,9 @@ packages:
   xmlchars@2.2.0:
     resolution: {integrity: sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==}
 
+  zod@4.6.7:
+    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
+
 snapshots:
 
   '@alloc/quick-lru@5.3.0': {}
@@ -1299,6 +1315,10 @@ snapshots:
       css-tree: 3.2.1
 
   '@csstools/css-tokenizer@4.0.0': {}
+
+  '@ecom/contracts@file:../../ecom-contracts/ecom-contracts-1.0.0.tgz(zod@4.6.7)':
+    dependencies:
+      zod: 4.6.7
 
   '@emnapi/runtime@1.11.3':
     dependencies:
@@ -2148,3 +2168,5 @@ snapshots:
   xml-name-validator@5.0.0: {}
 
   xmlchars@2.2.0: {}
+
+  zod@4.6.7: {}

@@ -11,10 +11,12 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@ecom/contracts": "file:../../ecom-contracts/ecom-contracts-1.0.0.tgz",
     "lucide-react": "^1.46.0",
     "next": "16.3.4",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",

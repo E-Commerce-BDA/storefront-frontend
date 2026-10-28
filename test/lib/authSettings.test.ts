@@ -75,9 +75,9 @@ describe("createCmsSource", () => {
   });
 
   it("maps the cms-svc envelope", async () => {
-    const fetchFn = vi.fn(async () => ({ ok: true, json: async () => ({ content: ENTRY.settings, version: 7 }) }));
+    const fetchFn = vi.fn(async () => ({ ok: true, json: async () => ({ settings: ENTRY.settings, version: 7 }) }));
     const src = createCmsSource("https://cms", fetchFn as unknown as typeof fetch);
     expect(await src.fetchPage("auth", new AbortController().signal)).toEqual(ENTRY);
-    expect(fetchFn).toHaveBeenCalledWith("https://cms/api/v1/cms/pages/auth", expect.objectContaining({}));
+    expect(fetchFn).toHaveBeenCalledWith("https://cms/api/v1/cms/settings/page/auth", expect.objectContaining({}));
   });
 });

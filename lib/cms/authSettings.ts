@@ -83,11 +83,12 @@ export function createCmsSource(
 ): AuthSettingsSource {
   return {
     async fetchPage(pageKey: string, signal: AbortSignal): Promise<AuthSettingsEntry | null> {
-      const res = await fetchFn(`${baseUrl}/api/v1/cms/pages/${pageKey}`, { signal });
+      const res = await fetchFn(`${baseUrl}/api/v1/cms/settings/page/${pageKey}`, { signal });
       if (!res.ok) return null;
-      const body = (await res.json()) as { content?: AuthSettings; version?: number };
-      if (!body || typeof body.content !== "object" || typeof body.version !== "number") return null;
-      return { settings: body.content, version: body.version };
+      const body = (await res.json()) as { settings?: AuthSettings; content?: AuthSettings; version?: number };
+      const rawSettings = body?.settings ?? body?.content;
+      if (!body || typeof rawSettings !== "object" || rawSettings === null || typeof body.version !== "number") return null;
+      return { settings: rawSettings, version: body.version };
     },
   };
 }
