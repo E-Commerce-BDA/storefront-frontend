@@ -22,6 +22,8 @@ import { DEMO_NAV_INPUT } from "@/lib/shell/demoNavInput";
 import NavbarMount from "@/app/_components/NavbarMount";
 import ProductCard from "@/components/commerce/ProductCard";
 import type {
+  CtaStyle,
+  CtaVariant,
   HoverMode,
   ImageBlendMode,
   MediaRatio,
@@ -205,6 +207,29 @@ const DEMO_CARD_PRODUCTS: ProductCardData[] = [
     image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=600&q=80",
     hoverImage: "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&w=600&q=80",
     tag: "Bestseller",
+    badges: [
+      { key: "sale", label: "Sale 25%", bg: "#e11d48", textColor: "#ffffff" },
+      { key: "new", label: "New Arrival", bg: "#0284c7", textColor: "#ffffff" },
+      { key: "eco", label: "Eco-Friendly", bg: "#166534", textColor: "#dcfce7", borderColor: "#22c55e", borderStyle: "solid" },
+    ],
+    options: [
+      {
+        name: "Color",
+        displayType: "swatch",
+        showOnCard: true,
+        values: [
+          { value: "Sky Blue", swatchHex: "#38bdf8" },
+          { value: "Navy", swatchHex: "#1e3a8a" },
+          { value: "White", swatchHex: "#ffffff" },
+        ],
+      },
+      {
+        name: "Size",
+        displayType: "pill",
+        showOnCard: true,
+        values: [{ value: "S" }, { value: "M" }, { value: "L" }, { value: "XL" }],
+      },
+    ],
     rating: 4.9,
     ratingCount: 128,
     stock: "in",
@@ -217,6 +242,21 @@ const DEMO_CARD_PRODUCTS: ProductCardData[] = [
     category: "Homeware",
     image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80",
     tag: "Trending",
+    badges: [
+      { key: "staff-pick", label: "Staff Pick", bg: "#059669", textColor: "#ffffff" },
+    ],
+    options: [
+      {
+        name: "Finish",
+        displayType: "swatch",
+        showOnCard: true,
+        values: [
+          { value: "Matte Sand", swatchHex: "#d6c7b2" },
+          { value: "Clay", swatchHex: "#a75d43" },
+          { value: "Charcoal", swatchHex: "#334155" },
+        ],
+      },
+    ],
     rating: 4.7,
     ratingCount: 84,
     stock: "low",
@@ -227,6 +267,9 @@ const DEMO_CARD_PRODUCTS: ProductCardData[] = [
     price: 36,
     category: "Accessories",
     image: "https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&w=600&q=80",
+    badges: [
+      { key: "limited", label: "Limited Edition", bg: "#7c3aed", textColor: "#f5f3ff", borderColor: "#a855f7", borderStyle: "dashed" },
+    ],
     rating: 5.0,
     ratingCount: 42,
     stock: "out",
@@ -255,7 +298,19 @@ export default function PreviewPage() {
   const [pcShowRatings, setPcShowRatings] = useState(true);
   const [pcShowDept, setPcShowDept] = useState(true);
   const [pcCardBg, setPcCardBg] = useState("");
+  const [pcBorderColor, setPcBorderColor] = useState("");
+  const [pcTextColor, setPcTextColor] = useState("");
+  const [pcPriceColor, setPcPriceColor] = useState("");
   const [pcTextAlign, setPcTextAlign] = useState<TextAlign>("left");
+  const [pcCtaVariant, setPcCtaVariant] = useState<CtaVariant>("overlay");
+  const [pcCtaStyle, setPcCtaStyle] = useState<CtaStyle>("icon");
+  const [pcShowSwatches, setPcShowSwatches] = useState(true);
+  const [pcShowPills, setPcShowPills] = useState(true);
+  const [pcSelectedOptions, setPcSelectedOptions] = useState<Record<string, string>>({
+    Color: "Sky Blue",
+    Size: "M",
+    Finish: "Clay",
+  });
 
   const [searchMode, setSearchMode] = useState<"trap" | "light">("trap");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -788,8 +843,9 @@ export default function PreviewPage() {
         <Card>
           <p className="mb-4 text-sm text-[var(--text-muted)]">
             Customizable commerce face: aspect ratio, 5 card types, independent card and image radii,
-            CSS image blend modes (e.g. <code>multiply</code> for packshot cutouts), badge customization &amp; toggles,
-            background colors, and hover modes. Completely controlled, dumb <code>props &rarr; JSX</code>.
+            CSS image blend modes (e.g. <code>multiply</code> for packshot cutouts), centralized badge registry &amp; toggles,
+            color customization with automatic contrast safety, CTA bar placements/styles, and option swatches/pills.
+            Completely controlled, dumb <code>props &rarr; JSX</code>.
           </p>
 
           <div className="mb-6 rounded-lg border border-[var(--border)] bg-[var(--color-section-bg)] p-4">
@@ -826,6 +882,34 @@ export default function PreviewPage() {
               </div>
 
               <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">CTA Placement</label>
+                <select
+                  value={pcCtaVariant}
+                  onChange={(e) => setPcCtaVariant(e.target.value as CtaVariant)}
+                  className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                >
+                  <option value="overlay">overlay (on media hover)</option>
+                  <option value="below">below (under media)</option>
+                  <option value="inline">inline (next to price)</option>
+                  <option value="footer">footer (pinned at card bottom)</option>
+                  <option value="none">none (hidden)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">CTA Style</label>
+                <select
+                  value={pcCtaStyle}
+                  onChange={(e) => setPcCtaStyle(e.target.value as CtaStyle)}
+                  className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                >
+                  <option value="icon">icon (circular quick actions)</option>
+                  <option value="label">label (text button)</option>
+                  <option value="icon-label">icon-label (full action button)</option>
+                </select>
+              </div>
+
+              <div>
                 <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Image Blend Mode</label>
                 <select
                   value={pcBlend}
@@ -847,10 +931,23 @@ export default function PreviewPage() {
                   onChange={(e) => setPcHover(e.target.value as HoverMode)}
                   className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
                 >
-                  <option value="actions">actions (CTA bar)</option>
+                  <option value="actions">actions (reveal CTA)</option>
                   <option value="image">image (secondary swap)</option>
                   <option value="zoom">zoom (scale cover)</option>
                   <option value="none">none (static)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Text Align</label>
+                <select
+                  value={pcTextAlign}
+                  onChange={(e) => setPcTextAlign(e.target.value as TextAlign)}
+                  className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                >
+                  <option value="left">left</option>
+                  <option value="center">center</option>
+                  <option value="right">right</option>
                 </select>
               </div>
 
@@ -892,34 +989,72 @@ export default function PreviewPage() {
 
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Card Background</label>
-                <select
-                  value={pcCardBg}
-                  onChange={(e) => setPcCardBg(e.target.value)}
-                  className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
-                >
-                  <option value="">transparent / default</option>
-                  <option value="#FFFFFF">#FFFFFF (White)</option>
-                  <option value="#F5FAFC">#F5FAFC (Mist)</option>
-                  <option value="#E6F7FB">#E6F7FB (Foam)</option>
-                  <option value="#0A2540">#0A2540 (Abyss Dark)</option>
-                </select>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={pcCardBg}
+                    onChange={(e) => setPcCardBg(e.target.value)}
+                    className="flex-1 rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                  >
+                    <option value="">transparent / default</option>
+                    <option value="#FFFFFF">#FFFFFF (White)</option>
+                    <option value="#F8FAFC">#F8FAFC (Slate Light)</option>
+                    <option value="#E6F7FB">#E6F7FB (Ocean Foam)</option>
+                    <option value="#0A2540">#0A2540 (Abyss Dark)</option>
+                    <option value="#18181B">#18181B (Zinc Dark)</option>
+                  </select>
+                  <input
+                    type="color"
+                    aria-label="Pick Card Background"
+                    value={pcCardBg.startsWith("#") && pcCardBg.length === 7 ? pcCardBg : "#ffffff"}
+                    onChange={(e) => setPcCardBg(e.target.value)}
+                    className="h-8 w-8 cursor-pointer rounded border border-[var(--border)] p-0.5"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Border Color</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g. #e2e8f0"
+                    value={pcBorderColor}
+                    onChange={(e) => setPcBorderColor(e.target.value)}
+                    className="flex-1 rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                  />
+                  <input
+                    type="color"
+                    aria-label="Pick Border Color"
+                    value={pcBorderColor.startsWith("#") && pcBorderColor.length === 7 ? pcBorderColor : "#e2e8f0"}
+                    onChange={(e) => setPcBorderColor(e.target.value)}
+                    className="h-8 w-8 cursor-pointer rounded border border-[var(--border)] p-0.5"
+                  />
+                </div>
               </div>
 
               <div className="flex flex-col gap-2 pt-2">
                 <label className="flex items-center gap-2 text-sm text-[var(--color-ink)]">
                   <input type="checkbox" checked={pcShowBadge} onChange={(e) => setPcShowBadge(e.target.checked)} />
-                  Show Badge
+                  Show Badges
                 </label>
                 <label className="flex items-center gap-2 text-sm text-[var(--color-ink)]">
                   <input type="checkbox" checked={pcShowRatings} onChange={(e) => setPcShowRatings(e.target.checked)} />
                   Show Ratings
                 </label>
+                <label className="flex items-center gap-2 text-sm text-[var(--color-ink)]">
+                  <input type="checkbox" checked={pcShowDept} onChange={(e) => setPcShowDept(e.target.checked)} />
+                  Show Department
+                </label>
               </div>
 
               <div className="flex flex-col gap-2 pt-2">
                 <label className="flex items-center gap-2 text-sm text-[var(--color-ink)]">
-                  <input type="checkbox" checked={pcShowDept} onChange={(e) => setPcShowDept(e.target.checked)} />
-                  Show Department
+                  <input type="checkbox" checked={pcShowSwatches} onChange={(e) => setPcShowSwatches(e.target.checked)} />
+                  Show Color Swatches
+                </label>
+                <label className="flex items-center gap-2 text-sm text-[var(--color-ink)]">
+                  <input type="checkbox" checked={pcShowPills} onChange={(e) => setPcShowPills(e.target.checked)} />
+                  Show Size Pills
                 </label>
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-[var(--text-muted)]">Badge Pos:</span>
@@ -934,7 +1069,8 @@ export default function PreviewPage() {
               </div>
             </div>
 
-            <div className="mt-6 flex justify-center">
+            <div className="mt-6 flex flex-col items-center justify-center">
+              <span className="mb-2 text-xs font-semibold uppercase text-[var(--text-muted)]">Live Interactive Preview</span>
               <div className="w-full max-w-[320px]">
                 <ProductCard
                   product={DEMO_CARD_PRODUCTS[0]}
@@ -949,9 +1085,19 @@ export default function PreviewPage() {
                   badgePosition={pcBadgePos}
                   showRatings={pcShowRatings}
                   showDept={pcShowDept}
-                  cardBg={pcCardBg}
+                  cardBg={pcCardBg || undefined}
+                  borderColor={pcBorderColor || (pcCardBg ? "var(--border)" : "transparent")}
+                  textColor={pcTextColor || undefined}
+                  priceColor={pcPriceColor || undefined}
                   textAlign={pcTextAlign}
-                  borderColor={pcCardBg ? "var(--border)" : "transparent"}
+                  ctaVariant={pcCtaVariant}
+                  ctaStyle={pcCtaStyle}
+                  showSwatches={pcShowSwatches}
+                  showPills={pcShowPills}
+                  selectedOptions={pcSelectedOptions}
+                  onSelectOption={(name, val) =>
+                    setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                  }
                 />
               </div>
             </div>
@@ -967,6 +1113,11 @@ export default function PreviewPage() {
                 mediaRatio="4:5"
                 borderRadius={12}
                 imageBorderRadius={12}
+                ctaVariant="overlay"
+                selectedOptions={pcSelectedOptions}
+                onSelectOption={(name, val) =>
+                  setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
               />
             </div>
             <div>
@@ -977,6 +1128,11 @@ export default function PreviewPage() {
                 mediaRatio="4:5"
                 borderRadius={8}
                 imageBorderRadius={8}
+                ctaVariant="overlay"
+                selectedOptions={pcSelectedOptions}
+                onSelectOption={(name, val) =>
+                  setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
               />
             </div>
             <div>
@@ -990,6 +1146,11 @@ export default function PreviewPage() {
                 cardPad={8}
                 cardBg="var(--color-card, #ffffff)"
                 borderColor="var(--border)"
+                ctaVariant="overlay"
+                selectedOptions={pcSelectedOptions}
+                onSelectOption={(name, val) =>
+                  setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
               />
             </div>
             <div>
@@ -1000,6 +1161,11 @@ export default function PreviewPage() {
                 mediaRatio="3:4"
                 borderRadius={16}
                 imageBorderRadius={16}
+                ctaVariant="overlay"
+                selectedOptions={pcSelectedOptions}
+                onSelectOption={(name, val) =>
+                  setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
               />
             </div>
             <div className="sm:col-span-2">
@@ -1013,6 +1179,105 @@ export default function PreviewPage() {
                 cardPad={12}
                 cardBg="var(--color-card, #ffffff)"
                 borderColor="var(--border)"
+                ctaVariant="below"
+                selectedOptions={pcSelectedOptions}
+                onSelectOption={(name, val) =>
+                  setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
+              />
+            </div>
+          </div>
+
+          <h3 className="mb-3 mt-8 font-semibold text-[var(--color-ink)]">CTA Action Bar Variants &amp; Styles</h3>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Below Media (Full Action Button)</span>
+              <ProductCard
+                product={DEMO_CARD_PRODUCTS[0]}
+                cardType="standard"
+                mediaRatio="4:5"
+                ctaVariant="below"
+                ctaStyle="icon-label"
+                borderRadius={12}
+                imageBorderRadius={10}
+                selectedOptions={pcSelectedOptions}
+                onSelectOption={(name, val) =>
+                  setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
+              />
+            </div>
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Inline With Price (Label Button)</span>
+              <ProductCard
+                product={DEMO_CARD_PRODUCTS[1]}
+                cardType="standard"
+                mediaRatio="4:5"
+                ctaVariant="inline"
+                ctaStyle="label"
+                borderRadius={12}
+                imageBorderRadius={10}
+                selectedOptions={pcSelectedOptions}
+                onSelectOption={(name, val) =>
+                  setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
+              />
+            </div>
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Pinned Footer (Solid Border)</span>
+              <ProductCard
+                product={DEMO_CARD_PRODUCTS[2]}
+                cardType="standard"
+                mediaRatio="4:5"
+                ctaVariant="footer"
+                ctaStyle="icon-label"
+                borderRadius={12}
+                imageBorderRadius={10}
+                cardBg="#ffffff"
+                borderColor="var(--border)"
+                cardPad={12}
+                selectedOptions={pcSelectedOptions}
+                onSelectOption={(name, val) =>
+                  setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
+              />
+            </div>
+          </div>
+
+          <h3 className="mb-3 mt-8 font-semibold text-[var(--color-ink)]">Centralized Badges &amp; Auto-Contrast Dark Surface</h3>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Centralized Badge Registry (Multi-Badge Stack + Swatches)</span>
+              <ProductCard
+                product={DEMO_CARD_PRODUCTS[0]}
+                cardType="standard"
+                mediaRatio="4:5"
+                badgePosition="left"
+                ctaVariant="below"
+                borderRadius={12}
+                imageBorderRadius={10}
+                selectedOptions={pcSelectedOptions}
+                onSelectOption={(name, val) =>
+                  setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
+              />
+            </div>
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Dark Theme Auto-Contrast (#0A2540 Abyss Dark)</span>
+              <ProductCard
+                product={DEMO_CARD_PRODUCTS[0]}
+                cardType="standard"
+                mediaRatio="4:5"
+                cardBg="#0A2540"
+                borderColor="#1E3A8A"
+                cardPad={12}
+                borderRadius={12}
+                imageBorderRadius={10}
+                ctaVariant="below"
+                ctaStyle="icon-label"
+                selectedOptions={pcSelectedOptions}
+                onSelectOption={(name, val) =>
+                  setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
               />
             </div>
           </div>

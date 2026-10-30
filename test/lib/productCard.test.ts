@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_PRODUCT_CARD_STYLES,
   PRODUCT_CARD_LIMITS,
+  isDarkHex,
   resolveProductCardCssVars,
   resolveProductCardStyles,
 } from "@/lib/commerce/productCard";
@@ -121,4 +122,62 @@ describe("resolveProductCardStyles", () => {
     expect(vars["--pc-price-size"]).toBe("14px");
     expect(vars["--pc-align"]).toBe("center");
   });
+
+  it("validates ctaVariant and ctaStyle options with fallback to default", () => {
+    const below = resolveProductCardStyles({ ctaVariant: "below", ctaStyle: "icon-label" });
+    expect(below.ctaVariant).toBe("below");
+    expect(below.ctaStyle).toBe("icon-label");
+
+    const invalid = resolveProductCardStyles({
+      ctaVariant: "bogus" as never,
+      ctaStyle: "unknown" as never,
+    });
+    expect(invalid.ctaVariant).toBe("overlay");
+    expect(invalid.ctaStyle).toBe("icon");
+  });
+
+  it("applies contrast safety fallbacks when dark background is selected", () => {
+    // Dark background with no explicit text color -> automatically sets safe light text
+    const darkCard = resolveProductCardStyles({ cardBg: "#0f172a" });
+    expect(darkCard.textColor).toBe("#f8fafc");
+    expect(darkCard.mutedTextColor).toBe("#94a3b8");
+    expect(darkCard.priceColor).toBe("#38bdf8");
+
+    // Dark background with explicit text color -> honors user choice
+    const customDark = resolveProductCardStyles({
+      cardBg: "#000000",
+      textColor: "#ffd700",
+    });
+    expect(customDark.textColor).toBe("#ffd700");
+
+    // Light background -> leaves empty for css cascade default
+    const lightCard = resolveProductCardStyles({ cardBg: "#ffffff" });
+    expect(lightCard.textColor).toBe("");
+  });
+
+  it("isDarkHex correctly identifies brightness", () => {
+    expect(isDarkHex("#000000")).toBe(true);
+    expect(isDarkHex("#0f172a")).toBe(true);
+    expect(isDarkHex("#1e293b")).toBe(true);
+    expect(isDarkHex("#ffffff")).toBe(false);
+    expect(isDarkHex("#f8fafc")).toBe(false);
+    expect(isDarkHex("#e2e8f0")).toBe(false);
+  });
+
+  it("emits text and price css vars when set", () => {
+    const styles = resolveProductCardStyles({
+      cardBg: "#111827",
+      textColor: "#f8fafc",
+      mutedTextColor: "#94a3b8",
+      priceColor: "#38bdf8",
+      comparePriceColor: "#64748b",
+    });
+    const vars = resolveProductCardCssVars(styles) as Record<string, string>;
+    expect(vars["--pc-bg"]).toBe("#111827");
+    expect(vars["--pc-text"]).toBe("#f8fafc");
+    expect(vars["--pc-muted"]).toBe("#94a3b8");
+    expect(vars["--pc-price"]).toBe("#38bdf8");
+    expect(vars["--pc-compare-price"]).toBe("#64748b");
+  });
 });
+

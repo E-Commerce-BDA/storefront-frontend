@@ -11,7 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@ecom/contracts": "file:../../ecom-contracts/ecom-contracts-1.0.0.tgz",
+    "@ecom/contracts": "file:../../ecom-contracts/ecom-contracts-1.6.0.tgz",
     "lucide-react": "^1.46.0",
     "next": "16.3.4",
     "react": "19.2.8",

@@ -151,4 +151,121 @@ describe("ProductCard", () => {
     const { container } = render(<ProductCard product={P} hoverMode="zoom" />);
     expect(container.firstElementChild?.getAttribute("data-hover")).toBe("zoom");
   });
+
+  it("renders centralized resolved badges from registry (max 3)", () => {
+    const productWithBadges: ProductCardData = {
+      ...P,
+      badges: [
+        { id: "b1", key: "sale", label: "Sale 20%", bg: "#e11d48", textColor: "#ffffff" },
+        { id: "b2", key: "new", label: "New Arrival", bg: "#0284c7", textColor: "#ffffff" },
+        { id: "b3", key: "eco", label: "Organic", bg: "#166534", textColor: "#dcfce7" },
+        { id: "b4", key: "extra", label: "Extra Badge", bg: "#000000", textColor: "#ffffff" },
+      ],
+    };
+
+    render(<ProductCard product={productWithBadges} />);
+    expect(screen.getByText("Sale 20%")).not.toBeNull();
+    expect(screen.getByText("New Arrival")).not.toBeNull();
+    expect(screen.getByText("Organic")).not.toBeNull();
+    // Clamped to 3
+    expect(screen.queryByText("Extra Badge")).toBeNull();
+  });
+
+  it("renders CTA action bar variants: below, inline, footer, none", () => {
+    // Below variant
+    const below = render(<ProductCard product={P} ctaVariant="below" />);
+    expect(below.container.querySelector(".sf-productcard__ctas--below")).not.toBeNull();
+    below.unmount();
+
+    // Inline variant
+    const inline = render(<ProductCard product={P} ctaVariant="inline" />);
+    expect(inline.container.querySelector(".sf-productcard__ctas--inline")).not.toBeNull();
+    inline.unmount();
+
+    // Footer variant
+    const footer = render(<ProductCard product={P} ctaVariant="footer" />);
+    expect(footer.container.querySelector(".sf-productcard__ctas--footer")).not.toBeNull();
+    footer.unmount();
+
+    // None variant
+    const none = render(<ProductCard product={P} ctaVariant="none" />);
+    expect(none.container.querySelector(".sf-productcard__ctas")).toBeNull();
+    none.unmount();
+  });
+
+  it("renders CTA action styles: icon, label, icon-label", () => {
+    const withLabels = render(<ProductCard product={P} ctaVariant="below" ctaStyle="icon-label" />);
+    expect(screen.getByText("Quick view")).not.toBeNull();
+    expect(screen.getByText("Wishlist")).not.toBeNull();
+    expect(screen.getByText("Add to bag")).not.toBeNull();
+    withLabels.unmount();
+  });
+
+  it("renders color swatches and size pills with interactive selection", () => {
+    const onSelectOption = vi.fn();
+    const productWithOptions: ProductCardData = {
+      ...P,
+      options: [
+        {
+          name: "Color",
+          displayType: "swatch",
+          showOnCard: true,
+          values: [
+            { value: "Navy", swatchHex: "#000080" },
+            { value: "Ruby", swatchHex: "#e0115f" },
+          ],
+        },
+        {
+          name: "Size",
+          displayType: "pill",
+          showOnCard: true,
+          values: [{ value: "S" }, { value: "M" }, { value: "L" }],
+        },
+      ],
+    };
+
+    const { container } = render(
+      <ProductCard
+        product={productWithOptions}
+        selectedOptions={{ Color: "Navy", Size: "M" }}
+        onSelectOption={onSelectOption}
+      />,
+    );
+
+    // Color Swatches
+    const swatches = container.querySelectorAll(".sf-productcard__swatch");
+    expect(swatches.length).toBe(2);
+    const navySwatch = container.querySelector('[aria-label="Color: Navy"]');
+    expect(navySwatch?.getAttribute("aria-checked")).toBe("true");
+    expect(navySwatch?.classList.contains("sf-productcard__swatch--active")).toBe(true);
+
+    const rubySwatch = container.querySelector('[aria-label="Color: Ruby"]');
+    if (rubySwatch) fireEvent.click(rubySwatch);
+    expect(onSelectOption).toHaveBeenCalledWith("Color", "Ruby");
+
+    // Size Pills
+    const mPill = screen.getByRole("radio", { name: "Size: M" });
+    expect(mPill.getAttribute("aria-checked")).toBe("true");
+    expect(mPill.classList.contains("sf-productcard__pill--active")).toBe(true);
+
+    const lPill = screen.getByRole("radio", { name: "Size: L" });
+    fireEvent.click(lPill);
+    expect(onSelectOption).toHaveBeenCalledWith("Size", "L");
+  });
+
+  it("honors sparse per-product cardSettings overrides", () => {
+    const productWithSettings: ProductCardData = {
+      ...P,
+      cardSettings: {
+        cardType: "compact",
+        ctaVariant: "footer",
+      },
+    };
+
+    const { container } = render(<ProductCard product={productWithSettings} />);
+    const article = container.firstElementChild as HTMLElement;
+    expect(article.getAttribute("data-card-type")).toBe("compact");
+    expect(article.getAttribute("data-ctavariant")).toBe("footer");
+    expect(container.querySelector(".sf-productcard__ctas--footer")).not.toBeNull();
+  });
 });

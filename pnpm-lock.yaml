@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@ecom/contracts':
-        specifier: file:../../ecom-contracts/ecom-contracts-1.0.0.tgz
-        version: file:../../ecom-contracts/ecom-contracts-1.0.0.tgz(zod@4.6.7)
+        specifier: file:../../ecom-contracts/ecom-contracts-1.6.0.tgz
+        version: file:../../ecom-contracts/ecom-contracts-1.6.0.tgz(zod@4.6.7)
       lucide-react:
         specifier: ^1.46.0
         version: 1.47.0(react@19.2.8)
@@ -130,9 +130,9 @@ packages:
     resolution: {integrity: sha512-QxULHAm7cNu72w97JUNCBFODFaXpbDg+dP8b/oWFAZ2MTRppA3U00Y2L1HqaS4J6yBqxwa/Y3nMBaxVKbB/NsA==}
     engines: {node: '>=20.19.0'}
 
-  '@ecom/contracts@file:../../ecom-contracts/ecom-contracts-1.0.0.tgz':
-    resolution: {integrity: sha512-XwLqtMkfxtWMUhB6/N81JCoXo2zTV6vLK5lZ0fb3FgUi5ufTNOUJtru1ytJoYuJ/W3/Q4eWWCWKiQDH8UTloIA==, tarball: file:../../ecom-contracts/ecom-contracts-1.0.0.tgz}
-    version: 1.0.0
+  '@ecom/contracts@file:../../ecom-contracts/ecom-contracts-1.6.0.tgz':
+    resolution: {integrity: sha512-6/RWyROi7ZNGWWgvLgnrqqoZ5qRjT70aM2TDpp/BAo/YH62umsMQx7bx5PuV3Z6F2nz+LdWjelj7nq3j8+zPZA==, tarball: file:../../ecom-contracts/ecom-contracts-1.6.0.tgz}
+    version: 1.6.0
     engines: {node: '>=22'}
     peerDependencies:
       zod: '>=4 <5'
@@ -1316,7 +1316,7 @@ snapshots:
 
   '@csstools/css-tokenizer@4.0.0': {}
 
-  '@ecom/contracts@file:../../ecom-contracts/ecom-contracts-1.0.0.tgz(zod@4.6.7)':
+  '@ecom/contracts@file:../../ecom-contracts/ecom-contracts-1.6.0.tgz(zod@4.6.7)':
     dependencies:
       zod: 4.6.7
 
