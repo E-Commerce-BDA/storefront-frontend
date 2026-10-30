@@ -1,5 +1,5 @@
 import { forwardRef, useRef } from "react";
-import { Badge, Icon } from "@/components/ui";
+import { Badge, Button, Icon } from "@/components/ui";
 import { tagTone } from "@/lib/search/tagTone";
 import {
   type BadgePosition,
@@ -91,6 +91,9 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
     mutedTextColor,
     priceColor,
     comparePriceColor,
+    ctaBg,
+    ctaTextColor,
+    ctaBorderColor,
     imageBlendMode,
     imageFit,
     badgePosition,
@@ -156,6 +159,9 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
     ...(mutedTextColor !== undefined ? { mutedTextColor } : {}),
     ...(priceColor !== undefined ? { priceColor } : {}),
     ...(comparePriceColor !== undefined ? { comparePriceColor } : {}),
+    ...(ctaBg !== undefined ? { ctaBg } : {}),
+    ...(ctaTextColor !== undefined ? { ctaTextColor } : {}),
+    ...(ctaBorderColor !== undefined ? { ctaBorderColor } : {}),
     ...(imageBlendMode !== undefined ? { imageBlendMode } : {}),
     ...(imageFit !== undefined ? { imageFit } : {}),
     ...(badgePosition !== undefined ? { badgePosition } : {}),
@@ -278,10 +284,17 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
           const meta = CTA_META[c];
           const isWishlist = c === "wishlist";
           const pressed = isWishlist ? (p.wishlisted ?? false) : undefined;
+          const isIconOnly = styles.ctaStyle === "icon";
+
           return (
-            <button
+            <Button
               key={c}
-              type="button"
+              size="sm"
+              variant="light"
+              bg={styles.ctaBg || "var(--pc-cta-bg, var(--color-navbar-bg, #ffffff))"}
+              textColor={styles.ctaTextColor || "var(--pc-cta-text, var(--color-ink))"}
+              borderColor={styles.ctaBorderColor || "var(--pc-cta-border, var(--border))"}
+              borderRadius={isIconOnly ? 999 : styles.borderRadius}
               className="sf-productcard__cta"
               disabled={out}
               aria-label={meta.label(p.name)}
@@ -290,6 +303,11 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
                 e.stopPropagation();
                 handlers[c]?.(p);
               }}
+              style={
+                isIconOnly
+                  ? { width: 36, height: 36, minHeight: 36, padding: 0 }
+                  : { width: "100%", height: 36, minHeight: 36, padding: "0 14px" }
+              }
             >
               {(styles.ctaStyle === "icon" || styles.ctaStyle === "icon-label") && (
                 <Icon name={meta.icon} size={16} filled={isWishlist ? (p.wishlisted ?? false) : false} />
@@ -297,7 +315,7 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
               {(styles.ctaStyle === "label" || styles.ctaStyle === "icon-label") && (
                 <span className="sf-productcard__cta-label">{meta.shortLabel}</span>
               )}
-            </button>
+            </Button>
           );
         })}
       </div>

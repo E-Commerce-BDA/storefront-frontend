@@ -386,6 +386,9 @@ export default function PreviewPage() {
   const [pcCtaVariant, setPcCtaVariant] = useState<CtaVariant>("overlay");
   const [pcCtaStyle, setPcCtaStyle] = useState<CtaStyle>("icon");
   const [pcCtaPosition, setPcCtaPosition] = useState<CtaPosition>("center");
+  const [pcCtaBg, setPcCtaBg] = useState("");
+  const [pcCtaTextColor, setPcCtaTextColor] = useState("");
+  const [pcCtaBorderColor, setPcCtaBorderColor] = useState("");
   const [pcImageFit, setPcImageFit] = useState<ImageFit>("cover");
   const [pcShowSwatches, setPcShowSwatches] = useState(true);
   const [pcShowPills, setPcShowPills] = useState(true);
@@ -1014,6 +1017,54 @@ export default function PreviewPage() {
               </div>
 
               <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">CTA Button Background</label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={pcCtaBg}
+                    onChange={(e) => setPcCtaBg(e.target.value)}
+                    className="flex-1 rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                  >
+                    <option value="">default / white</option>
+                    <option value="#0077B6">#0077B6 (Primary Blue)</option>
+                    <option value="#0A2540">#0A2540 (Abyss Dark)</option>
+                    <option value="#FFFFFF">#FFFFFF (White)</option>
+                    <option value="#F1F5F9">#F1F5F9 (Slate Light)</option>
+                    <option value="#FF6B4A">#FF6B4A (Coral Accent)</option>
+                  </select>
+                  <input
+                    type="color"
+                    aria-label="Pick CTA Button Background"
+                    value={pcCtaBg.startsWith("#") && pcCtaBg.length === 7 ? pcCtaBg : "#ffffff"}
+                    onChange={(e) => setPcCtaBg(e.target.value)}
+                    className="h-8 w-8 cursor-pointer rounded border border-[var(--border)] p-0.5"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">CTA Button Text Color</label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={pcCtaTextColor}
+                    onChange={(e) => setPcCtaTextColor(e.target.value)}
+                    className="flex-1 rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                  >
+                    <option value="">default / ink</option>
+                    <option value="#FFFFFF">#FFFFFF (White)</option>
+                    <option value="#0A2540">#0A2540 (Abyss Dark)</option>
+                    <option value="#0077B6">#0077B6 (Primary Blue)</option>
+                  </select>
+                  <input
+                    type="color"
+                    aria-label="Pick CTA Button Text Color"
+                    value={pcCtaTextColor.startsWith("#") && pcCtaTextColor.length === 7 ? pcCtaTextColor : "#0a2540"}
+                    onChange={(e) => setPcCtaTextColor(e.target.value)}
+                    className="h-8 w-8 cursor-pointer rounded border border-[var(--border)] p-0.5"
+                  />
+                </div>
+              </div>
+
+              <div>
                 <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Image Fit</label>
                 <select
                   value={pcImageFit}
@@ -1306,6 +1357,9 @@ export default function PreviewPage() {
                   ctaVariant={pcCtaVariant}
                   ctaStyle={pcCtaStyle}
                   ctaPosition={pcCtaPosition}
+                  ctaBg={pcCtaBg || undefined}
+                  ctaTextColor={pcCtaTextColor || undefined}
+                  ctaBorderColor={pcCtaBorderColor || undefined}
                   imageFit={pcImageFit}
                   showSwatches={pcShowSwatches}
                   showPills={pcShowPills}

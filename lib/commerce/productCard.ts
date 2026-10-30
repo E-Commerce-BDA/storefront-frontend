@@ -118,6 +118,9 @@ export interface ProductCardStyleConfig {
   mutedTextColor?: string;
   priceColor?: string;
   comparePriceColor?: string;
+  ctaBg?: string;
+  ctaTextColor?: string;
+  ctaBorderColor?: string;
   imageBlendMode?: ImageBlendMode;
   imageFit?: ImageFit;
   badgePosition?: BadgePosition;
@@ -160,6 +163,9 @@ export interface ResolvedProductCardStyles {
   mutedTextColor: string;
   priceColor: string;
   comparePriceColor: string;
+  ctaBg?: string;
+  ctaTextColor?: string;
+  ctaBorderColor?: string;
   imageBlendMode: ImageBlendMode;
   imageFit: ImageFit;
   badgePosition: BadgePosition;
@@ -396,6 +402,9 @@ export function resolveProductCardStyles(
     mutedTextColor,
     priceColor,
     comparePriceColor,
+    ctaBg: c.ctaBg ?? base.ctaBg,
+    ctaTextColor: c.ctaTextColor ?? base.ctaTextColor,
+    ctaBorderColor: c.ctaBorderColor ?? base.ctaBorderColor,
     imageBlendMode,
     imageFit,
     badgePosition: c.badgePosition === "right" || c.badgePosition === "left" ? c.badgePosition : base.badgePosition,
@@ -449,6 +458,9 @@ export function resolveProductCardCssVars(resolved: ResolvedProductCardStyles): 
   if (resolved.mutedTextColor) vars["--pc-muted"] = resolved.mutedTextColor;
   if (resolved.priceColor) vars["--pc-price"] = resolved.priceColor;
   if (resolved.comparePriceColor) vars["--pc-compare-price"] = resolved.comparePriceColor;
+  if (resolved.ctaBg) vars["--pc-cta-bg"] = resolved.ctaBg;
+  if (resolved.ctaTextColor) vars["--pc-cta-text"] = resolved.ctaTextColor;
+  if (resolved.ctaBorderColor) vars["--pc-cta-border"] = resolved.ctaBorderColor;
 
   return vars as React.CSSProperties;
 }

@@ -166,6 +166,9 @@ export interface ThemeProductCardField {
   mutedTextColor?: string;
   priceColor?: string;
   comparePriceColor?: string;
+  ctaBg?: string;
+  ctaTextColor?: string;
+  ctaBorderColor?: string;
   imageBlendMode?: ImageBlendMode;
   imageFit?: ImageFit;
   mediaRatio?: MediaRatio;
@@ -376,6 +379,9 @@ export interface ResolvedThemeProductCard {
   mutedTextColor: string;
   priceColor: string;
   comparePriceColor: string;
+  ctaBg: string;
+  ctaTextColor: string;
+  ctaBorderColor: string;
   imageBlendMode: ImageBlendMode;
   imageFit: ImageFit;
   mediaRatio: MediaRatio;
@@ -509,6 +515,9 @@ export const DEFAULT_THEME: ResolvedThemeSettings = {
     mutedTextColor: "",
     priceColor: "",
     comparePriceColor: "",
+    ctaBg: "",
+    ctaTextColor: "",
+    ctaBorderColor: "",
     imageBlendMode: "normal",
     imageFit: "cover",
     mediaRatio: "4:5",
@@ -715,6 +724,9 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
       mutedTextColor: cleanColor(pc?.mutedTextColor, D.productCard.mutedTextColor),
       priceColor: cleanColor(pc?.priceColor, D.productCard.priceColor),
       comparePriceColor: cleanColor(pc?.comparePriceColor, D.productCard.comparePriceColor),
+      ctaBg: cleanColor(pc?.ctaBg, D.productCard.ctaBg),
+      ctaTextColor: cleanColor(pc?.ctaTextColor, D.productCard.ctaTextColor),
+      ctaBorderColor: cleanColor(pc?.ctaBorderColor, D.productCard.ctaBorderColor),
       imageBlendMode:
         pc?.imageBlendMode === "normal" ||
         pc?.imageBlendMode === "multiply" ||

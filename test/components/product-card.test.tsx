@@ -568,4 +568,26 @@ describe("ProductCard", () => {
     const { container: footerC } = render(<ProductCard product={P} ctaVariant="footer" />);
     expect(footerC.querySelector(".sf-productcard__ctas--footer")).not.toBeNull();
   });
+
+  it("uses the Button component with sf-btn class and supports ctaBg, ctaTextColor, ctaBorderColor", () => {
+    const { container } = render(
+      <ProductCard
+        product={P}
+        ctaVariant="below"
+        ctaBg="#0077B6"
+        ctaTextColor="#FFFFFF"
+        ctaBorderColor="#005B8C"
+      />,
+    );
+    const article = container.firstElementChild as HTMLElement;
+    expect(article.style.getPropertyValue("--pc-cta-bg")).toBe("#0077B6");
+    expect(article.style.getPropertyValue("--pc-cta-text")).toBe("#FFFFFF");
+    expect(article.style.getPropertyValue("--pc-cta-border")).toBe("#005B8C");
+
+    const btn = container.querySelector(".sf-productcard__cta") as HTMLElement;
+    expect(btn.classList.contains("sf-btn")).toBe(true);
+    expect(btn.style.getPropertyValue("--btn-bg")).toBe("#0077B6");
+    expect(btn.style.getPropertyValue("--btn-text")).toBe("#FFFFFF");
+    expect(btn.style.getPropertyValue("--btn-border")).toBe("#005B8C");
+  });
 });

@@ -75,5 +75,8 @@ describe("product card style contract", () => {
     expect(css).toMatch(/\.sf-productcard\[data-ctastyle="label"\] \.sf-productcard__ctas[^{]*\{[^}]*flex-direction:\s*column/);
     expect(css).toMatch(/\.sf-productcard\[data-ctastyle="icon-label"\] \.sf-productcard__ctas[^{]*\{[^}]*flex-direction:\s*column/);
     expect(css).toMatch(/\.sf-productcard\[data-ctastyle="icon"\] \.sf-productcard__ctas[^{]*\{[^}]*flex-direction:\s*row/);
+    expect(css).toMatch(/\.sf-productcard__ctas\s*\{[^}]*top:\s*0/);
+    expect(css).toMatch(/\.sf-productcard__ctas\s*\{[^}]*bottom:\s*0/);
+    expect(css).toMatch(/\.sf-productcard__ctas\s*\{[^}]*margin:\s*auto/);
   });
 });
