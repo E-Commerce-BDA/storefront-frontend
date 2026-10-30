@@ -22,11 +22,13 @@ import { DEMO_NAV_INPUT } from "@/lib/shell/demoNavInput";
 import NavbarMount from "@/app/_components/NavbarMount";
 import ProductCard from "@/components/commerce/ProductCard";
 import type {
+  CtaPosition,
   CtaStyle,
   CtaVariant,
   EyebrowMode,
   HoverMode,
   ImageBlendMode,
+  ImageFit,
   ImageIndicatorStyle,
   ImageNavMode,
   MediaRatio,
@@ -383,6 +385,8 @@ export default function PreviewPage() {
   const [pcTextAlign, setPcTextAlign] = useState<TextAlign>("left");
   const [pcCtaVariant, setPcCtaVariant] = useState<CtaVariant>("overlay");
   const [pcCtaStyle, setPcCtaStyle] = useState<CtaStyle>("icon");
+  const [pcCtaPosition, setPcCtaPosition] = useState<CtaPosition>("center");
+  const [pcImageFit, setPcImageFit] = useState<ImageFit>("cover");
   const [pcShowSwatches, setPcShowSwatches] = useState(true);
   const [pcShowPills, setPcShowPills] = useState(true);
   const [pcEyebrow, setPcEyebrow] = useState<EyebrowMode>("category");
@@ -991,8 +995,33 @@ export default function PreviewPage() {
                   className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
                 >
                   <option value="icon">icon (circular quick actions)</option>
-                  <option value="label">label (text button)</option>
-                  <option value="icon-label">icon-label (full action button)</option>
+                  <option value="label">label (vertical tabs list)</option>
+                  <option value="icon-label">icon-label (vertical tabs with icons)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">CTA Alignment</label>
+                <select
+                  value={pcCtaPosition}
+                  onChange={(e) => setPcCtaPosition(e.target.value as CtaPosition)}
+                  className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                >
+                  <option value="center">center</option>
+                  <option value="left">left</option>
+                  <option value="right">right</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Image Fit</label>
+                <select
+                  value={pcImageFit}
+                  onChange={(e) => setPcImageFit(e.target.value as ImageFit)}
+                  className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                >
+                  <option value="cover">cover (Crop to fill frame)</option>
+                  <option value="contain">contain (Fit inside frame without cropping)</option>
                 </select>
               </div>
 
@@ -1276,6 +1305,8 @@ export default function PreviewPage() {
                   textAlign={pcTextAlign}
                   ctaVariant={pcCtaVariant}
                   ctaStyle={pcCtaStyle}
+                  ctaPosition={pcCtaPosition}
+                  imageFit={pcImageFit}
                   showSwatches={pcShowSwatches}
                   showPills={pcShowPills}
                   selectedOptions={pcSelectedOptions}
@@ -1375,7 +1406,7 @@ export default function PreviewPage() {
           <h3 className="mb-3 mt-8 font-semibold text-[var(--color-ink)]">CTA Action Bar Variants &amp; Styles</h3>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
             <div>
-              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Below Media (Full Action Button)</span>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Below Media (Vertical Tabs List)</span>
               <ProductCard
                 product={DEMO_CARD_PRODUCTS[0]}
                 cardType="standard"
@@ -1419,6 +1450,47 @@ export default function PreviewPage() {
                 cardBg="#ffffff"
                 borderColor="var(--border)"
                 cardPad={12}
+                selectedOptions={pcSelectedOptions}
+                onSelectOption={(name, val) =>
+                  setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
+              />
+            </div>
+          </div>
+
+          <h3 className="mb-3 mt-8 font-semibold text-[var(--color-ink)]">Image Object-Fit &amp; Inset Boundary Protection</h3>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Contained Packshot (cardPad=12, imageFit=&quot;contain&quot;)</span>
+              <ProductCard
+                product={DEMO_CARD_PRODUCTS[0]}
+                cardType="standard"
+                mediaRatio="4:5"
+                imageFit="contain"
+                cardPad={12}
+                cardBg="#F8FAFC"
+                borderColor="var(--border)"
+                borderRadius={16}
+                imageBorderRadius={10}
+                ctaVariant="below"
+                ctaStyle="icon-label"
+                selectedOptions={pcSelectedOptions}
+                onSelectOption={(name, val) =>
+                  setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
+              />
+            </div>
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Edge-to-Edge Cover (cardPad=0, imageFit=&quot;cover&quot;, overflow contained)</span>
+              <ProductCard
+                product={DEMO_CARD_PRODUCTS[1]}
+                cardType="standard"
+                mediaRatio="4:5"
+                imageFit="cover"
+                cardPad={0}
+                borderRadius={16}
+                imageBorderRadius={16}
+                ctaVariant="overlay"
                 selectedOptions={pcSelectedOptions}
                 onSelectOption={(name, val) =>
                   setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))

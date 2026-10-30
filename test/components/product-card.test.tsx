@@ -515,4 +515,57 @@ describe("ProductCard", () => {
     fireEvent.keyDown(sPill, { key: "ArrowLeft" });
     expect(onSelectOption).toHaveBeenCalledWith("Size", "L");
   });
+
+  it("renders imageFit='contain' with data-fit='contain' and sets --pc-image-fit var", () => {
+    const { container, unmount } = render(<ProductCard product={P} imageFit="contain" />);
+    const article = container.firstElementChild as HTMLElement;
+    expect(article.getAttribute("data-fit")).toBe("contain");
+    expect(article.style.getPropertyValue("--pc-image-fit")).toBe("contain");
+    unmount();
+
+    const { container: defaultContainer } = render(<ProductCard product={P} />);
+    const defaultArticle = defaultContainer.firstElementChild as HTMLElement;
+    expect(defaultArticle.getAttribute("data-fit")).toBe("cover");
+    expect(defaultArticle.style.getPropertyValue("--pc-image-fit")).toBe("cover");
+  });
+
+  it("renders vertical tabs list layout for label and icon-label CTA styles", () => {
+    const { container, unmount } = render(
+      <ProductCard
+        product={P}
+        ctaVariant="below"
+        ctaStyle="icon-label"
+        ctaPosition="left"
+      />,
+    );
+    const article = container.firstElementChild as HTMLElement;
+    expect(article.getAttribute("data-ctastyle")).toBe("icon-label");
+    expect(article.getAttribute("data-ctapos")).toBe("left");
+    expect(article.getAttribute("data-ctavariant")).toBe("below");
+
+    const ctas = container.querySelector(".sf-productcard__ctas--below");
+    expect(ctas).not.toBeNull();
+    const ctaBtns = ctas?.querySelectorAll(".sf-productcard__cta");
+    expect(ctaBtns?.length).toBe(3);
+    expect(ctas?.textContent).toContain("Quick view");
+    expect(ctas?.textContent).toContain("Add to bag");
+    unmount();
+
+    const { container: labelContainer } = render(
+      <ProductCard product={P} ctaVariant="below" ctaStyle="label" />,
+    );
+    const labelArticle = labelContainer.firstElementChild as HTMLElement;
+    expect(labelArticle.getAttribute("data-ctastyle")).toBe("label");
+  });
+
+  it("renders non-overlay CTAs (below, inline, footer) with correct variant classes", () => {
+    const { container: belowC } = render(<ProductCard product={P} ctaVariant="below" />);
+    expect(belowC.querySelector(".sf-productcard__ctas--below")).not.toBeNull();
+
+    const { container: inlineC } = render(<ProductCard product={P} ctaVariant="inline" />);
+    expect(inlineC.querySelector(".sf-productcard__ctas--inline")).not.toBeNull();
+
+    const { container: footerC } = render(<ProductCard product={P} ctaVariant="footer" />);
+    expect(footerC.querySelector(".sf-productcard__ctas--footer")).not.toBeNull();
+  });
 });

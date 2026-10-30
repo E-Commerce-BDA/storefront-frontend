@@ -465,6 +465,7 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
       data-ctavariant={styles.ctaVariant}
       data-ctastyle={styles.ctaStyle}
       data-blend-mode={styles.imageBlendMode}
+      data-fit={styles.imageFit}
       data-align={styles.textAlign}
       data-imagenav={styles.imageNav}
       data-imageindicator={styles.imageIndicator}

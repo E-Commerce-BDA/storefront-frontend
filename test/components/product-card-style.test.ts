@@ -66,4 +66,14 @@ describe("product card style contract", () => {
     const hexes = withoutFallbacks.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [];
     expect(hexes, `hardcoded paint ${hexes.join(", ")} bypasses theming`).toEqual([]);
   });
+
+  it("ensures card boundary containment and visible non-overlay CTAs", () => {
+    expect(css).toMatch(/\.sf-productcard\s*\{[^}]*overflow:\s*hidden/);
+    expect(css).toMatch(/\.sf-productcard__ctas--below\s*\{[^}]*visibility:\s*visible/);
+    expect(css).toMatch(/\.sf-productcard__ctas--inline\s*\{[^}]*visibility:\s*visible/);
+    expect(css).toMatch(/\.sf-productcard__ctas--footer\s*\{[^}]*visibility:\s*visible/);
+    expect(css).toMatch(/\.sf-productcard\[data-ctastyle="label"\] \.sf-productcard__ctas[^{]*\{[^}]*flex-direction:\s*column/);
+    expect(css).toMatch(/\.sf-productcard\[data-ctastyle="icon-label"\] \.sf-productcard__ctas[^{]*\{[^}]*flex-direction:\s*column/);
+    expect(css).toMatch(/\.sf-productcard\[data-ctastyle="icon"\] \.sf-productcard__ctas[^{]*\{[^}]*flex-direction:\s*row/);
+  });
 });
