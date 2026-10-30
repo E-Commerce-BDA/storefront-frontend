@@ -18,12 +18,20 @@ import { resolveOverlayMotion, type OverlayMotionField, type ResolvedOverlayMoti
 import type {
   BadgePosition,
   CtaPosition,
+  CtaStyle,
+  CtaVariant,
+  EyebrowMode,
   HoverMode,
   ImageBlendMode,
   ImageFit,
+  ImageIndicatorPosition,
+  ImageIndicatorStyle,
+  ImageNavMode,
   MediaRatio,
   ProductCardType,
   QuickAction,
+  SelectionEffect,
+  SelectionMode,
   TextAlign,
 } from "@/lib/commerce/productCard";
 import type { ButtonSize, ButtonVariant } from "@/components/ui/Button";
@@ -154,6 +162,10 @@ export interface ThemeProductCardField {
   hoverCardBg?: string;
   hoverBorderColor?: string;
   mediaBg?: string;
+  textColor?: string;
+  mutedTextColor?: string;
+  priceColor?: string;
+  comparePriceColor?: string;
   imageBlendMode?: ImageBlendMode;
   imageFit?: ImageFit;
   mediaRatio?: MediaRatio;
@@ -161,13 +173,25 @@ export interface ThemeProductCardField {
   showBadge?: boolean;
   showRatings?: boolean;
   showDept?: boolean;
+  showSwatches?: boolean;
+  showPills?: boolean;
   hoverMode?: HoverMode;
+  ctaVariant?: CtaVariant;
+  ctaStyle?: CtaStyle;
   ctaSet?: QuickAction[];
   ctaPosition?: CtaPosition;
   showActionsOnTouch?: boolean;
   nameSize?: number;
   priceSize?: number;
   textAlign?: TextAlign;
+  eyebrow?: EyebrowMode;
+  imageNav?: ImageNavMode;
+  imageIndicator?: ImageIndicatorStyle;
+  imageIndicatorPosition?: ImageIndicatorPosition;
+  imageLoop?: boolean;
+  imageLimit?: number;
+  selectionMode?: SelectionMode;
+  selectionEffects?: SelectionEffect[];
   colsDesktop?: number;
   colsTablet?: number;
   colsPhone?: number;
@@ -348,6 +372,10 @@ export interface ResolvedThemeProductCard {
   hoverCardBg: string;
   hoverBorderColor: string;
   mediaBg: string;
+  textColor: string;
+  mutedTextColor: string;
+  priceColor: string;
+  comparePriceColor: string;
   imageBlendMode: ImageBlendMode;
   imageFit: ImageFit;
   mediaRatio: MediaRatio;
@@ -355,13 +383,25 @@ export interface ResolvedThemeProductCard {
   showBadge: boolean;
   showRatings: boolean;
   showDept: boolean;
+  showSwatches: boolean;
+  showPills: boolean;
   hoverMode: HoverMode;
+  ctaVariant: CtaVariant;
+  ctaStyle: CtaStyle;
   ctaSet: QuickAction[];
   ctaPosition: CtaPosition;
   showActionsOnTouch: boolean;
   nameSize: number;
   priceSize: number;
   textAlign: TextAlign;
+  eyebrow: EyebrowMode;
+  imageNav: ImageNavMode;
+  imageIndicator: ImageIndicatorStyle;
+  imageIndicatorPosition: ImageIndicatorPosition;
+  imageLoop: boolean;
+  imageLimit: number;
+  selectionMode: SelectionMode;
+  selectionEffects: SelectionEffect[];
   colsDesktop: number;
   colsTablet: number;
   colsPhone: number;
@@ -465,6 +505,10 @@ export const DEFAULT_THEME: ResolvedThemeSettings = {
     hoverCardBg: "",
     hoverBorderColor: "",
     mediaBg: "",
+    textColor: "",
+    mutedTextColor: "",
+    priceColor: "",
+    comparePriceColor: "",
     imageBlendMode: "normal",
     imageFit: "cover",
     mediaRatio: "4:5",
@@ -472,13 +516,25 @@ export const DEFAULT_THEME: ResolvedThemeSettings = {
     showBadge: true,
     showRatings: true,
     showDept: true,
+    showSwatches: true,
+    showPills: true,
     hoverMode: "actions",
+    ctaVariant: "overlay",
+    ctaStyle: "icon",
     ctaSet: ["quick-view", "wishlist", "add-to-cart"],
     ctaPosition: "center",
     showActionsOnTouch: false,
     nameSize: 15,
     priceSize: 15,
     textAlign: "left",
+    eyebrow: "category",
+    imageNav: "hover",
+    imageIndicator: "dots",
+    imageIndicatorPosition: "bottom",
+    imageLoop: true,
+    imageLimit: 5,
+    selectionMode: "preview",
+    selectionEffects: ["image"],
     colsDesktop: 4,
     colsTablet: 3,
     colsPhone: 2,
@@ -655,6 +711,10 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
       hoverCardBg: cleanColor(pc?.hoverCardBg, D.productCard.hoverCardBg),
       hoverBorderColor: cleanColor(pc?.hoverBorderColor, D.productCard.hoverBorderColor),
       mediaBg: cleanColor(pc?.mediaBg, D.productCard.mediaBg),
+      textColor: cleanColor(pc?.textColor, D.productCard.textColor),
+      mutedTextColor: cleanColor(pc?.mutedTextColor, D.productCard.mutedTextColor),
+      priceColor: cleanColor(pc?.priceColor, D.productCard.priceColor),
+      comparePriceColor: cleanColor(pc?.comparePriceColor, D.productCard.comparePriceColor),
       imageBlendMode:
         pc?.imageBlendMode === "normal" ||
         pc?.imageBlendMode === "multiply" ||
@@ -676,6 +736,8 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
       showBadge: pc?.showBadge ?? D.productCard.showBadge,
       showRatings: pc?.showRatings ?? D.productCard.showRatings,
       showDept: pc?.showDept ?? D.productCard.showDept,
+      showSwatches: pc?.showSwatches ?? D.productCard.showSwatches,
+      showPills: pc?.showPills ?? D.productCard.showPills,
       hoverMode:
         pc?.hoverMode === "none" ||
         pc?.hoverMode === "image" ||
@@ -683,6 +745,20 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
         pc?.hoverMode === "zoom"
           ? pc.hoverMode
           : D.productCard.hoverMode,
+      ctaVariant:
+        pc?.ctaVariant === "below" ||
+        pc?.ctaVariant === "inline" ||
+        pc?.ctaVariant === "footer" ||
+        pc?.ctaVariant === "none" ||
+        pc?.ctaVariant === "overlay"
+          ? pc.ctaVariant
+          : D.productCard.ctaVariant,
+      ctaStyle:
+        pc?.ctaStyle === "label" ||
+        pc?.ctaStyle === "icon-label" ||
+        pc?.ctaStyle === "icon"
+          ? pc.ctaStyle
+          : D.productCard.ctaStyle,
       ctaSet: (Array.isArray(pc?.ctaSet) ? pc.ctaSet : D.productCard.ctaSet)
         .filter((c) => c === "quick-view" || c === "wishlist" || c === "add-to-cart" || c === "share")
         .slice(0, 3),
@@ -692,6 +768,32 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
       nameSize: clampInt(pc?.nameSize, L.nameSize.min, L.nameSize.max, D.productCard.nameSize),
       priceSize: clampInt(pc?.priceSize, L.nameSize.min, L.nameSize.max, D.productCard.priceSize),
       textAlign: pc?.textAlign === "center" || pc?.textAlign === "right" ? pc.textAlign : D.productCard.textAlign,
+      eyebrow:
+        pc?.eyebrow === "brand" || pc?.eyebrow === "none" || pc?.eyebrow === "category"
+          ? pc.eyebrow
+          : D.productCard.eyebrow,
+      imageNav:
+        pc?.imageNav === "always" || pc?.imageNav === "touch" || pc?.imageNav === "none" || pc?.imageNav === "hover"
+          ? pc.imageNav
+          : D.productCard.imageNav,
+      imageIndicator:
+        pc?.imageIndicator === "bars" ||
+        pc?.imageIndicator === "count" ||
+        pc?.imageIndicator === "none" ||
+        pc?.imageIndicator === "dots"
+          ? pc.imageIndicator
+          : D.productCard.imageIndicator,
+      imageIndicatorPosition:
+        pc?.imageIndicatorPosition === "top" ? "top" : D.productCard.imageIndicatorPosition,
+      imageLoop: pc?.imageLoop ?? D.productCard.imageLoop,
+      imageLimit: clampInt(pc?.imageLimit, 1, 10, D.productCard.imageLimit),
+      selectionMode:
+        pc?.selectionMode === "commit-only" || pc?.selectionMode === "visual" || pc?.selectionMode === "preview"
+          ? pc.selectionMode
+          : D.productCard.selectionMode,
+      selectionEffects: Array.isArray(pc?.selectionEffects)
+        ? pc.selectionEffects.filter((e) => e === "image" || e === "price" || e === "stock")
+        : D.productCard.selectionEffects,
       colsDesktop: clampInt(pc?.colsDesktop, 3, 5, D.productCard.colsDesktop),
       colsTablet: clampInt(pc?.colsTablet, 2, 3, D.productCard.colsTablet),
       colsPhone: clampInt(pc?.colsPhone, 1, 2, D.productCard.colsPhone),

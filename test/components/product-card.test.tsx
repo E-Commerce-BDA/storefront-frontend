@@ -88,11 +88,15 @@ describe("ProductCard", () => {
       first.container.querySelector('[aria-label="Add Ocean Linen Shirt to wishlist"]')?.getAttribute("aria-pressed"),
     ).toBe("true");
     first.unmount();
-    const second = render(<ProductCard product={{ ...P, hoverImage: "h.jpg" }} hoverMode="image" />);
+    const second = render(<ProductCard product={{ ...P, hoverImage: "h.jpg" }} hoverMode="image" ctaVariant="none" />);
     expect(second.container.firstElementChild?.getAttribute("data-hover")).toBe("image");
     expect(second.container.querySelector(".sf-productcard__hoverimg")).not.toBeNull();
     expect(screen.queryByRole("group", { name: "Actions for Ocean Linen Shirt" })).toBeNull();
     second.unmount();
+    // Decoupled overlay CTAs render even when hoverMode is image
+    const third = render(<ProductCard product={{ ...P, hoverImage: "h.jpg" }} hoverMode="image" ctaVariant="overlay" />);
+    expect(third.container.querySelector(".sf-productcard__ctas")).not.toBeNull();
+    third.unmount();
   });
 
   it("hides badge/ratings/dept on gates; reserved props stay inert", () => {
@@ -267,5 +271,248 @@ describe("ProductCard", () => {
     expect(article.getAttribute("data-card-type")).toBe("compact");
     expect(article.getAttribute("data-ctavariant")).toBe("footer");
     expect(container.querySelector(".sf-productcard__ctas--footer")).not.toBeNull();
+  });
+
+  it("renders multi-image carousel arrows and indicators with index callbacks", () => {
+    const onImageIndexChange = vi.fn();
+    const productWithImages: ProductCardData = {
+      ...P,
+      images: [
+        { url: "img1.jpg" },
+        { url: "img2.jpg" },
+        { url: "img3.jpg" },
+      ],
+    };
+
+    const { container } = render(
+      <ProductCard
+        product={productWithImages}
+        activeImageIndex={1}
+        onImageIndexChange={onImageIndexChange}
+        imageNav="hover"
+        imageIndicator="dots"
+      />,
+    );
+
+    const prevBtn = screen.getByRole("button", { name: "Previous image" });
+    const nextBtn = screen.getByRole("button", { name: "Next image" });
+    expect(prevBtn).not.toBeNull();
+    expect(nextBtn).not.toBeNull();
+
+    // Prev button changes index to 0
+    fireEvent.click(prevBtn);
+    expect(onImageIndexChange).toHaveBeenCalledWith(0);
+
+    // Next button changes index to 2
+    fireEvent.click(nextBtn);
+    expect(onImageIndexChange).toHaveBeenCalledWith(2);
+
+    // Indicator dots
+    const dots = container.querySelectorAll(".sf-productcard__indicator-dot");
+    expect(dots.length).toBe(3);
+    expect(dots[1].classList.contains("sf-productcard__indicator-dot--active")).toBe(true);
+
+    // Clicking dot 2
+    fireEvent.click(dots[2]);
+    expect(onImageIndexChange).toHaveBeenCalledWith(2);
+  });
+
+  it("places options into info, media, brand-hover, and media-hover-top slots", () => {
+    const productWithSlots: ProductCardData = {
+      ...P,
+      brand: { name: "Oceanic Brand" },
+      options: [
+        {
+          name: "Color",
+          displayType: "swatch",
+          showOnCard: true,
+          cardPlacement: "brand-hover",
+          values: [{ value: "Navy", swatchHex: "#000080" }],
+        },
+        {
+          name: "Size",
+          displayType: "pill",
+          showOnCard: true,
+          cardPlacement: "media-hover-top",
+          values: [{ value: "M" }],
+        },
+        {
+          name: "Material",
+          displayType: "pill",
+          showOnCard: true,
+          cardPlacement: "media",
+          values: [{ value: "Linen" }],
+        },
+        {
+          name: "Fit",
+          displayType: "pill",
+          showOnCard: true,
+          cardPlacement: "info",
+          values: [{ value: "Regular" }],
+        },
+        {
+          name: "HiddenOpt",
+          displayType: "pill",
+          showOnCard: false,
+          cardPlacement: "hidden",
+          values: [{ value: "Secret" }],
+        },
+      ],
+    };
+
+    const { container } = render(
+      <ProductCard product={productWithSlots} eyebrow="brand" />,
+    );
+
+    // Brand eyebrow
+    expect(screen.getByText("Oceanic Brand")).not.toBeNull();
+
+    // brand-hover slot
+    expect(container.querySelector(".sf-productcard__brand-hover-slot [aria-label='Color: Navy']")).not.toBeNull();
+
+    // media-hover-top slot
+    expect(container.querySelector(".sf-productcard__media-hover-top [aria-label='Size: M']")).not.toBeNull();
+
+    // media slot
+    expect(container.querySelector(".sf-productcard__media-options [aria-label='Material: Linen']")).not.toBeNull();
+
+    // info slot
+    expect(container.querySelector(".sf-productcard__options [aria-label='Fit: Regular']")).not.toBeNull();
+
+    // hidden slot
+    expect(screen.queryByLabelText("HiddenOpt: Secret")).toBeNull();
+  });
+
+  it("applies selection effects on catalog grid: image, price, stock update", () => {
+    const productWithVariants: ProductCardData = {
+      ...P,
+      image: "default.jpg",
+      price: 48,
+      compareAt: 60,
+      cardVariants: [
+        {
+          id: "v-ruby",
+          sku: "SHIRT-RUBY-M",
+          price: 54,
+          compareAtPrice: 70,
+          stock: 3,
+          imageUrl: "ruby.jpg",
+          optionValues: { Color: "Ruby", Size: "M" },
+        },
+        {
+          id: "v-out",
+          sku: "SHIRT-NAVY-XL",
+          price: 40,
+          stock: 0,
+          imageUrl: "out.jpg",
+          optionValues: { Color: "Navy", Size: "XL" },
+        },
+      ],
+      options: [
+        {
+          name: "Color",
+          displayType: "swatch",
+          showOnCard: true,
+          values: [{ value: "Ruby" }, { value: "Navy" }],
+        },
+        {
+          name: "Size",
+          displayType: "pill",
+          showOnCard: true,
+          values: [{ value: "M" }, { value: "XL" }],
+        },
+      ],
+    };
+
+    // When Ruby + M is selected
+    const { container, rerender } = render(
+      <ProductCard
+        product={productWithVariants}
+        selectedOptions={{ Color: "Ruby", Size: "M" }}
+        selectionEffects={["image", "price", "stock"]}
+      />,
+    );
+
+    const img = container.querySelector(".sf-productcard__cover") as HTMLImageElement;
+    expect(img.src).toContain("ruby.jpg");
+    expect(screen.getByText("$54")).not.toBeNull();
+    expect(screen.getByText("$70")).not.toBeNull();
+    expect(screen.getByText("Low stock")).not.toBeNull();
+
+    // When Navy + XL is selected (stock=0 -> out of stock)
+    rerender(
+      <ProductCard
+        product={productWithVariants}
+        selectedOptions={{ Color: "Navy", Size: "XL" }}
+        selectionEffects={["image", "price", "stock"]}
+      />,
+    );
+
+    expect(screen.getByText("Sold out")).not.toBeNull();
+    expect(container.querySelector("article")?.getAttribute("data-stock")).toBe("out");
+  });
+
+  it("triggers onPreviewOption on swatch mouse enter/leave when selectionMode=preview", () => {
+    const onPreviewOption = vi.fn();
+    const productWithOptions: ProductCardData = {
+      ...P,
+      options: [
+        {
+          name: "Color",
+          displayType: "swatch",
+          showOnCard: true,
+          values: [{ value: "Emerald", swatchHex: "#00ff00" }],
+        },
+      ],
+    };
+
+    const { container } = render(
+      <ProductCard
+        product={productWithOptions}
+        selectionMode="preview"
+        onPreviewOption={onPreviewOption}
+      />,
+    );
+
+    const swatch = container.querySelector(".sf-productcard__swatch") as HTMLButtonElement;
+    fireEvent.mouseEnter(swatch);
+    expect(onPreviewOption).toHaveBeenCalledWith("Color", "Emerald");
+
+    fireEvent.mouseLeave(swatch);
+    expect(onPreviewOption).toHaveBeenCalledWith("Color", null);
+  });
+
+  it("supports Arrow keyboard navigation between option values in radiogroup", () => {
+    const onSelectOption = vi.fn();
+    const productWithOptions: ProductCardData = {
+      ...P,
+      options: [
+        {
+          name: "Size",
+          displayType: "pill",
+          showOnCard: true,
+          values: [{ value: "S" }, { value: "M" }, { value: "L" }],
+        },
+      ],
+    };
+
+    render(
+      <ProductCard
+        product={productWithOptions}
+        selectedOptions={{ Size: "S" }}
+        onSelectOption={onSelectOption}
+      />,
+    );
+
+    const sPill = screen.getByRole("radio", { name: "Size: S" });
+    expect(sPill.getAttribute("tabIndex")).toBe("0");
+    const mPill = screen.getByRole("radio", { name: "Size: M" });
+    expect(mPill.getAttribute("tabIndex")).toBe("-1");
+
+    fireEvent.keyDown(sPill, { key: "ArrowRight" });
+    expect(onSelectOption).toHaveBeenCalledWith("Size", "M");
+
+    fireEvent.keyDown(sPill, { key: "ArrowLeft" });
+    expect(onSelectOption).toHaveBeenCalledWith("Size", "L");
   });
 });

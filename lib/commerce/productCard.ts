@@ -17,6 +17,32 @@ export type ImageBlendMode = "normal" | "multiply" | "darken" | "overlay" | "scr
 export type ImageFit = "cover" | "contain";
 export type TextAlign = "left" | "center" | "right";
 
+export type OptionCardPlacement = "info" | "media" | "brand-hover" | "media-hover-top" | "hidden";
+export type EyebrowMode = "category" | "brand" | "none";
+export type ImageNavMode = "hover" | "always" | "touch" | "none";
+export type ImageIndicatorStyle = "dots" | "bars" | "count" | "none";
+export type ImageIndicatorPosition = "bottom" | "top";
+export type SelectionMode = "preview" | "commit-only" | "visual";
+export type SelectionEffect = "image" | "price" | "stock";
+
+export interface ProductImageItem {
+  id?: string;
+  url: string;
+  alt?: string | null;
+  isPrimary?: boolean;
+  sortOrder?: number;
+}
+
+export interface CardVariant {
+  id: string;
+  sku: string;
+  price: number;
+  compareAtPrice?: number | null;
+  stock: number;
+  imageUrl?: string | null;
+  optionValues: Record<string, string>;
+}
+
 export interface ProductCardBadge {
   id?: string;
   key: string;
@@ -41,6 +67,7 @@ export interface ProductCardOption {
   name: string;
   displayType: "text" | "pill" | "swatch";
   showOnCard: boolean;
+  cardPlacement?: OptionCardPlacement;
   values: ProductCardOptionValue[];
 }
 
@@ -57,6 +84,12 @@ export interface ProductCardData extends SearchResult {
   badges?: ProductCardBadge[];
   /** Card-projected options (swatches, size pills) */
   options?: ProductCardOption[];
+  /** Multiple product media images for carousel */
+  images?: ProductImageItem[];
+  /** Brand identity */
+  brand?: { id?: string; name: string };
+  /** Compact card variants for active selection effects */
+  cardVariants?: CardVariant[];
   /** Sparse per-product card settings */
   cardSettings?: Partial<ProductCardStyleConfig>;
 }
@@ -102,6 +135,14 @@ export interface ProductCardStyleConfig {
   nameSize?: number;
   priceSize?: number;
   textAlign?: TextAlign;
+  eyebrow?: EyebrowMode;
+  imageNav?: ImageNavMode;
+  imageIndicator?: ImageIndicatorStyle;
+  imageIndicatorPosition?: ImageIndicatorPosition;
+  imageLoop?: boolean;
+  imageLimit?: number;
+  selectionMode?: SelectionMode;
+  selectionEffects?: SelectionEffect[];
 }
 
 export interface ResolvedProductCardStyles {
@@ -136,6 +177,14 @@ export interface ResolvedProductCardStyles {
   nameSize: number;
   priceSize: number;
   textAlign: TextAlign;
+  eyebrow: EyebrowMode;
+  imageNav: ImageNavMode;
+  imageIndicator: ImageIndicatorStyle;
+  imageIndicatorPosition: ImageIndicatorPosition;
+  imageLoop: boolean;
+  imageLimit: number;
+  selectionMode: SelectionMode;
+  selectionEffects: SelectionEffect[];
 }
 
 export const PRODUCT_CARD_RATIOS: Record<MediaRatio, string> = {
@@ -185,6 +234,14 @@ export const DEFAULT_PRODUCT_CARD_STYLES: ResolvedProductCardStyles = {
   nameSize: 15,
   priceSize: 15,
   textAlign: "left",
+  eyebrow: "category",
+  imageNav: "hover",
+  imageIndicator: "dots",
+  imageIndicatorPosition: "bottom",
+  imageLoop: true,
+  imageLimit: 5,
+  selectionMode: "preview",
+  selectionEffects: ["image"],
 };
 
 const clamp = (v: unknown, min: number, max: number, fallback: number): number => {
@@ -293,6 +350,37 @@ export function resolveProductCardStyles(
   const validCtas = new Set<QuickAction>(["quick-view", "wishlist", "add-to-cart", "share"]);
   const ctaSet = rawCtaSet.filter((action): action is QuickAction => validCtas.has(action)).slice(0, 3);
 
+  const eyebrow: EyebrowMode =
+    c.eyebrow === "brand" || c.eyebrow === "none" || c.eyebrow === "category" ? c.eyebrow : base.eyebrow;
+
+  const imageNav: ImageNavMode =
+    c.imageNav === "always" || c.imageNav === "touch" || c.imageNav === "none" || c.imageNav === "hover"
+      ? c.imageNav
+      : base.imageNav;
+
+  const imageIndicator: ImageIndicatorStyle =
+    c.imageIndicator === "bars" ||
+    c.imageIndicator === "count" ||
+    c.imageIndicator === "none" ||
+    c.imageIndicator === "dots"
+      ? c.imageIndicator
+      : base.imageIndicator;
+
+  const imageIndicatorPosition: ImageIndicatorPosition =
+    c.imageIndicatorPosition === "top" ? "top" : base.imageIndicatorPosition;
+
+  const imageLoop = c.imageLoop ?? base.imageLoop;
+  const imageLimit = clamp(c.imageLimit ?? base.imageLimit, 1, 10, base.imageLimit);
+
+  const selectionMode: SelectionMode =
+    c.selectionMode === "commit-only" || c.selectionMode === "visual" || c.selectionMode === "preview"
+      ? c.selectionMode
+      : base.selectionMode;
+
+  const selectionEffects: SelectionEffect[] = Array.isArray(c.selectionEffects)
+    ? c.selectionEffects.filter((e): e is SelectionEffect => e === "image" || e === "price" || e === "stock")
+    : base.selectionEffects;
+
   return {
     cardType,
     mediaRatio,
@@ -328,6 +416,14 @@ export function resolveProductCardStyles(
     nameSize: clamp(c.nameSize ?? base.nameSize, L.nameSize.min, L.nameSize.max, base.nameSize),
     priceSize: clamp(c.priceSize ?? base.priceSize, L.priceSize.min, L.priceSize.max, base.priceSize),
     textAlign,
+    eyebrow,
+    imageNav,
+    imageIndicator,
+    imageIndicatorPosition,
+    imageLoop,
+    imageLimit,
+    selectionMode,
+    selectionEffects,
   };
 }
 
@@ -355,4 +451,69 @@ export function resolveProductCardCssVars(resolved: ResolvedProductCardStyles): 
   if (resolved.comparePriceColor) vars["--pc-compare-price"] = resolved.comparePriceColor;
 
   return vars as React.CSSProperties;
+}
+
+export interface ResolvedVariantState {
+  activeVariant: CardVariant | null;
+  displayImage: string;
+  displayPrice: number;
+  displayCompareAt?: number | null;
+  displayStock: ProductStock;
+  isOutOfStock: boolean;
+}
+
+/**
+ * Pure variant resolver for selection effects on catalog grids.
+ */
+export function resolveSelectedVariant(
+  product: ProductCardData,
+  selectedOptions?: Record<string, string>,
+  previewedOptions?: Record<string, string> | null,
+  activeImageIndex: number = 0,
+  effects: SelectionEffect[] = ["image"],
+): ResolvedVariantState {
+  const activeOpts = {
+    ...(selectedOptions ?? {}),
+    ...(previewedOptions ?? {}),
+  };
+
+  const variants = product.cardVariants ?? [];
+  let matched: CardVariant | null = null;
+
+  if (variants.length > 0 && Object.keys(activeOpts).length > 0) {
+    matched =
+      variants.find((v) =>
+        Object.entries(activeOpts).every(([optName, optVal]) => v.optionValues[optName] === optVal),
+      ) ?? null;
+  }
+
+  // Base image selection
+  let baseImage = product.image;
+  if (product.images && product.images.length > 0) {
+    const idx = Math.max(0, Math.min(activeImageIndex, product.images.length - 1));
+    baseImage = product.images[idx]?.url || product.image;
+  }
+
+  const applyImage = effects.includes("image");
+  const applyPrice = effects.includes("price");
+  const applyStock = effects.includes("stock");
+
+  const displayImage = applyImage && matched?.imageUrl ? matched.imageUrl : baseImage;
+  const displayPrice = applyPrice && matched?.price !== undefined ? matched.price : product.price;
+  const displayCompareAt =
+    applyPrice && matched?.compareAtPrice !== undefined ? matched.compareAtPrice : product.compareAt;
+
+  let displayStock = product.stock ?? "in";
+  if (applyStock && matched) {
+    displayStock = matched.stock <= 0 ? "out" : matched.stock < 5 ? "low" : "in";
+  }
+
+  return {
+    activeVariant: matched,
+    displayImage,
+    displayPrice,
+    displayCompareAt,
+    displayStock,
+    isOutOfStock: displayStock === "out",
+  };
 }

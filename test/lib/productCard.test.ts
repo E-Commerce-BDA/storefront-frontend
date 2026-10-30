@@ -9,9 +9,11 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_PRODUCT_CARD_STYLES,
   PRODUCT_CARD_LIMITS,
+  type ProductCardData,
   isDarkHex,
   resolveProductCardCssVars,
   resolveProductCardStyles,
+  resolveSelectedVariant,
 } from "@/lib/commerce/productCard";
 
 describe("resolveProductCardStyles", () => {
@@ -178,6 +180,129 @@ describe("resolveProductCardStyles", () => {
     expect(vars["--pc-muted"]).toBe("#94a3b8");
     expect(vars["--pc-price"]).toBe("#38bdf8");
     expect(vars["--pc-compare-price"]).toBe("#64748b");
+  });
+
+  it("validates eyebrow, carousel and selection config options", () => {
+    const custom = resolveProductCardStyles({
+      eyebrow: "brand",
+      imageNav: "always",
+      imageIndicator: "bars",
+      imageIndicatorPosition: "top",
+      imageLoop: false,
+      imageLimit: 8,
+      selectionMode: "commit-only",
+      selectionEffects: ["image", "stock"],
+    });
+    expect(custom.eyebrow).toBe("brand");
+    expect(custom.imageNav).toBe("always");
+    expect(custom.imageIndicator).toBe("bars");
+    expect(custom.imageIndicatorPosition).toBe("top");
+    expect(custom.imageLoop).toBe(false);
+    expect(custom.imageLimit).toBe(8);
+    expect(custom.selectionMode).toBe("commit-only");
+    expect(custom.selectionEffects).toEqual(["image", "stock"]);
+
+    const fallbacks = resolveProductCardStyles({
+      eyebrow: "invalid" as never,
+      imageNav: "bogus" as never,
+      imageIndicator: "unknown" as never,
+      imageLimit: 99,
+      selectionMode: "nope" as never,
+    });
+    expect(fallbacks.eyebrow).toBe("category");
+    expect(fallbacks.imageNav).toBe("hover");
+    expect(fallbacks.imageIndicator).toBe("dots");
+    expect(fallbacks.imageLimit).toBe(10); // clamped to max 10
+    expect(fallbacks.selectionMode).toBe("preview");
+  });
+});
+
+describe("resolveSelectedVariant", () => {
+  const sampleProduct: ProductCardData = {
+    id: "prod-1",
+    name: "Classic Tee",
+    price: 30,
+    compareAt: 40,
+    category: "Apparel",
+    image: "default-front.jpg",
+    stock: "in",
+    images: [{ url: "default-front.jpg" }, { url: "default-back.jpg" }],
+    cardVariants: [
+      {
+        id: "v-teal",
+        sku: "TEE-TEAL-M",
+        price: 35,
+        compareAtPrice: 45,
+        stock: 3,
+        imageUrl: "teal-front.jpg",
+        optionValues: { Color: "Teal", Size: "M" },
+      },
+      {
+        id: "v-black",
+        sku: "TEE-BLACK-M",
+        price: 32,
+        stock: 0,
+        imageUrl: "black-front.jpg",
+        optionValues: { Color: "Black", Size: "M" },
+      },
+    ],
+  };
+
+  it("returns base product when no options are selected", () => {
+    const res = resolveSelectedVariant(sampleProduct);
+    expect(res.activeVariant).toBeNull();
+    expect(res.displayImage).toBe("default-front.jpg");
+    expect(res.displayPrice).toBe(30);
+    expect(res.displayCompareAt).toBe(40);
+    expect(res.displayStock).toBe("in");
+    expect(res.isOutOfStock).toBe(false);
+  });
+
+  it("matches variant and applies image, price and stock effects", () => {
+    const res = resolveSelectedVariant(
+      sampleProduct,
+      { Color: "Teal", Size: "M" },
+      null,
+      0,
+      ["image", "price", "stock"],
+    );
+    expect(res.activeVariant?.id).toBe("v-teal");
+    expect(res.displayImage).toBe("teal-front.jpg");
+    expect(res.displayPrice).toBe(35);
+    expect(res.displayCompareAt).toBe(45);
+    expect(res.displayStock).toBe("low"); // stock 3 < 5 -> "low"
+    expect(res.isOutOfStock).toBe(false);
+  });
+
+  it("marks out of stock when matched variant stock is 0", () => {
+    const res = resolveSelectedVariant(
+      sampleProduct,
+      { Color: "Black", Size: "M" },
+      null,
+      0,
+      ["image", "price", "stock"],
+    );
+    expect(res.activeVariant?.id).toBe("v-black");
+    expect(res.displayStock).toBe("out");
+    expect(res.isOutOfStock).toBe(true);
+  });
+
+  it("previews override selected options", () => {
+    const res = resolveSelectedVariant(
+      sampleProduct,
+      { Color: "Black", Size: "M" },
+      { Color: "Teal" }, // hovering Teal overrides Color
+      0,
+      ["image", "price"],
+    );
+    expect(res.activeVariant?.id).toBe("v-teal");
+    expect(res.displayImage).toBe("teal-front.jpg");
+    expect(res.displayPrice).toBe(35);
+  });
+
+  it("selects carousel image when activeImageIndex changes without variant match", () => {
+    const res = resolveSelectedVariant(sampleProduct, undefined, null, 1);
+    expect(res.displayImage).toBe("default-back.jpg");
   });
 });
 

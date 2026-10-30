@@ -24,11 +24,15 @@ import ProductCard from "@/components/commerce/ProductCard";
 import type {
   CtaStyle,
   CtaVariant,
+  EyebrowMode,
   HoverMode,
   ImageBlendMode,
+  ImageIndicatorStyle,
+  ImageNavMode,
   MediaRatio,
   ProductCardData,
   ProductCardType,
+  SelectionMode,
   TextAlign,
 } from "@/lib/commerce/productCard";
 
@@ -204,8 +208,15 @@ const DEMO_CARD_PRODUCTS: ProductCardData[] = [
     price: 48,
     compareAt: 64,
     category: "Apparel",
+    brand: { name: "Oceanic Tailors" },
     image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=600&q=80",
     hoverImage: "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&w=600&q=80",
+    images: [
+      { url: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=600&q=80" },
+      { url: "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&w=600&q=80" },
+      { url: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=600&q=80" },
+      { url: "https://images.unsplash.com/photo-1603252109303-2751441dd157?auto=format&fit=crop&w=600&q=80" },
+    ],
     tag: "Bestseller",
     badges: [
       { key: "sale", label: "Sale 25%", bg: "#e11d48", textColor: "#ffffff" },
@@ -217,6 +228,7 @@ const DEMO_CARD_PRODUCTS: ProductCardData[] = [
         name: "Color",
         displayType: "swatch",
         showOnCard: true,
+        cardPlacement: "brand-hover",
         values: [
           { value: "Sky Blue", swatchHex: "#38bdf8" },
           { value: "Navy", swatchHex: "#1e3a8a" },
@@ -227,7 +239,37 @@ const DEMO_CARD_PRODUCTS: ProductCardData[] = [
         name: "Size",
         displayType: "pill",
         showOnCard: true,
+        cardPlacement: "media-hover-top",
         values: [{ value: "S" }, { value: "M" }, { value: "L" }, { value: "XL" }],
+      },
+    ],
+    cardVariants: [
+      {
+        id: "var-1",
+        sku: "SHIRT-BLUE-M",
+        price: 48,
+        compareAtPrice: 64,
+        stock: 12,
+        imageUrl: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=600&q=80",
+        optionValues: { Color: "Sky Blue", Size: "M" },
+      },
+      {
+        id: "var-2",
+        sku: "SHIRT-NAVY-M",
+        price: 52,
+        compareAtPrice: 68,
+        stock: 5,
+        imageUrl: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=600&q=80",
+        optionValues: { Color: "Navy", Size: "M" },
+      },
+      {
+        id: "var-3",
+        sku: "SHIRT-WHITE-M",
+        price: 44,
+        compareAtPrice: 58,
+        stock: 2,
+        imageUrl: "https://images.unsplash.com/photo-1603252109303-2751441dd157?auto=format&fit=crop&w=600&q=80",
+        optionValues: { Color: "White", Size: "M" },
       },
     ],
     rating: 4.9,
@@ -240,7 +282,13 @@ const DEMO_CARD_PRODUCTS: ProductCardData[] = [
     price: 24,
     compareAt: 30,
     category: "Homeware",
+    brand: { name: "Nordic Atelier" },
     image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80",
+    images: [
+      { url: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80" },
+      { url: "https://images.unsplash.com/photo-1577937927133-66ef06acdf18?auto=format&fit=crop&w=600&q=80" },
+      { url: "https://images.unsplash.com/photo-1577937927183-b91c0ff471d4?auto=format&fit=crop&w=600&q=80" },
+    ],
     tag: "Trending",
     badges: [
       { key: "staff-pick", label: "Staff Pick", bg: "#059669", textColor: "#ffffff" },
@@ -250,11 +298,41 @@ const DEMO_CARD_PRODUCTS: ProductCardData[] = [
         name: "Finish",
         displayType: "swatch",
         showOnCard: true,
+        cardPlacement: "media",
         values: [
           { value: "Matte Sand", swatchHex: "#d6c7b2" },
           { value: "Clay", swatchHex: "#a75d43" },
           { value: "Charcoal", swatchHex: "#334155" },
         ],
+      },
+    ],
+    cardVariants: [
+      {
+        id: "var-mug-1",
+        sku: "MUG-SAND",
+        price: 24,
+        compareAtPrice: 30,
+        stock: 18,
+        imageUrl: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80",
+        optionValues: { Finish: "Matte Sand" },
+      },
+      {
+        id: "var-mug-2",
+        sku: "MUG-CLAY",
+        price: 26,
+        compareAtPrice: 32,
+        stock: 3,
+        imageUrl: "https://images.unsplash.com/photo-1577937927133-66ef06acdf18?auto=format&fit=crop&w=600&q=80",
+        optionValues: { Finish: "Clay" },
+      },
+      {
+        id: "var-mug-3",
+        sku: "MUG-CHARCOAL",
+        price: 24,
+        compareAtPrice: 30,
+        stock: 0,
+        imageUrl: "https://images.unsplash.com/photo-1577937927183-b91c0ff471d4?auto=format&fit=crop&w=600&q=80",
+        optionValues: { Finish: "Charcoal" },
       },
     ],
     rating: 4.7,
@@ -266,6 +344,7 @@ const DEMO_CARD_PRODUCTS: ProductCardData[] = [
     name: "Handcrafted Leather Cardholder",
     price: 36,
     category: "Accessories",
+    brand: { name: "Studio Crafters" },
     image: "https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&w=600&q=80",
     badges: [
       { key: "limited", label: "Limited Edition", bg: "#7c3aed", textColor: "#f5f3ff", borderColor: "#a855f7", borderStyle: "dashed" },
@@ -306,6 +385,14 @@ export default function PreviewPage() {
   const [pcCtaStyle, setPcCtaStyle] = useState<CtaStyle>("icon");
   const [pcShowSwatches, setPcShowSwatches] = useState(true);
   const [pcShowPills, setPcShowPills] = useState(true);
+  const [pcEyebrow, setPcEyebrow] = useState<EyebrowMode>("category");
+  const [pcImageNav, setPcImageNav] = useState<ImageNavMode>("hover");
+  const [pcImageIndicator, setPcImageIndicator] = useState<ImageIndicatorStyle>("dots");
+  const [pcSelectionMode, setPcSelectionMode] = useState<SelectionMode>("preview");
+  const [pcActiveImageIdx, setPcActiveImageIdx] = useState(0);
+  const [pcPreviewedOptions, setPcPreviewedOptions] = useState<Record<string, string> | null>(null);
+  const [pcOptPlacementColor, setPcOptPlacementColor] = useState<"brand-hover" | "info" | "media">("brand-hover");
+  const [pcOptPlacementSize, setPcOptPlacementSize] = useState<"media-hover-top" | "info" | "media">("media-hover-top");
   const [pcSelectedOptions, setPcSelectedOptions] = useState<Record<string, string>>({
     Color: "Sky Blue",
     Size: "M",
@@ -1032,6 +1119,86 @@ export default function PreviewPage() {
                 </div>
               </div>
 
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Eyebrow Mode</label>
+                <select
+                  value={pcEyebrow}
+                  onChange={(e) => setPcEyebrow(e.target.value as EyebrowMode)}
+                  className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                >
+                  <option value="category">category (Apparel)</option>
+                  <option value="brand">brand (Oceanic Tailors)</option>
+                  <option value="none">none (hidden)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Image Carousel Nav</label>
+                <select
+                  value={pcImageNav}
+                  onChange={(e) => setPcImageNav(e.target.value as ImageNavMode)}
+                  className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                >
+                  <option value="hover">hover (arrows on card hover)</option>
+                  <option value="always">always (always visible)</option>
+                  <option value="touch">touch (on touch devices)</option>
+                  <option value="none">none (no arrows)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Image Indicator</label>
+                <select
+                  value={pcImageIndicator}
+                  onChange={(e) => setPcImageIndicator(e.target.value as ImageIndicatorStyle)}
+                  className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                >
+                  <option value="dots">dots</option>
+                  <option value="bars">bars</option>
+                  <option value="count">count (1 / 4)</option>
+                  <option value="none">none</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Selection Mode</label>
+                <select
+                  value={pcSelectionMode}
+                  onChange={(e) => setPcSelectionMode(e.target.value as SelectionMode)}
+                  className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                >
+                  <option value="preview">preview (hover previews, click commits)</option>
+                  <option value="commit-only">commit-only (click only)</option>
+                  <option value="visual">visual (visual swatch selection)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Color Swatch Slot</label>
+                <select
+                  value={pcOptPlacementColor}
+                  onChange={(e) => setPcOptPlacementColor(e.target.value as "brand-hover" | "info" | "media")}
+                  className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                >
+                  <option value="brand-hover">brand-hover (replaces brand on hover)</option>
+                  <option value="info">info (standard info block)</option>
+                  <option value="media">media (bottom media overlay)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Size Pill Slot</label>
+                <select
+                  value={pcOptPlacementSize}
+                  onChange={(e) => setPcOptPlacementSize(e.target.value as "media-hover-top" | "info" | "media")}
+                  className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                >
+                  <option value="media-hover-top">media-hover-top (floats top on hover)</option>
+                  <option value="info">info (standard info block)</option>
+                  <option value="media">media (bottom media overlay)</option>
+                </select>
+              </div>
+
               <div className="flex flex-col gap-2 pt-2">
                 <label className="flex items-center gap-2 text-sm text-[var(--color-ink)]">
                   <input type="checkbox" checked={pcShowBadge} onChange={(e) => setPcShowBadge(e.target.checked)} />
@@ -1043,7 +1210,7 @@ export default function PreviewPage() {
                 </label>
                 <label className="flex items-center gap-2 text-sm text-[var(--color-ink)]">
                   <input type="checkbox" checked={pcShowDept} onChange={(e) => setPcShowDept(e.target.checked)} />
-                  Show Department
+                  Show Department / Eyebrow
                 </label>
               </div>
 
@@ -1073,7 +1240,14 @@ export default function PreviewPage() {
               <span className="mb-2 text-xs font-semibold uppercase text-[var(--text-muted)]">Live Interactive Preview</span>
               <div className="w-full max-w-[320px]">
                 <ProductCard
-                  product={DEMO_CARD_PRODUCTS[0]}
+                  product={{
+                    ...DEMO_CARD_PRODUCTS[0],
+                    options: DEMO_CARD_PRODUCTS[0].options?.map((opt) => {
+                      if (opt.name === "Color") return { ...opt, cardPlacement: pcOptPlacementColor };
+                      if (opt.name === "Size") return { ...opt, cardPlacement: pcOptPlacementSize };
+                      return opt;
+                    }),
+                  }}
                   cardType={pcCardType}
                   mediaRatio={pcRatio}
                   borderRadius={pcRadius}
@@ -1085,6 +1259,16 @@ export default function PreviewPage() {
                   badgePosition={pcBadgePos}
                   showRatings={pcShowRatings}
                   showDept={pcShowDept}
+                  eyebrow={pcEyebrow}
+                  imageNav={pcImageNav}
+                  imageIndicator={pcImageIndicator}
+                  selectionMode={pcSelectionMode}
+                  activeImageIndex={pcActiveImageIdx}
+                  onImageIndexChange={setPcActiveImageIdx}
+                  previewedOptions={pcPreviewedOptions}
+                  onPreviewOption={(name, val) =>
+                    setPcPreviewedOptions(val ? { [name]: val } : null)
+                  }
                   cardBg={pcCardBg || undefined}
                   borderColor={pcBorderColor || (pcCardBg ? "var(--border)" : "transparent")}
                   textColor={pcTextColor || undefined}
@@ -1277,6 +1461,177 @@ export default function PreviewPage() {
                 selectedOptions={pcSelectedOptions}
                 onSelectOption={(name, val) =>
                   setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
+              />
+            </div>
+          </div>
+
+          <h3 className="mb-3 mt-8 font-semibold text-[var(--color-ink)]">Multi-Image Carousel with Sibling Arrows &amp; Indicators</h3>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Dots Indicator (Hover Arrows)</span>
+              <ProductCard
+                product={DEMO_CARD_PRODUCTS[0]}
+                cardType="standard"
+                mediaRatio="4:5"
+                imageNav="hover"
+                imageIndicator="dots"
+                borderRadius={12}
+                imageBorderRadius={10}
+                activeImageIndex={pcActiveImageIdx}
+                onImageIndexChange={setPcActiveImageIdx}
+              />
+            </div>
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Segmented Bars (Always Arrows)</span>
+              <ProductCard
+                product={DEMO_CARD_PRODUCTS[1]}
+                cardType="standard"
+                mediaRatio="4:5"
+                imageNav="always"
+                imageIndicator="bars"
+                borderRadius={12}
+                imageBorderRadius={10}
+              />
+            </div>
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Slide Counter Badge (1 / 4)</span>
+              <ProductCard
+                product={DEMO_CARD_PRODUCTS[0]}
+                cardType="standard"
+                mediaRatio="4:5"
+                imageNav="hover"
+                imageIndicator="count"
+                borderRadius={12}
+                imageBorderRadius={10}
+              />
+            </div>
+          </div>
+
+          <h3 className="mb-3 mt-8 font-semibold text-[var(--color-ink)]">Configurable Option Placements (brand-hover &amp; media-hover-top)</h3>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">brand-hover (Swatches replace brand on hover)</span>
+              <ProductCard
+                product={{
+                  ...DEMO_CARD_PRODUCTS[0],
+                  options: [
+                    {
+                      name: "Color",
+                      displayType: "swatch",
+                      showOnCard: true,
+                      cardPlacement: "brand-hover",
+                      values: [
+                        { value: "Sky Blue", swatchHex: "#38bdf8" },
+                        { value: "Navy", swatchHex: "#1e3a8a" },
+                        { value: "White", swatchHex: "#ffffff" },
+                      ],
+                    },
+                  ],
+                }}
+                cardType="standard"
+                eyebrow="brand"
+                borderRadius={12}
+                imageBorderRadius={10}
+                selectedOptions={pcSelectedOptions}
+                onSelectOption={(name, val) =>
+                  setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
+              />
+            </div>
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">media-hover-top (Pills over image top on hover)</span>
+              <ProductCard
+                product={{
+                  ...DEMO_CARD_PRODUCTS[0],
+                  options: [
+                    {
+                      name: "Size",
+                      displayType: "pill",
+                      showOnCard: true,
+                      cardPlacement: "media-hover-top",
+                      values: [{ value: "S" }, { value: "M" }, { value: "L" }, { value: "XL" }],
+                    },
+                  ],
+                }}
+                cardType="standard"
+                borderRadius={12}
+                imageBorderRadius={10}
+                selectedOptions={pcSelectedOptions}
+                onSelectOption={(name, val) =>
+                  setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
+              />
+            </div>
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">media (Bottom Overlay on image)</span>
+              <ProductCard
+                product={{
+                  ...DEMO_CARD_PRODUCTS[1],
+                  options: [
+                    {
+                      name: "Finish",
+                      displayType: "swatch",
+                      showOnCard: true,
+                      cardPlacement: "media",
+                      values: [
+                        { value: "Matte Sand", swatchHex: "#d6c7b2" },
+                        { value: "Clay", swatchHex: "#a75d43" },
+                        { value: "Charcoal", swatchHex: "#334155" },
+                      ],
+                    },
+                  ],
+                }}
+                cardType="standard"
+                borderRadius={12}
+                imageBorderRadius={10}
+                selectedOptions={pcSelectedOptions}
+                onSelectOption={(name, val) =>
+                  setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
+              />
+            </div>
+          </div>
+
+          <h3 className="mb-3 mt-8 font-semibold text-[var(--color-ink)]">Variant Selection Effects (Color Click Swaps Photo, Price &amp; Stock)</h3>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Apparel Card with Active Variant Effects</span>
+              <ProductCard
+                product={DEMO_CARD_PRODUCTS[0]}
+                cardType="standard"
+                mediaRatio="4:5"
+                selectionEffects={["image", "price", "stock"]}
+                selectionMode="preview"
+                borderRadius={12}
+                imageBorderRadius={10}
+                selectedOptions={pcSelectedOptions}
+                previewedOptions={pcPreviewedOptions}
+                onSelectOption={(name, val) =>
+                  setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
+                onPreviewOption={(name, val) =>
+                  setPcPreviewedOptions(val ? { [name]: val } : null)
+                }
+              />
+            </div>
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Homeware Card with Active Variant Effects</span>
+              <ProductCard
+                product={DEMO_CARD_PRODUCTS[1]}
+                cardType="standard"
+                mediaRatio="4:5"
+                selectionEffects={["image", "price", "stock"]}
+                selectionMode="preview"
+                borderRadius={12}
+                imageBorderRadius={10}
+                selectedOptions={pcSelectedOptions}
+                previewedOptions={pcPreviewedOptions}
+                onSelectOption={(name, val) =>
+                  setPcSelectedOptions((prev) => ({ ...prev, [name]: val }))
+                }
+                onPreviewOption={(name, val) =>
+                  setPcPreviewedOptions(val ? { [name]: val } : null)
                 }
               />
             </div>
