@@ -22,6 +22,7 @@ import { DEMO_NAV_INPUT } from "@/lib/shell/demoNavInput";
 import NavbarMount from "@/app/_components/NavbarMount";
 import ProductCard from "@/components/commerce/ProductCard";
 import type {
+  CtaIconPosition,
   CtaPosition,
   CtaStyle,
   CtaVariant,
@@ -34,6 +35,7 @@ import type {
   MediaRatio,
   ProductCardData,
   ProductCardType,
+  QuickAction,
   SelectionMode,
   TextAlign,
 } from "@/lib/commerce/productCard";
@@ -386,6 +388,8 @@ export default function PreviewPage() {
   const [pcCtaVariant, setPcCtaVariant] = useState<CtaVariant>("overlay");
   const [pcCtaStyle, setPcCtaStyle] = useState<CtaStyle>("icon");
   const [pcCtaPosition, setPcCtaPosition] = useState<CtaPosition>("center");
+  const [pcCtaIconPos, setPcCtaIconPos] = useState<CtaIconPosition>("bottom");
+  const [pcCtaSet, setPcCtaSet] = useState<QuickAction[]>(["quick-view", "wishlist", "add-to-cart"]);
   const [pcCtaBg, setPcCtaBg] = useState("");
   const [pcCtaTextColor, setPcCtaTextColor] = useState("");
   const [pcCtaBorderColor, setPcCtaBorderColor] = useState("");
@@ -1003,6 +1007,20 @@ export default function PreviewPage() {
                 </select>
               </div>
 
+              {pcCtaStyle === "icon" && (
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Icon CTA Position</label>
+                  <select
+                    value={pcCtaIconPos}
+                    onChange={(e) => setPcCtaIconPos(e.target.value as CtaIconPosition)}
+                    className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                  >
+                    <option value="bottom">bottom (Lower part of image)</option>
+                    <option value="center">center (Middle of image)</option>
+                  </select>
+                </div>
+              )}
+
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">CTA Alignment</label>
                 <select
@@ -1061,6 +1079,62 @@ export default function PreviewPage() {
                     onChange={(e) => setPcCtaTextColor(e.target.value)}
                     className="h-8 w-8 cursor-pointer rounded border border-[var(--border)] p-0.5"
                   />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">CTA Button Border Color</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g. #0077B6 or transparent"
+                    value={pcCtaBorderColor}
+                    onChange={(e) => setPcCtaBorderColor(e.target.value)}
+                    className="flex-1 rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                  />
+                  <input
+                    type="color"
+                    aria-label="Pick CTA Button Border Color"
+                    value={pcCtaBorderColor.startsWith("#") && pcCtaBorderColor.length === 7 ? pcCtaBorderColor : "#e2e8f0"}
+                    onChange={(e) => setPcCtaBorderColor(e.target.value)}
+                    className="h-8 w-8 cursor-pointer rounded border border-[var(--border)] p-0.5"
+                  />
+                </div>
+              </div>
+
+              <div className="sm:col-span-2 md:col-span-3 lg:col-span-4">
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">
+                  Active CTA Actions ({pcCtaSet.length}/3 selected)
+                </label>
+                <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--color-ink)]">
+                  {(
+                    [
+                      { id: "quick-view", label: "Quick View" },
+                      { id: "wishlist", label: "Wishlist" },
+                      { id: "add-to-cart", label: "Add to Bag" },
+                      { id: "share", label: "Share" },
+                    ] as const
+                  ).map((action) => {
+                    const checked = pcCtaSet.includes(action.id);
+                    return (
+                      <label key={action.id} className="flex cursor-pointer items-center gap-1.5 font-medium">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => {
+                            if (checked) {
+                              if (pcCtaSet.length > 1) {
+                                setPcCtaSet(pcCtaSet.filter((a) => a !== action.id));
+                              }
+                            } else if (pcCtaSet.length < 3) {
+                              setPcCtaSet([...pcCtaSet, action.id]);
+                            }
+                          }}
+                        />
+                        {action.label}
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1357,6 +1431,8 @@ export default function PreviewPage() {
                   ctaVariant={pcCtaVariant}
                   ctaStyle={pcCtaStyle}
                   ctaPosition={pcCtaPosition}
+                  ctaIconPosition={pcCtaIconPos}
+                  ctaSet={pcCtaSet}
                   ctaBg={pcCtaBg || undefined}
                   ctaTextColor={pcCtaTextColor || undefined}
                   ctaBorderColor={pcCtaBorderColor || undefined}

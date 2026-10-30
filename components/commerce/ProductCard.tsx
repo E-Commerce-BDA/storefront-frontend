@@ -3,6 +3,7 @@ import { Badge, Button, Icon } from "@/components/ui";
 import { tagTone } from "@/lib/search/tagTone";
 import {
   type BadgePosition,
+  type CtaIconPosition,
   type CtaPosition,
   type CtaStyle,
   type CtaVariant,
@@ -107,6 +108,7 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
     ctaStyle,
     ctaSet,
     ctaPosition,
+    ctaIconPosition,
     showActionsOnTouch,
     nameSize,
     priceSize,
@@ -175,6 +177,7 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
     ...(ctaStyle !== undefined ? { ctaStyle } : {}),
     ...(ctaSet !== undefined ? { ctaSet } : {}),
     ...(ctaPosition !== undefined ? { ctaPosition } : {}),
+    ...(ctaIconPosition !== undefined ? { ctaIconPosition } : {}),
     ...(showActionsOnTouch !== undefined ? { showActionsOnTouch } : {}),
     ...(nameSize !== undefined ? { nameSize } : {}),
     ...(priceSize !== undefined ? { priceSize } : {}),
@@ -480,6 +483,7 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
       data-touch-actions={styles.showActionsOnTouch}
       data-badgepos={styles.badgePosition}
       data-ctapos={styles.ctaPosition}
+      data-cta-icon-pos={styles.ctaIconPosition}
       data-ctavariant={styles.ctaVariant}
       data-ctastyle={styles.ctaStyle}
       data-blend-mode={styles.imageBlendMode}

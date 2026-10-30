@@ -590,4 +590,17 @@ describe("ProductCard", () => {
     expect(btn.style.getPropertyValue("--btn-text")).toBe("#FFFFFF");
     expect(btn.style.getPropertyValue("--btn-border")).toBe("#005B8C");
   });
+
+  it("supports ctaIconPosition='center' and 'bottom' data attribute on article", () => {
+    const { container: centerC, unmount } = render(
+      <ProductCard product={P} ctaStyle="icon" ctaIconPosition="center" />,
+    );
+    expect(centerC.firstElementChild?.getAttribute("data-cta-icon-pos")).toBe("center");
+    unmount();
+
+    const { container: bottomC } = render(
+      <ProductCard product={P} ctaStyle="icon" ctaIconPosition="bottom" />,
+    );
+    expect(bottomC.firstElementChild?.getAttribute("data-cta-icon-pos")).toBe("bottom");
+  });
 });

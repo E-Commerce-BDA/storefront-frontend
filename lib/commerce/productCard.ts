@@ -11,6 +11,7 @@ export type BadgePosition = "left" | "right";
 export type HoverMode = "none" | "image" | "actions" | "zoom";
 export type QuickAction = "quick-view" | "wishlist" | "add-to-cart" | "share";
 export type CtaPosition = "left" | "center" | "right";
+export type CtaIconPosition = "center" | "bottom";
 export type CtaVariant = "overlay" | "below" | "inline" | "footer" | "none";
 export type CtaStyle = "icon" | "label" | "icon-label";
 export type ImageBlendMode = "normal" | "multiply" | "darken" | "overlay" | "screen";
@@ -134,6 +135,7 @@ export interface ProductCardStyleConfig {
   ctaStyle?: CtaStyle;
   ctaSet?: QuickAction[];
   ctaPosition?: CtaPosition;
+  ctaIconPosition?: CtaIconPosition;
   showActionsOnTouch?: boolean;
   nameSize?: number;
   priceSize?: number;
@@ -179,6 +181,7 @@ export interface ResolvedProductCardStyles {
   ctaStyle: CtaStyle;
   ctaSet: QuickAction[];
   ctaPosition: CtaPosition;
+  ctaIconPosition: CtaIconPosition;
   showActionsOnTouch: boolean;
   nameSize: number;
   priceSize: number;
@@ -236,6 +239,7 @@ export const DEFAULT_PRODUCT_CARD_STYLES: ResolvedProductCardStyles = {
   ctaStyle: "icon",
   ctaSet: ["quick-view", "wishlist", "add-to-cart"],
   ctaPosition: "center",
+  ctaIconPosition: "bottom",
   showActionsOnTouch: false,
   nameSize: 15,
   priceSize: 15,
@@ -421,6 +425,7 @@ export function resolveProductCardStyles(
       c.ctaPosition === "left" || c.ctaPosition === "right" || c.ctaPosition === "center"
         ? c.ctaPosition
         : base.ctaPosition,
+    ctaIconPosition: c.ctaIconPosition === "center" ? "center" : (base.ctaIconPosition ?? "bottom"),
     showActionsOnTouch: c.showActionsOnTouch ?? base.showActionsOnTouch,
     nameSize: clamp(c.nameSize ?? base.nameSize, L.nameSize.min, L.nameSize.max, base.nameSize),
     priceSize: clamp(c.priceSize ?? base.priceSize, L.priceSize.min, L.priceSize.max, base.priceSize),
