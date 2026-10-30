@@ -20,6 +20,16 @@ import { DEFAULT_THEME } from "@/lib/cms/themeSettings";
 import { resolveNavSettings } from "@/lib/shell/resolveNav";
 import { DEMO_NAV_INPUT } from "@/lib/shell/demoNavInput";
 import NavbarMount from "@/app/_components/NavbarMount";
+import ProductCard from "@/components/commerce/ProductCard";
+import type {
+  HoverMode,
+  ImageBlendMode,
+  MediaRatio,
+  ProductCardData,
+  ProductCardType,
+  TextAlign,
+} from "@/lib/commerce/productCard";
+
 import {
   Button,
   Input,
@@ -184,6 +194,45 @@ const DEMO_STUB_CATALOG: DemoResult[] = [
   { name: "Wool Beanie", price: "$28" },
 ];
 
+
+const DEMO_CARD_PRODUCTS: ProductCardData[] = [
+  {
+    id: "pc-1",
+    name: "Ocean Linen Relaxed Shirt",
+    price: 48,
+    compareAt: 64,
+    category: "Apparel",
+    image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=600&q=80",
+    hoverImage: "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&w=600&q=80",
+    tag: "Bestseller",
+    rating: 4.9,
+    ratingCount: 128,
+    stock: "in",
+  },
+  {
+    id: "pc-2",
+    name: "Minimalist Ceramic Coffee Mug",
+    price: 24,
+    compareAt: 30,
+    category: "Homeware",
+    image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80",
+    tag: "Trending",
+    rating: 4.7,
+    ratingCount: 84,
+    stock: "low",
+  },
+  {
+    id: "pc-3",
+    name: "Handcrafted Leather Cardholder",
+    price: 36,
+    category: "Accessories",
+    image: "https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&w=600&q=80",
+    rating: 5.0,
+    ratingCount: 42,
+    stock: "out",
+  },
+];
+
 export default function PreviewPage() {
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
@@ -193,6 +242,21 @@ export default function PreviewPage() {
   const [ship, setShip] = useState("flat");
   const [radius, setRadius] = useState(8);
   const [dialogOpen, setDialogOpen] = useState(false);
+  // §19 ProductCard showcase state
+  const [pcCardType, setPcCardType] = useState<ProductCardType>("standard");
+  const [pcRatio, setPcRatio] = useState<MediaRatio>("4:5");
+  const [pcRadius, setPcRadius] = useState(12);
+  const [pcImageRadius, setPcImageRadius] = useState(8);
+  const [pcPad, setPcPad] = useState(12);
+  const [pcBlend, setPcBlend] = useState<ImageBlendMode>("normal");
+  const [pcHover, setPcHover] = useState<HoverMode>("actions");
+  const [pcShowBadge, setPcShowBadge] = useState(true);
+  const [pcBadgePos, setPcBadgePos] = useState<"left" | "right">("left");
+  const [pcShowRatings, setPcShowRatings] = useState(true);
+  const [pcShowDept, setPcShowDept] = useState(true);
+  const [pcCardBg, setPcCardBg] = useState("");
+  const [pcTextAlign, setPcTextAlign] = useState<TextAlign>("left");
+
   const [searchMode, setSearchMode] = useState<"trap" | "light">("trap");
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -718,6 +782,240 @@ export default function PreviewPage() {
             Production mounts once in <code>app/layout.tsx</code>.
           </p>
           <NavbarMount nav={demoNav} />
+        </Card>
+
+        <H2>19. ProductCard — commerce face (all variants + interactive customizations)</H2>
+        <Card>
+          <p className="mb-4 text-sm text-[var(--text-muted)]">
+            Customizable commerce face: aspect ratio, 5 card types, independent card and image radii,
+            CSS image blend modes (e.g. <code>multiply</code> for packshot cutouts), badge customization &amp; toggles,
+            background colors, and hover modes. Completely controlled, dumb <code>props &rarr; JSX</code>.
+          </p>
+
+          <div className="mb-6 rounded-lg border border-[var(--border)] bg-[var(--color-section-bg)] p-4">
+            <h3 className="mb-3 font-semibold text-[var(--color-ink)]">Interactive Customization Playground</h3>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Card Type</label>
+                <select
+                  value={pcCardType}
+                  onChange={(e) => setPcCardType(e.target.value as ProductCardType)}
+                  className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                >
+                  <option value="standard">standard</option>
+                  <option value="minimal">minimal</option>
+                  <option value="compact">compact</option>
+                  <option value="overlay">overlay</option>
+                  <option value="horizontal">horizontal</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Aspect Ratio</label>
+                <select
+                  value={pcRatio}
+                  onChange={(e) => setPcRatio(e.target.value as MediaRatio)}
+                  className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                >
+                  <option value="1:1">1:1 (Square)</option>
+                  <option value="3:4">3:4 (Portrait)</option>
+                  <option value="4:5">4:5 (Editorial)</option>
+                  <option value="4:3">4:3 (Landscape)</option>
+                  <option value="16:9">16:9 (Wide)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Image Blend Mode</label>
+                <select
+                  value={pcBlend}
+                  onChange={(e) => setPcBlend(e.target.value as ImageBlendMode)}
+                  className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                >
+                  <option value="normal">normal</option>
+                  <option value="multiply">multiply (blend white cutout)</option>
+                  <option value="darken">darken</option>
+                  <option value="overlay">overlay</option>
+                  <option value="screen">screen</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Hover Mode</label>
+                <select
+                  value={pcHover}
+                  onChange={(e) => setPcHover(e.target.value as HoverMode)}
+                  className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                >
+                  <option value="actions">actions (CTA bar)</option>
+                  <option value="image">image (secondary swap)</option>
+                  <option value="zoom">zoom (scale cover)</option>
+                  <option value="none">none (static)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Card Radius: {pcRadius}px</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="24"
+                  value={pcRadius}
+                  onChange={(e) => setPcRadius(Number(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Image Radius: {pcImageRadius}px</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="24"
+                  value={pcImageRadius}
+                  onChange={(e) => setPcImageRadius(Number(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Card Padding: {pcPad}px</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="24"
+                  value={pcPad}
+                  onChange={(e) => setPcPad(Number(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase text-[var(--text-muted)]">Card Background</label>
+                <select
+                  value={pcCardBg}
+                  onChange={(e) => setPcCardBg(e.target.value)}
+                  className="w-full rounded border border-[var(--border)] bg-white px-2 py-1 text-sm text-[var(--color-ink)]"
+                >
+                  <option value="">transparent / default</option>
+                  <option value="#FFFFFF">#FFFFFF (White)</option>
+                  <option value="#F5FAFC">#F5FAFC (Mist)</option>
+                  <option value="#E6F7FB">#E6F7FB (Foam)</option>
+                  <option value="#0A2540">#0A2540 (Abyss Dark)</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-2">
+                <label className="flex items-center gap-2 text-sm text-[var(--color-ink)]">
+                  <input type="checkbox" checked={pcShowBadge} onChange={(e) => setPcShowBadge(e.target.checked)} />
+                  Show Badge
+                </label>
+                <label className="flex items-center gap-2 text-sm text-[var(--color-ink)]">
+                  <input type="checkbox" checked={pcShowRatings} onChange={(e) => setPcShowRatings(e.target.checked)} />
+                  Show Ratings
+                </label>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-2">
+                <label className="flex items-center gap-2 text-sm text-[var(--color-ink)]">
+                  <input type="checkbox" checked={pcShowDept} onChange={(e) => setPcShowDept(e.target.checked)} />
+                  Show Department
+                </label>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-[var(--text-muted)]">Badge Pos:</span>
+                  <button
+                    type="button"
+                    onClick={() => setPcBadgePos(pcBadgePos === "left" ? "right" : "left")}
+                    className="rounded border border-[var(--border)] bg-white px-2 py-0.5 text-xs font-medium text-[var(--color-ink)]"
+                  >
+                    {pcBadgePos}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-center">
+              <div className="w-full max-w-[320px]">
+                <ProductCard
+                  product={DEMO_CARD_PRODUCTS[0]}
+                  cardType={pcCardType}
+                  mediaRatio={pcRatio}
+                  borderRadius={pcRadius}
+                  imageBorderRadius={pcImageRadius}
+                  cardPad={pcPad}
+                  imageBlendMode={pcBlend}
+                  hoverMode={pcHover}
+                  showBadge={pcShowBadge}
+                  badgePosition={pcBadgePos}
+                  showRatings={pcShowRatings}
+                  showDept={pcShowDept}
+                  cardBg={pcCardBg}
+                  textAlign={pcTextAlign}
+                  borderColor={pcCardBg ? "var(--border)" : "transparent"}
+                />
+              </div>
+            </div>
+          </div>
+
+          <h3 className="mb-3 font-semibold text-[var(--color-ink)]">All 5 Card Type Variants Side-by-Side</h3>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">1. Standard</span>
+              <ProductCard
+                product={DEMO_CARD_PRODUCTS[0]}
+                cardType="standard"
+                mediaRatio="4:5"
+                borderRadius={12}
+                imageBorderRadius={12}
+              />
+            </div>
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">2. Minimal</span>
+              <ProductCard
+                product={DEMO_CARD_PRODUCTS[1]}
+                cardType="minimal"
+                mediaRatio="4:5"
+                borderRadius={8}
+                imageBorderRadius={8}
+              />
+            </div>
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">3. Compact</span>
+              <ProductCard
+                product={DEMO_CARD_PRODUCTS[0]}
+                cardType="compact"
+                mediaRatio="1:1"
+                borderRadius={6}
+                imageBorderRadius={6}
+                cardPad={8}
+                cardBg="var(--color-card, #ffffff)"
+                borderColor="var(--border)"
+              />
+            </div>
+            <div>
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">4. Overlay (Cinematic)</span>
+              <ProductCard
+                product={DEMO_CARD_PRODUCTS[0]}
+                cardType="overlay"
+                mediaRatio="3:4"
+                borderRadius={16}
+                imageBorderRadius={16}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">5. Horizontal (Row / Drawer)</span>
+              <ProductCard
+                product={DEMO_CARD_PRODUCTS[1]}
+                cardType="horizontal"
+                mediaRatio="1:1"
+                borderRadius={12}
+                imageBorderRadius={12}
+                cardPad={12}
+                cardBg="var(--color-card, #ffffff)"
+                borderColor="var(--border)"
+              />
+            </div>
+          </div>
         </Card>
 
       </main>

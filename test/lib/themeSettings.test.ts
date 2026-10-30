@@ -86,10 +86,14 @@ describe("resolveThemeSettings", () => {
   it("resolves productCard builtins, clamps columns, filters CTAs (sf-039)", () => {
     const empty = resolveThemeSettings({});
     expect(empty.productCard).toMatchObject({
+      cardType: "standard",
       mediaRatio: "4:5",
       badgePosition: "left",
       hoverMode: "actions",
       ctaPosition: "center",
+      imageBlendMode: "normal",
+      imageFit: "cover",
+      textAlign: "left",
       colsDesktop: 4,
       colsTablet: 3,
       colsPhone: 2,
@@ -97,9 +101,13 @@ describe("resolveThemeSettings", () => {
     const r = resolveThemeSettings({
       settings: {
         productCard: {
+          cardType: "bogus" as never,
           mediaRatio: "9:16" as never,
           badgePosition: "center" as never,
-          hoverMode: "zoom" as never,
+          hoverMode: "invalid" as never,
+          imageBlendMode: "bogus" as never,
+          imageFit: "bogus" as never,
+          textAlign: "bogus" as never,
           ctaSet: ["share", "bogus" as never, "wishlist", "add-to-cart", "quick-view"],
           ctaPosition: "top" as never,
           colsDesktop: 9,
@@ -107,13 +115,19 @@ describe("resolveThemeSettings", () => {
           colsPhone: 9,
           nameSize: 99,
           borderRadius: -5,
+          imageBorderRadius: 99,
+          cardPad: 50,
         },
       },
     });
     const pc = r.productCard;
+    expect(pc.cardType).toBe("standard");
     expect(pc.mediaRatio).toBe("4:5");
     expect(pc.badgePosition).toBe("left");
     expect(pc.hoverMode).toBe("actions");
+    expect(pc.imageBlendMode).toBe("normal");
+    expect(pc.imageFit).toBe("cover");
+    expect(pc.textAlign).toBe("left");
     expect(pc.ctaSet).toEqual(["share", "wishlist", "add-to-cart"]);
     expect(pc.ctaPosition).toBe("center");
     expect(pc.colsDesktop).toBe(5);
@@ -121,6 +135,33 @@ describe("resolveThemeSettings", () => {
     expect(pc.colsPhone).toBe(2);
     expect(pc.nameSize).toBe(22);
     expect(pc.borderRadius).toBe(0);
+    expect(pc.imageBorderRadius).toBe(24);
+    expect(pc.cardPad).toBe(24);
+  });
+
+  it("accepts valid productCard custom values including zoom and blend modes (sf-039)", () => {
+    const r = resolveThemeSettings({
+      settings: {
+        productCard: {
+          cardType: "overlay",
+          mediaRatio: "1:1",
+          imageBlendMode: "multiply",
+          hoverMode: "zoom",
+          textAlign: "center",
+          borderRadius: 16,
+          imageBorderRadius: 8,
+          cardPad: 12,
+        },
+      },
+    });
+    expect(r.productCard.cardType).toBe("overlay");
+    expect(r.productCard.mediaRatio).toBe("1:1");
+    expect(r.productCard.imageBlendMode).toBe("multiply");
+    expect(r.productCard.hoverMode).toBe("zoom");
+    expect(r.productCard.textAlign).toBe("center");
+    expect(r.productCard.borderRadius).toBe(16);
+    expect(r.productCard.imageBorderRadius).toBe(8);
+    expect(r.productCard.cardPad).toBe(12);
   });
 
   it("resolves select builtins, clamps, checks the branch union (sf-033)", () => {

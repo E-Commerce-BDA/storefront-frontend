@@ -21,18 +21,29 @@ describe("product card style contract", () => {
       /background:\s*var\(--pc-bg/,
       /border:\s*1px solid var\(--pc-border/,
       /aspect-ratio:\s*var\(--pc-ratio/,
+      /border-radius:\s*var\(--pc-radius/,
+      /border-radius:\s*var\(--pc-media-radius/,
+      /padding:\s*var\(--pc-pad/,
+      /mix-blend-mode:\s*var\(--pc-image-blend/,
+      /object-fit:\s*var\(--pc-image-fit/,
       /color:\s*var\(--pc-name/,
       /color:\s*var\(--pc-price/,
+      /text-align:\s*var\(--pc-align/,
     ]) {
       expect(pcCss, `card paint must resolve ${prop} through a var`).toMatch(prop);
     }
   });
 
-  it("drives badge/CTA/stock/hover through data hooks", () => {
+  it("drives badge/CTA/stock/hover/card-type through data hooks", () => {
     expect(css).toMatch(/\.sf-productcard\[data-badgepos="right"\] \.sf-productcard__badge/);
     expect(css).toMatch(/\.sf-productcard\[data-ctapos="right"\] \.sf-productcard__ctas/);
     expect(css).toMatch(/\.sf-productcard\[data-stock="out"\]/);
     expect(css).toMatch(/\.sf-productcard\[data-hover="actions"\] \.sf-productcard__media:hover \.sf-productcard__ctas/);
+    expect(css).toMatch(/\.sf-productcard\[data-hover="zoom"\] \.sf-productcard__media:hover \.sf-productcard__cover/);
+    expect(css).toMatch(/\.sf-productcard\[data-card-type="minimal"\]/);
+    expect(css).toMatch(/\.sf-productcard\[data-card-type="compact"\]/);
+    expect(css).toMatch(/\.sf-productcard\[data-card-type="overlay"\]/);
+    expect(css).toMatch(/\.sf-productcard\[data-card-type="horizontal"\]/);
     // Focus parity: keyboard reveals what hover reveals.
     expect(css).toMatch(/\.sf-productcard\[data-hover="actions"\] \.sf-productcard__media:focus-within \.sf-productcard__ctas/);
   });
@@ -47,6 +58,7 @@ describe("product card style contract", () => {
     const guard = css.match(/@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?\n\}/g)?.join("\n") ?? "";
     expect(guard).toMatch(/\.sf-productcard__hoverimg/);
     expect(guard).toMatch(/\.sf-productcard__ctas/);
+    expect(guard).toMatch(/\.sf-productcard\[data-hover="zoom"\]/);
   });
 
   it("contains no hex literals outside var() fallbacks", () => {

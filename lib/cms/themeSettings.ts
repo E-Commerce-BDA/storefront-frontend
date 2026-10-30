@@ -19,8 +19,12 @@ import type {
   BadgePosition,
   CtaPosition,
   HoverMode,
+  ImageBlendMode,
+  ImageFit,
   MediaRatio,
+  ProductCardType,
   QuickAction,
+  TextAlign,
 } from "@/lib/commerce/productCard";
 import type { ButtonSize, ButtonVariant } from "@/components/ui/Button";
 import type { BadgeBorderStyle } from "@/components/ui/Badge";
@@ -52,6 +56,8 @@ export const THEME_LIMITS = {
   dialogBodySize: { min: 12, max: 16 },
   dialogBodyWeight: { min: 400, max: 700 },
   cardRadius: { min: 0, max: 24 },
+  imageRadius: { min: 0, max: 24 },
+  cardPad: { min: 0, max: 24 },
   nameSize: { min: 12, max: 22 },
   priceSize: { min: 12, max: 22 },
   gridCols: { min: 1, max: 5 },
@@ -139,9 +145,17 @@ export interface ThemeTextareaField {
  * squeeze cards illegible, so the resolver caps, never the CSS).
  */
 export interface ThemeProductCardField {
+  cardType?: ProductCardType;
   cardBg?: string;
   borderColor?: string;
   borderRadius?: number;
+  imageBorderRadius?: number;
+  cardPad?: number;
+  hoverCardBg?: string;
+  hoverBorderColor?: string;
+  mediaBg?: string;
+  imageBlendMode?: ImageBlendMode;
+  imageFit?: ImageFit;
   mediaRatio?: MediaRatio;
   badgePosition?: BadgePosition;
   showBadge?: boolean;
@@ -153,6 +167,7 @@ export interface ThemeProductCardField {
   showActionsOnTouch?: boolean;
   nameSize?: number;
   priceSize?: number;
+  textAlign?: TextAlign;
   colsDesktop?: number;
   colsTablet?: number;
   colsPhone?: number;
@@ -324,9 +339,17 @@ export interface ResolvedThemeDialog {
 }
 
 export interface ResolvedThemeProductCard {
+  cardType: ProductCardType;
   cardBg: string;
   borderColor: string;
   borderRadius: number;
+  imageBorderRadius: number;
+  cardPad: number;
+  hoverCardBg: string;
+  hoverBorderColor: string;
+  mediaBg: string;
+  imageBlendMode: ImageBlendMode;
+  imageFit: ImageFit;
   mediaRatio: MediaRatio;
   badgePosition: BadgePosition;
   showBadge: boolean;
@@ -338,6 +361,7 @@ export interface ResolvedThemeProductCard {
   showActionsOnTouch: boolean;
   nameSize: number;
   priceSize: number;
+  textAlign: TextAlign;
   colsDesktop: number;
   colsTablet: number;
   colsPhone: number;
@@ -432,9 +456,17 @@ export const DEFAULT_THEME: ResolvedThemeSettings = {
   // Card builtins mirror today's component defaults: transparent card,
   // 4:5 media, left badge, actions-center, 15px info faces.
   productCard: {
+    cardType: "standard",
     cardBg: "",
     borderColor: "",
     borderRadius: 0,
+    imageBorderRadius: 0,
+    cardPad: 0,
+    hoverCardBg: "",
+    hoverBorderColor: "",
+    mediaBg: "",
+    imageBlendMode: "normal",
+    imageFit: "cover",
     mediaRatio: "4:5",
     badgePosition: "left",
     showBadge: true,
@@ -446,6 +478,7 @@ export const DEFAULT_THEME: ResolvedThemeSettings = {
     showActionsOnTouch: false,
     nameSize: 15,
     priceSize: 15,
+    textAlign: "left",
     colsDesktop: 4,
     colsTablet: 3,
     colsPhone: 2,
@@ -601,9 +634,36 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
     // Columns clamp to legibility ranges (5/3/2 caps — CSS never sees an
     // absurd count; ctaSet clamps to 3 with unknown actions dropped).
     productCard: {
+      cardType:
+        pc?.cardType === "standard" ||
+        pc?.cardType === "minimal" ||
+        pc?.cardType === "compact" ||
+        pc?.cardType === "overlay" ||
+        pc?.cardType === "horizontal"
+          ? pc.cardType
+          : D.productCard.cardType,
       cardBg: cleanColor(pc?.cardBg, D.productCard.cardBg),
       borderColor: cleanColor(pc?.borderColor, D.productCard.borderColor),
       borderRadius: clampInt(pc?.borderRadius, L.cardRadius.min, L.cardRadius.max, D.productCard.borderRadius),
+      imageBorderRadius: clampInt(
+        pc?.imageBorderRadius ?? pc?.borderRadius,
+        L.imageRadius.min,
+        L.imageRadius.max,
+        clampInt(pc?.borderRadius, L.cardRadius.min, L.cardRadius.max, D.productCard.imageBorderRadius),
+      ),
+      cardPad: clampInt(pc?.cardPad, L.cardPad.min, L.cardPad.max, D.productCard.cardPad),
+      hoverCardBg: cleanColor(pc?.hoverCardBg, D.productCard.hoverCardBg),
+      hoverBorderColor: cleanColor(pc?.hoverBorderColor, D.productCard.hoverBorderColor),
+      mediaBg: cleanColor(pc?.mediaBg, D.productCard.mediaBg),
+      imageBlendMode:
+        pc?.imageBlendMode === "normal" ||
+        pc?.imageBlendMode === "multiply" ||
+        pc?.imageBlendMode === "darken" ||
+        pc?.imageBlendMode === "overlay" ||
+        pc?.imageBlendMode === "screen"
+          ? pc.imageBlendMode
+          : D.productCard.imageBlendMode,
+      imageFit: pc?.imageFit === "contain" ? "contain" : D.productCard.imageFit,
       mediaRatio:
         pc?.mediaRatio === "3:4" ||
         pc?.mediaRatio === "4:3" ||
@@ -616,15 +676,22 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
       showBadge: pc?.showBadge ?? D.productCard.showBadge,
       showRatings: pc?.showRatings ?? D.productCard.showRatings,
       showDept: pc?.showDept ?? D.productCard.showDept,
-      hoverMode: pc?.hoverMode === "image" || pc?.hoverMode === "actions" ? pc.hoverMode : D.productCard.hoverMode,
+      hoverMode:
+        pc?.hoverMode === "none" ||
+        pc?.hoverMode === "image" ||
+        pc?.hoverMode === "actions" ||
+        pc?.hoverMode === "zoom"
+          ? pc.hoverMode
+          : D.productCard.hoverMode,
       ctaSet: (Array.isArray(pc?.ctaSet) ? pc.ctaSet : D.productCard.ctaSet)
-        .filter((c): c is QuickAction => c === "quick-view" || c === "wishlist" || c === "add-to-cart" || c === "share")
+        .filter((c) => c === "quick-view" || c === "wishlist" || c === "add-to-cart" || c === "share")
         .slice(0, 3),
       ctaPosition:
         pc?.ctaPosition === "left" || pc?.ctaPosition === "right" ? pc.ctaPosition : D.productCard.ctaPosition,
       showActionsOnTouch: pc?.showActionsOnTouch ?? D.productCard.showActionsOnTouch,
       nameSize: clampInt(pc?.nameSize, L.nameSize.min, L.nameSize.max, D.productCard.nameSize),
       priceSize: clampInt(pc?.priceSize, L.nameSize.min, L.nameSize.max, D.productCard.priceSize),
+      textAlign: pc?.textAlign === "center" || pc?.textAlign === "right" ? pc.textAlign : D.productCard.textAlign,
       colsDesktop: clampInt(pc?.colsDesktop, 3, 5, D.productCard.colsDesktop),
       colsTablet: clampInt(pc?.colsTablet, 2, 3, D.productCard.colsTablet),
       colsPhone: clampInt(pc?.colsPhone, 1, 2, D.productCard.colsPhone),

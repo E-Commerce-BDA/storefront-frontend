@@ -2,7 +2,8 @@
 /**
  * ProductCard contract — article root (never button/link), sibling
  * actions (no nesting), CTA clamp to 3, stock/wishlist faces, badge
- * position, hover modes, reserved props inert. Fully controlled.
+ * position, hover modes, card types, blend modes, reserved props inert.
+ * Fully controlled.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
@@ -33,6 +34,8 @@ describe("ProductCard", () => {
     expect(screen.getByText("4.8")).not.toBeNull();
     expect(screen.getByText("(142)")).not.toBeNull();
     expect(container.firstElementChild?.getAttribute("data-badgepos")).toBe("left");
+    expect(container.firstElementChild?.getAttribute("data-card-type")).toBe("standard");
+    expect(container.firstElementChild?.getAttribute("data-blend-mode")).toBe("normal");
   });
 
   it("opens via media/name buttons (never nested), actions stop propagation", () => {
@@ -108,5 +111,44 @@ describe("ProductCard", () => {
     expect(screen.queryByText("4.8")).toBeNull();
     expect(screen.queryByText("Shirts")).toBeNull();
     expect(screen.getByText("Ocean Linen Shirt")).not.toBeNull();
+  });
+
+  it("honors cardType, imageBlendMode, textAlign and independent border radii", () => {
+    const { container } = render(
+      <ProductCard
+        product={P}
+        cardType="overlay"
+        imageBlendMode="multiply"
+        textAlign="center"
+        borderRadius={12}
+        imageBorderRadius={6}
+      />,
+    );
+    const article = container.firstElementChild as HTMLElement;
+    expect(article.getAttribute("data-card-type")).toBe("overlay");
+    expect(article.getAttribute("data-blend-mode")).toBe("multiply");
+    expect(article.getAttribute("data-align")).toBe("center");
+    expect(article.style.getPropertyValue("--pc-radius")).toBe("12px");
+    expect(article.style.getPropertyValue("--pc-media-radius")).toBe("6px");
+    expect(article.style.getPropertyValue("--pc-image-blend")).toBe("multiply");
+  });
+
+  it("merges styleConfig with flat prop overrides (flat wins)", () => {
+    const { container } = render(
+      <ProductCard
+        product={P}
+        styleConfig={{ cardType: "minimal", borderRadius: 8, mediaRatio: "1:1" }}
+        cardType="horizontal"
+      />,
+    );
+    const article = container.firstElementChild as HTMLElement;
+    expect(article.getAttribute("data-card-type")).toBe("horizontal");
+    expect(article.style.getPropertyValue("--pc-radius")).toBe("8px");
+    expect(article.style.getPropertyValue("--pc-ratio")).toBe("1 / 1");
+  });
+
+  it("renders hover zoom mode", () => {
+    const { container } = render(<ProductCard product={P} hoverMode="zoom" />);
+    expect(container.firstElementChild?.getAttribute("data-hover")).toBe("zoom");
   });
 });
