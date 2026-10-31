@@ -1,16 +1,24 @@
 import { fetchAuthSettings } from "@/lib/cms/authSettings";
 import { resolveAuthSettings } from "@/lib/auth/resolveSettings";
 import { authCssVars } from "@/lib/auth/cssVars";
+import { safeNextPath } from "@/lib/auth/next";
 import { AuthPage, AuthPanel, AuthSplit } from "@/components/auth";
 import SignupForm from "../_components/SignupForm";
 
 /**
  * Smart signup route: fetch settings → resolve → vars → props.
- * Success signs the user in (no second login) once the thin-client
- * slice lands; the stub surfaces the documented 409 today.
+ * Success signs the shopper in (register returns the same pair as login), so
+ * the form resumes `?next=` exactly like signin does.
  * No header/footer (conversion route renders chromeless until finalized).
  */
-export default async function SignupPage() {
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
+  const nextPath = safeNextPath(next);
+
   // TODO(cms-svc): createCmsSource(process.env.CMS_BASE_URL) + Redis cache.
   const result = await fetchAuthSettings("auth", {
     source: { fetchPage: async () => null },
@@ -33,6 +41,7 @@ export default async function SignupPage() {
       title={style.content.formTitle}
       submitLabel="Create account"
       errorStyle={style.errors.style}
+      nextPath={nextPath}
       footer={
         <p className="m-0 text-[13px] text-[var(--text-muted)]">
           Already have an account?{" "}

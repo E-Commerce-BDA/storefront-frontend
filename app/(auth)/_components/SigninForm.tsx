@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import Input from "@/components/ui/Input";
 import Checkbox from "@/components/ui/Checkbox";
 import { Icon } from "@/components/ui";
 import { AuthForm, type AuthFormError } from "@/components/auth";
+import { submitAuth } from "@/lib/auth/browser";
 import { displayFor } from "@/lib/auth/errors";
 import type { ErrorStyle } from "@/lib/auth/settings";
 
@@ -12,8 +14,13 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * Route island: signin fields + courtesy validation + submit state.
- * Owned by app/(auth)/signin only. Submit currently hits a marked stub —
- * TODO(auth-client): replace with lib/auth/client login().
+ * Owned by app/(auth)/signin only.
+ *
+ * Posts to the BFF (`/api/auth/login`), which is the only place the token pair
+ * ever exists; this component gets back `{ user }` or `{ error: { code } }`
+ * and maps the code through `displayFor`. On success it does `replace` (not
+ * `push`) so the back button cannot return to a form the shopper already
+ * used, then `refresh` so the server-rendered shell picks up the new cookie.
  */
 export interface SigninFormProps {
   title: string;
@@ -35,6 +42,7 @@ export default function SigninForm({
   nextPath = "/account",
   footer,
 }: SigninFormProps) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -52,11 +60,18 @@ export default function SigninForm({
     if (!EMAIL_RE.test(email) || password === "") return;
     setLoading(true);
     setError(null);
-    // TODO(auth-client): replace stub with lib/auth/client login() —
-    // same envelope, same displayFor map, real service behind it.
-    await new Promise((r) => setTimeout(r, 900));
-    setLoading(false);
-    setError(displayFor("INVALID_CREDENTIALS"));
+
+    const failure = await submitAuth("/api/auth/login", { email, password });
+    if (failure !== null) {
+      setLoading(false);
+      setError(displayFor(failure));
+      return;
+    }
+
+    // Deliberately still loading: the navigation is the success state, and a
+    // second click while it runs would burn a second session.
+    router.replace(nextPath);
+    router.refresh();
   }
 
   return (
@@ -107,6 +122,9 @@ export default function SigninForm({
           </button>
         }
       />
+      {/* Still cosmetic: auth-svc fixes the pair at 15m/30d, so there is no
+          longer session to opt into yet. Logged as an auth-svc follow-up
+          rather than silently extending a cookie the service would reject. */}
       <Checkbox checked={remember} onChange={setRemember} label={rememberLabel} />
     </AuthForm>
   );

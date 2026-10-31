@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import Input from "@/components/ui/Input";
 import { Icon } from "@/components/ui";
 import { AuthForm, PasswordMeter, type AuthFormError } from "@/components/auth";
+import { submitAuth } from "@/lib/auth/browser";
 import { displayFor } from "@/lib/auth/errors";
 import type { ErrorStyle } from "@/lib/auth/settings";
 
@@ -13,16 +15,29 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * Route island: signup fields + courtesy validation + confirm-match
  * (UI-only — one password is sent) + submit state.
  * Owned by app/(auth)/signup only.
- * TODO(auth-client): replace stub with lib/auth/client signup().
+ *
+ * Register signs the shopper in: auth-svc returns the same pair as login, so
+ * the BFF can set the cookies and this island lands straight in the account
+ * instead of asking for the password again. `409` is the one failure worth
+ * naming (EMAIL_TAKEN) — everything else falls through `displayFor`.
  */
 export interface SignupFormProps {
   title: string;
   submitLabel: string;
   errorStyle?: ErrorStyle;
+  /** Resume path after success — same contract as SigninForm's. */
+  nextPath?: string;
   footer?: ReactNode;
 }
 
-export default function SignupForm({ title, submitLabel, errorStyle = "banner", footer }: SignupFormProps) {
+export default function SignupForm({
+  title,
+  submitLabel,
+  errorStyle = "banner",
+  nextPath = "/account",
+  footer,
+}: SignupFormProps) {
+  const router = useRouter();
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
   const [email, setEmail] = useState("");
@@ -54,10 +69,21 @@ export default function SignupForm({ title, submitLabel, errorStyle = "banner", 
     if (!valid) return;
     setLoading(true);
     setError(null);
-    // TODO(auth-client): replace stub with lib/auth/client signup().
-    await new Promise((r) => setTimeout(r, 900));
-    setLoading(false);
-    setError(displayFor("EMAIL_TAKEN"));
+
+    const failure = await submitAuth("/api/auth/register", {
+      email,
+      password,
+      firstName: first.trim(),
+      lastName: last.trim(),
+    });
+    if (failure !== null) {
+      setLoading(false);
+      setError(displayFor(failure));
+      return;
+    }
+
+    router.replace(nextPath);
+    router.refresh();
   }
 
   return (

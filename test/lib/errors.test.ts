@@ -10,6 +10,7 @@ describe("displayFor", () => {
     expect(displayFor("EMAIL_TAKEN").message).toContain("already exists");
     expect(displayFor("TOKEN_REUSED").message).toContain("protection");
     expect(displayFor("RATE_LIMITED").message).toContain("Too many attempts");
+    expect(displayFor("SERVICE_UNAVAILABLE").message).toContain("couldn't reach sign-in");
   });
 
   it("falls back to generic for unknown/missing codes (never raw text)", () => {

@@ -1,6 +1,7 @@
 import { fetchAuthSettings } from "@/lib/cms/authSettings";
 import { resolveAuthSettings } from "@/lib/auth/resolveSettings";
 import { authCssVars } from "@/lib/auth/cssVars";
+import { safeNextPath } from "@/lib/auth/next";
 import { AuthPage, AuthPanel, AuthSplit } from "@/components/auth";
 import SigninForm from "../_components/SigninForm";
 
@@ -8,10 +9,10 @@ import SigninForm from "../_components/SigninForm";
  * Smart signin route: fetch settings → resolve → vars → props.
  * Owns no styling decisions; renders composed blocks + its form island.
  * No header/footer (conversion route renders chromeless until finalized).
+ *
+ * `?next=` is whatever the proxy (or a link) put there, so it goes through
+ * `safeNextPath` before it becomes a redirect target on the client.
  */
-
-// TODO(validate): promote to lib/auth/validate.ts with the thin-client slice.
-const NEXT_RE = /^\/(account|checkout|cart)(\/|$|\?)/;
 
 export default async function SigninPage({
   searchParams,
@@ -19,7 +20,7 @@ export default async function SigninPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const { next } = await searchParams;
-  const nextPath = typeof next === "string" && NEXT_RE.test(next) ? next : "/account";
+  const nextPath = safeNextPath(next);
 
   // TODO(cms-svc): createCmsSource(process.env.CMS_BASE_URL) + Redis cache.
   // Null source/cache today → resolver renders builtins (today's look).

@@ -18,7 +18,8 @@ export type AuthErrorCode =
   | "TOKEN_REUSED"
   | "ACCOUNT_DISABLED"
   | "VALIDATION_FAILED"
-  | "RATE_LIMITED";
+  | "RATE_LIMITED"
+  | "SERVICE_UNAVAILABLE";
 
 export interface AuthErrorDisplay {
   code: string;
@@ -56,6 +57,10 @@ const COPY: Record<AuthErrorCode, AuthErrorDisplay> = {
   RATE_LIMITED: {
     code: "RATE_LIMITED",
     message: "Too many attempts. Try again shortly.",
+  },
+  SERVICE_UNAVAILABLE: {
+    code: "SERVICE_UNAVAILABLE",
+    message: "We couldn't reach sign-in right now. Try again in a moment.",
   },
 };
 

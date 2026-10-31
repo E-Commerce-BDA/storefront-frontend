@@ -12,9 +12,14 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * Route island: forgot-password request + post-link reset demo.
  * `token` present (from ?token=) renders the reset step directly.
  * Success copy is demo-grade — TODO(auth-copy): move to settings content
- * slots when the thin-client slice lands the real flow.
+ * slots when a real reset flow exists.
  * Owned by app/(auth)/forgot only.
- * TODO(auth-client): replace stubs with lib/auth/client forgot()/reset().
+ *
+ * TODO(auth-client): auth-svc has no reset endpoint (`auth.controller.ts`
+ * exposes login/register/refresh/logout/me only), so both onSubmit handlers
+ * below stay stubs. Deliberate, documented gap: the day auth-svc grows
+ * `POST /auth/password/forgot` + `/auth/password/reset`, this island posts to
+ * two new BFF routes in the same shape as `submitAuth` — nothing else moves.
  */
 export interface ForgotFormProps {
   title: string;
