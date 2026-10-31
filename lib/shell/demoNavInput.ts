@@ -1,13 +1,16 @@
 import type { NavSettings } from "./navSettings";
 
 /**
- * Demo nav input — shared scaffolding seam (layout, homepage, showcase
- * all read this one object). Visibly-marked demo content, not copy —
- * never translate it, never A/B test against it.
+ * Demo nav input — the documented fallback, and nothing else.
  *
- * TODO(cms-svc): replace imports of this with the CMS read (same
- * NavSettings shape the service returns) so the real resolver runs on
- * live data. One-line swap per call site; callers never change.
+ * Since sf-050 the live path is `lib/cms/navigation.ts` (`fetchNavSettings`:
+ * cms-svc → stale cache → this object). It is still imported by the resolver
+ * tests and by `app/components/page.tsx` (showcase, deleted at launch), which
+ * is why it survives — a CMS outage has to render *something*, and a blank
+ * navbar is worse than demo chrome.
+ *
+ * No TODO left on the app routes — they are wired. The remaining consumer is
+ * the showcase page (`app/components`), which is deleted at launch.
  */
 export const DEMO_NAV_INPUT: NavSettings = {
   shared: {

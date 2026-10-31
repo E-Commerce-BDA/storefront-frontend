@@ -16,6 +16,8 @@
  */
 
 import type { AuthSettings } from "@/lib/auth/settings";
+import { CMS_REVALIDATE_SECONDS } from "./client";
+import { cmsTag } from "./tags";
 
 export interface AuthSettingsEntry {
   settings: AuthSettings;
@@ -76,14 +78,19 @@ export async function fetchAuthSettings(
   return { settings: null, version: null, stale: false };
 }
 
-/** Default source against cms-svc (active once cms-svc lands). */
+/** Default source against cms-svc (`GET /api/v1/cms/settings/page/:pageKey`). */
 export function createCmsSource(
   baseUrl: string,
   fetchFn: typeof fetch = fetch,
 ): AuthSettingsSource {
   return {
     async fetchPage(pageKey: string, signal: AbortSignal): Promise<AuthSettingsEntry | null> {
-      const res = await fetchFn(`${baseUrl}/api/v1/cms/settings/page/${pageKey}`, { signal });
+      const res = await fetchFn(`${baseUrl}/api/v1/cms/settings/page/${pageKey}`, {
+        signal,
+        // Tagged so `POST /api/revalidate` can drop this entry. Without the
+        // tag the fetch still works — it just can never be invalidated.
+        next: { tags: [cmsTag.pageSettings(pageKey)], revalidate: CMS_REVALIDATE_SECONDS },
+      });
       if (!res.ok) return null;
       const body = (await res.json()) as { settings?: AuthSettings; content?: AuthSettings; version?: number };
       const rawSettings = body?.settings ?? body?.content;

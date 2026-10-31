@@ -1,4 +1,4 @@
-import { fetchAuthSettings } from "@/lib/cms/authSettings";
+import { fetchAuthPageSettings } from "@/lib/cms/pageSettings";
 import { resolveAuthSettings } from "@/lib/auth/resolveSettings";
 import { authCssVars } from "@/lib/auth/cssVars";
 import { safeNextPath } from "@/lib/auth/next";
@@ -22,12 +22,8 @@ export default async function SigninPage({
   const { next } = await searchParams;
   const nextPath = safeNextPath(next);
 
-  // TODO(cms-svc): createCmsSource(process.env.CMS_BASE_URL) + Redis cache.
-  // Null source/cache today → resolver renders builtins (today's look).
-  const result = await fetchAuthSettings("auth", {
-    source: { fetchPage: async () => null },
-    cache: { get: () => null, set: () => {} },
-  });
+  // CMS-backed: cms-svc → stale cache → builtins. Never blank, never throws.
+  const result = await fetchAuthPageSettings("auth");
   const style = resolveAuthSettings({ settings: result.settings, global: null }).signin;
   const vars = authCssVars(style);
 

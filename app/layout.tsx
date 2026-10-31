@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Outfit } from "next/font/google";
 import "./globals.css";
 import { resolveNavSettings } from "@/lib/shell/resolveNav";
-import { DEMO_NAV_INPUT } from "@/lib/shell/demoNavInput";
+import { fetchNavSettings } from "@/lib/cms/navigation";
 import NavbarMount from "./_components/NavbarMount";
 
 const fraunces = Fraunces({
@@ -27,10 +27,15 @@ export const metadata: Metadata = {
 /**
  * Root layout — server resolves nav once per request (admin values flow
  * as concrete props; client never sees knob names), NavbarMount owns
- * interaction state below. DEMO input until cms-svc lands (one-line swap).
+ * interaction state below.
+ *
+ * `fetchNavSettings` never rejects: cms-svc down → stale cache → demo nav.
+ * That ordering matters here more than anywhere else, because a throw in the
+ * root layout blanks every route in the app.
  */
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const nav = resolveNavSettings({ settings: DEMO_NAV_INPUT, global: null });
+  const { settings } = await fetchNavSettings();
+  const nav = resolveNavSettings({ settings, global: null });
   return (
     <html lang="en" className={`${fraunces.variable} ${outfit.variable}`}>
       <body>
