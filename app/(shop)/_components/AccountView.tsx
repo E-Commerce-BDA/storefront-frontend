@@ -1,0 +1,181 @@
+"use client";
+
+/**
+ * AccountView — the `/account` island — sf-051
+ * (plan §8: `GET /api/account`; A6.3 list, A6.7 sign-out)
+ *
+ * One fetch of the fanned-out BFF answer, which already decided its partial
+ * degradation (profile fails → whole page fails; history fails → `ordersError`
+ * with a profile to render). The island's job is to paint those three states
+ * honestly and own the one write available here: sign-out.
+ *
+ * Sign-out POSTs the BFF (cookies clear server-side), drops the local cart so
+ * the badge stops lying to the next person at this keyboard, and lands on
+ * `/signin` — the proxy will keep sending a signed-out shopper there anyway.
+ * Order *detail*, profile edit and the address book are sf-059; a row that
+ * links into an unbuilt page would be the fake this wave promised not to ship.
+ */
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { z } from "zod";
+import { Badge, Button, EmptyState, Icon } from "@/components/ui";
+import PageHeader from "@/components/shell/PageHeader";
+import { useCart } from "@/app/_components/CartProvider";
+import { bff } from "@/lib/http/browser";
+import { orderSchema } from "@/lib/order/schemas";
+import type { OrderDto } from "@/lib/order/schemas";
+
+const accountResponseSchema = z
+  .object({
+    user: z
+      .object({
+        id: z.string(),
+        email: z.string(),
+        firstName: z.string().nullish(),
+        lastName: z.string().nullish(),
+      })
+      .loose(),
+    orders: z.array(orderSchema),
+    ordersError: z
+      .object({ code: z.string(), status: z.number() })
+      .loose()
+      .nullish(),
+  })
+  .loose();
+
+type AccountView = z.infer<typeof accountResponseSchema>;
+
+export default function AccountView() {
+  const router = useRouter();
+  const cart = useCart();
+  const [data, setData] = useState<AccountView | null>(null);
+  const [failure, setFailure] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    void bff<AccountView>("/api/account", { schema: accountResponseSchema }).then((result) => {
+      if (!alive) return;
+      if (result.ok) {
+        setData(result.data);
+        return;
+      }
+      if (result.kind === "unauthorized") {
+        router.push(`/signin?next=${encodeURIComponent("/account")}`);
+        return;
+      }
+      // Any non-401 failure (503 fan-out, contract mismatch) is the same
+      // honest answer here: the account could not be read.
+      setFailure(result.message || "Account is unavailable right now.");
+    });
+    return () => {
+      alive = false;
+    };
+  }, [router]);
+
+  if (failure !== null) {
+    return (
+      <EmptyState
+        icon={<Icon name="user" size={22} />}
+        title="Account unavailable"
+        body={failure}
+        action={
+          <Button variant="light" onClick={() => router.push("/products")}>
+            Continue shopping
+          </Button>
+        }
+      />
+    );
+  }
+
+  if (data === null) {
+    return (
+      <p className="text-sm text-[var(--text-muted)]" role="status">
+        Loading your account…
+      </p>
+    );
+  }
+
+  const fullName = [data.user.firstName, data.user.lastName].filter(Boolean).join(" ");
+
+  return (
+    <>
+      <PageHeader
+        title={fullName === "" ? data.user.email : fullName}
+        actions={
+          <Button
+            variant="ghost-ink"
+            size="sm"
+            disabled={signingOut}
+            onClick={() => {
+              setSigningOut(true);
+              void fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" })
+                .finally(async () => {
+                  await cart.clear();
+                  router.push("/signin");
+                });
+            }}
+          >
+            {signingOut ? "Signing out…" : "Sign out"}
+          </Button>
+        }
+      />
+      <p className="-mt-4 mb-8 text-sm text-[var(--text-muted)]">{data.user.email}</p>
+
+      <section aria-label="Order history" className="grid gap-4">
+        <h2 className="m-0 text-base font-semibold text-[var(--color-ink)]">Recent orders</h2>
+
+        {data.ordersError ? (
+          <p role="status" className="m-0 rounded-[var(--radius-md,10px)] border border-[var(--border)] px-4 py-3 text-sm text-[var(--text-muted)]">
+            Your orders are unavailable right now — the profile above is still yours.
+          </p>
+        ) : data.orders.length === 0 ? (
+          <EmptyState
+            icon={<Icon name="shopping-bag" size={22} />}
+            title="No orders yet"
+            body="When you place an order it will show up here."
+            action={
+              <Button variant="light" onClick={() => router.push("/products")}>
+                Start shopping
+              </Button>
+            }
+          />
+        ) : (
+          <ul className="m-0 grid list-none gap-3 p-0" role="list">
+            {data.orders.map((order) => (
+              <OrderRow key={order.id} order={order} />
+            ))}
+          </ul>
+        )}
+      </section>
+    </>
+  );
+}
+
+function OrderRow({ order }: { order: OrderDto }) {
+  return (
+    <li className="flex items-baseline justify-between gap-4 rounded-[var(--radius-md,10px)] border border-[var(--border)] px-4 py-3">
+      <div className="grid gap-1">
+        <span className="text-sm font-medium text-[var(--color-ink)]">{order.order_number}</span>
+        <span className="text-xs text-[var(--text-muted)]">{formatDate(order.created_at)}</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <Badge tone={order.status === "cancelled" ? "error" : order.status === "delivered" ? "success" : "neutral"}>
+          {order.status}
+        </Badge>
+        <span className="text-sm font-semibold text-[var(--color-ink)]">${order.grand_total}</span>
+      </div>
+    </li>
+  );
+}
+
+/** ISO row → a readable date; an unparseable stamp shows raw rather than "Invalid Date". */
+function formatDate(iso: string): string {
+  try {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return iso;
+    return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(date);
+  } catch {
+    return iso;
+  }
+}
