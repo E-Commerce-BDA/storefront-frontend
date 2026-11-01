@@ -1,9 +1,11 @@
 /**
  * POST /api/auth/register — sign-up is a sign-in.
  *
- * auth-svc answers 201 with the same pair as login, so the BFF sets the same
- * cookies and the island lands in the account without a second prompt. The
- * only failure worth naming is 409.
+ * auth-svc register creates the user (201, { user } only), then the client
+ * logs in to get the token pair. The mock returns SESSION for every fetch call
+ * so both steps succeed. The BFF sets the same cookies as login and the island
+ * lands in the account without a second prompt. The only failure worth naming
+ * is 409.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";

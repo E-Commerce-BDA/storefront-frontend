@@ -116,8 +116,10 @@ export const orderStatusHistoryRowSchema = z
   .object({
     id: z.string().optional(),
     order_id: z.string().optional(),
-    status: z.string(),
+    from_status: z.string().nullish(),
+    to_status: z.string(),
     note: z.string().nullish(),
+    actor: z.string().optional(),
     created_at: z.string().optional(),
   })
   .loose();

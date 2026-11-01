@@ -179,9 +179,23 @@ export function createAuthClient(options: {
     },
 
     async register(input) {
-      const result = await post("/api/v1/auth/register", input, "register");
-      if (!result.ok) return result;
-      const session = asSession(result.data);
+      // Step 1 — create the account. auth-svc returns { user } only; any
+      // non-2xx is forwarded to the handler with the existing error taxonomy.
+      const createResult = await post("/api/v1/auth/register", input, "register");
+      if (!createResult.ok) return createResult;
+
+      // Step 2 — authenticate. auth-svc does not issue tokens on register, so
+      // the BFF logs in with the credentials the shopper just provided. A
+      // failure here is a 503-equivalent (account exists but session didn't).
+      const authResult = await post(
+        "/api/v1/auth/login",
+        { email: input.email, password: input.password },
+        "register",
+      );
+      if (!authResult.ok) {
+        return { ok: false, code: "SERVICE_UNAVAILABLE", status: 0 };
+      }
+      const session = asSession(authResult.data);
       if (!session) return { ok: false, code: "SERVICE_UNAVAILABLE", status: 200 };
       return { ok: true, data: session };
     },

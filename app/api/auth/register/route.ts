@@ -1,11 +1,13 @@
 /**
  * POST /api/auth/register — BFF handler
  *
- * Same shape as login: validate → auth-svc → HttpOnly cookies → merge the guest
- * cart → `{ user }`. A duplicate email arrives as `409` and is reported as
- * `EMAIL_TAKEN`, which is the one auth error that is safe to name (the shopper
- * already knows they have an account, and "sign in instead?" is the useful next
- * step).
+ * Sign-up is sign-in: the auth client calls auth-svc register (creates the
+ * account, 201) then auth-svc login (issues the token pair). The handler
+ * receives a full `AuthSession` and proceeds identically to login: validate →
+ * auth-svc → HttpOnly cookies → merge the guest cart → `{ user }`. A duplicate
+ * email arrives as `409` and is reported as `EMAIL_TAKEN`, which is the one
+ * auth error that is safe to name (the shopper already knows they have an
+ * account, and "sign in instead?" is the useful next step).
  */
 
 import { NextResponse, type NextRequest } from "next/server";
