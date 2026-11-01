@@ -4,12 +4,14 @@
  * The handler's whole job is: tokens → cookies, everything else → `{ user }`.
  * So the assertions are (a) the body's key set is exactly `['user']`, (b) the
  * serialised body contains no token value, (c) the Set-Cookie pair carries
- * HttpOnly/SameSite/path, and (d) a failure sets no cookie at all.
+ * HttpOnly/SameSite/path, (d) a failure sets no cookie at all, and (e) a guest
+ * cart is absorbed after the cookies land, without ever failing the sign-in.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "@/app/api/auth/login/route";
 import { ACCESS_COOKIE, REFRESH_COOKIE } from "@/lib/auth/session";
+import { GUEST_COOKIE } from "@/lib/session/guest";
 
 const SESSION = {
   user: {
@@ -23,10 +25,15 @@ const SESSION = {
   refreshToken: "rt_should_never_ship",
 };
 
-function request(body: unknown): NextRequest {
+const GUEST = "guest-1234";
+
+function request(body: unknown, guestId?: string): NextRequest {
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (guestId !== undefined) headers.cookie = `${GUEST_COOKIE}=${guestId}`;
+
   return new NextRequest("http://localhost/api/auth/login", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers,
     body: JSON.stringify(body),
   });
 }
@@ -38,6 +45,22 @@ function stubAuthService(status: number, body: unknown) {
       headers: { "content-type": "application/json" },
     }),
   );
+  vi.stubGlobal("fetch", fetchFn);
+  return fetchFn;
+}
+
+/** auth-svc and cart-svc in one stub: the URLs are the only thing that differ. */
+function stubServices(routes: Record<string, { status: number; body: unknown }>) {
+  const fetchFn = vi.fn(async (url: string | URL | Request) => {
+    const href = String(url);
+    const path = Object.keys(routes).find((candidate) => href.includes(candidate));
+    if (path === undefined) throw new Error(`unstubbed fetch: ${href}`);
+    const route = routes[path];
+    return new Response(JSON.stringify(route.body), {
+      status: route.status,
+      headers: { "content-type": "application/json" },
+    });
+  });
   vi.stubGlobal("fetch", fetchFn);
   return fetchFn;
 }
@@ -128,5 +151,91 @@ describe("POST /api/auth/login", () => {
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ error: { code: "SERVICE_UNAVAILABLE" } });
     expect(response.headers.getSetCookie()).toEqual([]);
+  });
+});
+
+describe("POST /api/auth/login — guest cart merge (A4.6)", () => {
+  it("absorbs sf_cid into the new session and rotates it", async () => {
+    vi.stubEnv("AUTH_SVC_URL", "http://auth.test");
+    vi.stubEnv("CART_SVC_URL", "http://cart.test");
+    const fetchFn = stubServices({
+      "/api/v1/auth/login": { status: 200, body: SESSION },
+      "/api/v1/cart/merge": { status: 200, body: { cart: { id: "c2" } } },
+    });
+
+    const response = await POST(
+      request({ email: "ana@x.com", password: "secret123" }, GUEST),
+    );
+
+    expect(response.status).toBe(200);
+
+    const merge = fetchFn.mock.calls[1] as unknown as [string, RequestInit];
+    expect(merge[0]).toBe("http://cart.test/api/v1/cart/merge");
+    expect(merge[1].headers).toMatchObject({
+      authorization: `Bearer ${SESSION.accessToken}`,
+      "x-session-id": GUEST,
+    });
+
+    // Cookies land first, rotation last: the response is a signed-in one either way.
+    const cookies = response.headers.getSetCookie();
+    expect(cookies.some((cookie) => cookie.startsWith(`${ACCESS_COOKIE}=`))).toBe(true);
+    const guest = cookies.find((cookie) => cookie.startsWith(`${GUEST_COOKIE}=`)) ?? "";
+    expect(guest).toMatch(/httponly/i);
+    // The converted id must not survive: a later sign-out starts a clean cart.
+    expect(guest.split(";")[0]).not.toBe(`${GUEST_COOKIE}=${GUEST}`);
+  });
+
+  it("carries the guest id as x-session-id, never as a cookie, to cart-svc", async () => {
+    vi.stubEnv("AUTH_SVC_URL", "http://auth.test");
+    vi.stubEnv("CART_SVC_URL", "http://cart.test");
+    const fetchFn = stubServices({
+      "/api/v1/auth/login": { status: 200, body: SESSION },
+      "/api/v1/cart/merge": { status: 200, body: { cart: { id: "c2" } } },
+    });
+
+    await POST(request({ email: "ana@x.com", password: "secret123" }, GUEST));
+
+    const [, init] = fetchFn.mock.calls[1] as unknown as [string, RequestInit];
+    expect((init.headers as Record<string, string>).cookie).toBeUndefined();
+    expect((init.headers as Record<string, string>)["x-idempotency-key"]).toBeTruthy();
+  });
+
+  it("still signs the shopper in when the merge fails, and keeps the guest id", async () => {
+    vi.stubEnv("AUTH_SVC_URL", "http://auth.test");
+    vi.stubEnv("CART_SVC_URL", "http://cart.test");
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    stubServices({
+      "/api/v1/auth/login": { status: 200, body: SESSION },
+      "/api/v1/cart/merge": {
+        status: 503,
+        body: { error: { code: "CART_UNAVAILABLE", message: "down" } },
+      },
+    });
+
+    const response = await POST(
+      request({ email: "ana@x.com", password: "secret123" }, GUEST),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ user: { id: "u1" } });
+    // No rotation: the guest cart is still reachable under the old id.
+    expect(
+      response.headers
+        .getSetCookie()
+        .some((cookie) => cookie.startsWith(`${GUEST_COOKIE}=`)),
+    ).toBe(false);
+  });
+
+  it("never calls cart-svc when the shopper had no guest cart", async () => {
+    vi.stubEnv("AUTH_SVC_URL", "http://auth.test");
+    vi.stubEnv("CART_SVC_URL", "http://cart.test");
+    const fetchFn = stubServices({
+      "/api/v1/auth/login": { status: 200, body: SESSION },
+    });
+
+    const response = await POST(request({ email: "ana@x.com", password: "secret123" }));
+
+    expect(response.status).toBe(200);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 });

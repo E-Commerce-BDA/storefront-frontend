@@ -1,16 +1,18 @@
 /**
  * POST /api/auth/register — BFF handler
  *
- * Same shape as login: validate → auth-svc → HttpOnly cookies → `{ user }`. A
- * duplicate email arrives as `409` and is reported as `EMAIL_TAKEN`, which is
- * the one auth error that is safe to name (the shopper already knows they have
- * an account, and "sign in instead?" is the useful next step).
+ * Same shape as login: validate → auth-svc → HttpOnly cookies → merge the guest
+ * cart → `{ user }`. A duplicate email arrives as `409` and is reported as
+ * `EMAIL_TAKEN`, which is the one auth error that is safe to name (the shopper
+ * already knows they have an account, and "sign in instead?" is the useful next
+ * step).
  */
 
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { authServiceUrl, createAuthClient } from "@/lib/auth/client";
 import { isSecureCookie, sessionCookies } from "@/lib/auth/session";
+import { absorbGuestCart } from "@/lib/cart/absorb";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -50,6 +52,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   })) {
     response.cookies.set(cookie);
   }
+  // A4.6: same as login — a shopper who filled a basket before registering
+  // keeps it. Never blocks the 201.
+  await absorbGuestCart(request, response, result.data);
   return response;
 }
 

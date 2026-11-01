@@ -2,15 +2,19 @@
  * POST /api/auth/login — BFF handler
  *
  * One action: validate the body → call auth-svc → put the token pair in
- * HttpOnly cookies → reply `{ user }`. The tokens exist only in this function's
- * frame; they are never serialised into the response (G3 asserts that
- * mechanically: `Object.keys(body)` is exactly `['user']`).
+ * HttpOnly cookies → merge the guest cart → reply `{ user }`. The tokens exist
+ * only in this function's frame; they are never serialised into the response
+ * (G3 asserts that mechanically: `Object.keys(body)` is exactly `['user']`).
+ *
+ * The merge is the last step on purpose (A4.6): it needs the new access token,
+ * and it must not be able to fail the sign-in — see `lib/cart/absorb.ts`.
  */
 
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { authServiceUrl, createAuthClient } from "@/lib/auth/client";
 import { isSecureCookie, sessionCookies } from "@/lib/auth/session";
+import { absorbGuestCart } from "@/lib/cart/absorb";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -46,6 +50,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   })) {
     response.cookies.set(cookie);
   }
+  // A4.6: the guest basket follows the shopper into the new session. Cookies
+  // are already on the response, so a merge that misses its budget degrades to
+  // "signed in, empty cart" rather than a failed sign-in.
+  await absorbGuestCart(request, response, result.data);
   return response;
 }
 

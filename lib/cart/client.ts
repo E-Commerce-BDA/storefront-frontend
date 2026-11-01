@@ -158,7 +158,7 @@ export function createCartClient(
         path: `${BASE}/merge`,
         headers: { ...identity, "x-idempotency-key": key(requestOptions) },
         // The merge budget is tighter than the client's: login must not hang on
-        // a slow cart-svc (see `lib/auth/merge.ts`).
+        // a slow cart-svc (see `lib/cart/merge.ts`).
         schema: cartMergeResponseSchema,
         cache: "no-store",
         signal: requestOptions?.signal,

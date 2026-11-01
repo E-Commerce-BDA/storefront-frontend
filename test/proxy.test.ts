@@ -6,11 +6,16 @@
  * `x-middleware-request-*` override pair (Bearer in, cookie out — Next deletes
  * every header missing from `x-middleware-override-headers`, which is why the
  * deleted cookie cannot ride along), and Location for the two guards.
+ *
+ * sf-051 added a third job — minting `sf_cid` — so the guest assertions cover
+ * both halves: the `Set-Cookie` the browser keeps and the
+ * `x-middleware-request-cookie` the *current* render reads.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import proxy, { config } from "@/proxy";
 import { ACCESS_COOKIE, REFRESH_COOKIE } from "@/lib/auth/session";
+import { GUEST_COOKIE } from "@/lib/session/guest";
 
 function request(path: string, cookie?: string): NextRequest {
   return new NextRequest(`http://localhost${path}`, {
@@ -25,9 +30,12 @@ afterEach(() => {
 });
 
 describe("config", () => {
-  it("only matches the session endpoint and the two guarded trees", () => {
+  it("matches the session endpoint, the two guarded trees and every page a cart can be filled from", () => {
     expect(config.matcher).toEqual([
+      "/",
       "/api/auth/session",
+      "/products/:path*",
+      "/cart",
       "/account/:path*",
       "/checkout/:path*",
     ]);
@@ -94,11 +102,53 @@ describe("navigation guards", () => {
     );
   });
 
-  it("ignores paths the matcher does not cover, even without cookies", () => {
-    const response = proxy(request("/products"));
+  it("mints sf_cid on a page the matcher covers, before the render", () => {
+    const page = request("/products/mug");
+
+    const response = proxy(page);
 
     expect(response.headers.get("x-middleware-next")).toBe("1");
-    expect(response.headers.get("location")).toBeNull();
+    const cookie = response.headers
+      .getSetCookie()
+      .find((value) => value.startsWith(`${GUEST_COOKIE}=`));
+    expect(cookie).toBeDefined();
+    expect(cookie).toMatch(/httponly/i);
+    expect(cookie).toMatch(/samesite=lax/i);
+    expect(cookie).toMatch(/path=\/(;|$)/i);
+    expect(cookie).toMatch(/max-age=2592000/i);
+
+    // The cookie has to be on the *request* too, or the render that follows
+    // this proxy run fetches an empty cart.
+    expect(page.cookies.get(GUEST_COOKIE)?.value).toBeDefined();
+    expect(response.headers.get("x-middleware-request-cookie")).toContain(
+      `${GUEST_COOKIE}=`,
+    );
+  });
+
+  it("carries the minted cookie on a redirect too, so the basket survives sign-in", () => {
+    const response = proxy(request("/checkout"));
+
+    expect(response.status).toBe(307);
+    expect(
+      response.headers.getSetCookie().some((value) => value.startsWith(`${GUEST_COOKIE}=`)),
+    ).toBe(true);
+  });
+
+  it("does not re-mint when the browser already has one", () => {
+    const response = proxy(request("/cart", `${GUEST_COOKIE}=guest-1234`));
+
+    expect(
+      response.headers.getSetCookie().some((value) => value.startsWith(`${GUEST_COOKIE}=`)),
+    ).toBe(false);
+  });
+
+  it("never mints on the session endpoint — that is an API answer, not a page", () => {
+    vi.stubEnv("AUTH_SVC_URL", "http://auth.test");
+
+    const response = proxy(request("/api/auth/session"));
+
+    expect(response.status).toBe(401);
+    expect(response.headers.getSetCookie()).toEqual([]);
   });
 
   it("does not treat /accounting as a guarded route", () => {
