@@ -22,19 +22,35 @@ app/api/<domain>/<action>/route.ts      # ONE action per handler:
                                         # validate → forward → cookies
 lib/<domain>/*.ts                       # pure: types, DEFAULT_*, resolvers,
                                         # var emitters. No React, no fetch, no DB
+lib/<domain>/client.ts                  # the sanctioned exception: server-only
+                                        # service client (auth, cms, catalog, cart,
+                                        # order). Pure lib otherwise stays fetch-free
+lib/services/urls.ts                    # the service registry: one row per backend
+                                        # (env var, fallback URL, timeout)
+lib/http/                               # the only fetch plumbing: result.ts (types),
+                                        # client.ts (server transport), browser.ts
+                                        # (island → this origin, key + 401 refresh)
+lib/session/                            # guest cookie + identity headers, pure
+lib/bff/                                # route-handler helpers (respond, origin)
 components/ui/*.tsx                     # dumb: props → JSX only
 components/<domain>/*.tsx               # composed dumb: domain-arranged
                                         # props → JSX (AuthPage/Split/Panel/Form);
                                         # still no fetch/store/state (see §3)
-app/**/_components/*.tsx                # route-colocated client islands ("use client"):
-                                        # stateful forms owned by their route only;
-                                        # never imported across routes (share via
-                                        # components/<domain>/ instead)
+app/**/_components/*.tsx                # client islands ("use client"):
+                                        #   route-colocated → the route only
+                                        #   app/(group)/_components → that group's
+                                        #   routes only, never across groups
+                                        # (share across groups via components/)
 test/                                   # mirrors source (test/lib ↔ lib,
                                         # test/components ↔ components)
 proxy.ts                                # repo root, edge-safe
                                         # (Next 16 name — never middleware.ts)
 ```
+
+A page is a server component that asks a `lib/<domain>/client.ts` for data. A page
+that shows private data renders an island instead, and the island talks to
+`app/api/**` through `lib/http/browser.ts` — never to a service. Adding a route is
+one file plus one client method; if it needs more than that, the seam is wrong.
 
 Importance lives close to the application; everything gets dumber with depth.
 Route segments own orchestration, `lib` owns decisions, `components/ui`
@@ -76,7 +92,8 @@ docs defer to this section where wording differs.)
    `components/ui/index.ts`. Composed `components/<domain>/` blocks share
    their domain's `lib` entry (no model file per block) but keep their own
    tests; route islands in `app/**/_components/` ship with their route's
-   tests only.
+   tests only, and group islands in `app/(group)/_components/` ship with the
+   group's tests.
 8. **Paint/state/motion → `.sf-*` CSS (themeable, testable); layout/
    positioning → Tailwind utilities (disposable, unthemed).** State
    selectors, pseudo-elements, keyframes, and var() fallbacks live in the
