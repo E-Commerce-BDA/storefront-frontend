@@ -61,7 +61,35 @@ export const cartMutationResponseSchema = z
 
 export const cartMergeResponseSchema = z.object({ cart: cartSchema }).loose();
 
+/**
+ * What **our own BFF** answers, which differs from cart-svc in two ways: the
+ * envelope is `{cart, items, totals}` with `cart` still possible (null before
+ * the first item), and a mutation returns `{item, totals}` — the service's
+ * `cartTotals` renamed on the way out (`app/api/cart/items/route.ts`).
+ *
+ * Kept separate from `cartResponseSchema` on purpose: the service contract is
+ * strict about `cart`, and loosening it there would hide a broken upstream.
+ */
+export const cartSnapshotSchema = z
+  .object({
+    cart: cartSchema.nullish(),
+    items: z.array(cartItemSchema),
+    totals: cartTotalsSchema,
+  })
+  .loose();
+
+export const cartMutationSchema = z
+  .object({
+    item: cartItemSchema,
+    totals: cartTotalsSchema,
+  })
+  .loose();
+
 export type CartTotalsDto = z.infer<typeof cartTotalsSchema>;
 export type CartDto = z.infer<typeof cartSchema>;
 export type CartItemDto = z.infer<typeof cartItemSchema>;
+/** cart-svc's answer, `cart` always present. */
 export type CartSnapshot = z.infer<typeof cartResponseSchema>;
+/** Our BFF's answer, `cart` still absent before the first item. */
+export type CartSnapshotDto = z.infer<typeof cartSnapshotSchema>;
+export type CartMutationDto = z.infer<typeof cartMutationSchema>;

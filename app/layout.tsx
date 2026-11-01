@@ -4,6 +4,7 @@ import "./globals.css";
 import { resolveNavSettings } from "@/lib/shell/resolveNav";
 import { fetchNavSettings } from "@/lib/cms/navigation";
 import NavbarMount from "./_components/NavbarMount";
+import CartProvider from "./_components/CartProvider";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -32,6 +33,10 @@ export const metadata: Metadata = {
  * `fetchNavSettings` never rejects: cms-svc down → stale cache → demo nav.
  * That ordering matters here more than anywhere else, because a throw in the
  * root layout blanks every route in the app.
+ *
+ * `CartProvider` wraps the chrome *and* the page: the navbar badge, the drawer
+ * and whatever route is rendering must all read one cart. It fetches once on
+ * mount and holds no server data of its own, so the layout stays static.
  */
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { settings } = await fetchNavSettings();
@@ -39,8 +44,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={`${fraunces.variable} ${outfit.variable}`}>
       <body>
-        <NavbarMount nav={nav} />
-        {children}
+        <CartProvider>
+          <NavbarMount nav={nav} />
+          {children}
+        </CartProvider>
       </body>
     </html>
   );

@@ -25,12 +25,16 @@ import {
   toResponse,
 } from "@/lib/bff/handler";
 import { cartClient } from "@/lib/cart/client";
-import { emptyCart } from "@/lib/cart/empty";
+import { emptyCart } from "@/lib/cart/state";
 import { hasIdentity, identityHeaders, readIdentity } from "@/lib/session/identity";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const identity = readIdentity(request.cookies);
-  if (!hasIdentity(identity)) return jsonNoStore(emptyCart());
+  if (!hasIdentity(identity)) {
+    // Same zeros the client store starts from — one source, no drift.
+    const { items, totals } = emptyCart();
+    return jsonNoStore({ cart: null, items, totals });
+  }
 
   return toResponse(await cartClient().getCart(identityHeaders(identity)));
 }
