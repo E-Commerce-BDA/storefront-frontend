@@ -3333,4 +3333,13 @@ body {
   font-weight: 700;
 }
 
+/* (shop) route container — the one 1280px / 24px grid every commerce page sits in
+   (pages/routing.md §2, design-system §8). Carried by app/(shop)/layout.tsx so a
+   route is only content. Geometry only, no paint — nothing here resolves a token. */
+.sf-shop {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 24px 64px;
+}
+
 
