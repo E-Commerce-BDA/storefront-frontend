@@ -28,17 +28,17 @@ export interface GalleryImage {
 export const GALLERY_DEFAULT_RATIO: MediaRatio = "4:5";
 
 /**
- * Primary first → `sortOrder` ascending → upload order.
+ * Primary first → `sortOrder` ascending → upload order, empty urls dropped.
  *
- * Empty urls are dropped (`<img src="">` re-requests the page), duplicates keep
- * their first occurrence *after* ordering, so the primary row's alt text wins
- * over a later copy's.
+ * The one home of that order: the PDP rail and the card's cover both read it, so
+ * the same product cannot open on a different frame in the two places. Exposed
+ * for that reason — `lib/commerce/fromCatalog.ts` maps the rows further and must
+ * not re-derive the rule.
  */
-export function toGalleryImages(
+export function orderImageRows(
   images: readonly ProductImageDto[] | null | undefined,
-  fallbackAlt = "",
-): GalleryImage[] {
-  const ranked = (images ?? [])
+): ProductImageDto[] {
+  return (images ?? [])
     .map((image, index) => ({ image, index }))
     .filter(({ image }) => typeof image.url === "string" && image.url.trim() !== "")
     .sort((a, b) => {
@@ -50,11 +50,26 @@ export function toGalleryImages(
         (a.image.sortOrder ?? Number.MAX_SAFE_INTEGER) -
         (b.image.sortOrder ?? Number.MAX_SAFE_INTEGER);
       return order !== 0 ? order : a.index - b.index;
-    });
+    })
+    .map(({ image }) => image);
+}
+
+/**
+ * Primary first → `sortOrder` ascending → upload order.
+ *
+ * Empty urls are dropped (`<img src="">` re-requests the page), duplicates keep
+ * their first occurrence *after* ordering, so the primary row's alt text wins
+ * over a later copy's.
+ */
+export function toGalleryImages(
+  images: readonly ProductImageDto[] | null | undefined,
+  fallbackAlt = "",
+): GalleryImage[] {
+  const ranked = orderImageRows(images);
 
   const seen = new Set<string>();
   const gallery: GalleryImage[] = [];
-  for (const { image } of ranked) {
+  for (const image of ranked) {
     if (seen.has(image.url)) continue;
     seen.add(image.url);
     gallery.push({

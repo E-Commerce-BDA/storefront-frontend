@@ -2978,4 +2978,52 @@ body {
   outline-offset: -4px;
 }
 
+/* ProductGrid — a face of product cards (components/commerce/ProductGrid,
+   product.md §15). Columns come in as three inline vars from the theme's
+   `productCard.cols*`, mobile-first; the card itself never learns about
+   siblings. Layout (the track) is geometry; every paint below resolves through
+   a --grid-* var over a token. */
+.sf-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-cols-phone, 2), 1fr);
+  gap: var(--grid-gap, 20px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 640px) {
+  .sf-grid {
+    grid-template-columns: repeat(var(--grid-cols-tablet, 3), 1fr);
+  }
+}
+@media (min-width: 1024px) {
+  .sf-grid {
+    grid-template-columns: repeat(var(--grid-cols-desktop, 4), 1fr);
+  }
+}
+/* The cell, not the card, carries the quick-add state — a card that knew about
+   carts would not be a dumb block. */
+.sf-grid__cell {
+  position: relative;
+}
+.sf-grid__cell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 2px dashed transparent;
+  border-radius: var(--grid-cell-radius, var(--radius-card));
+}
+/* Explicit solids, never `opacity` — a dimmed card loses its own contrast and
+   a shopper cannot read a price through a veil. */
+.sf-grid__cell[data-pending="true"]::after {
+  border-color: var(--grid-pending-border, var(--border));
+  background: var(--grid-pending-bg, var(--color-section-bg));
+}
+.sf-grid__cell[data-added="true"]::after {
+  border-style: solid;
+  border-color: var(--grid-added-border, var(--color-success));
+  background: var(--grid-added-bg, var(--color-success-bg));
+}
+
 
