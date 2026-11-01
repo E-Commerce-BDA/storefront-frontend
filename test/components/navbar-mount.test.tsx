@@ -27,6 +27,14 @@ vi.mock("next/navigation", () => ({
   usePathname: () => mockPath,
 }));
 
+// NavbarMount reads the cart store only to pass count + onOpen to the navbar;
+// stub the hook so this file tests nav behaviour, not the provider (whose own
+// fetch/drawer behaviour is covered by the cart-store tests).
+const openDrawer = vi.fn();
+vi.mock("@/app/_components/CartProvider", () => ({
+  useCart: () => ({ count: 0, openDrawer }),
+}));
+
 function stubMatchMedia(matches: boolean) {
   Object.defineProperty(window, "matchMedia", {
     writable: true,
@@ -66,6 +74,12 @@ describe("NavbarMount", () => {
     expect(screen.getByRole("dialog", { name: "Menu" })).not.toBeNull();
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("dialog", { name: "Menu" })).toBeNull();
+  });
+
+  it("raises the cart drawer from the navbar cart trigger", () => {
+    render(<NavbarMount nav={DEFAULT_NAV_SETTINGS} />);
+    fireEvent.click(screen.getByRole("button", { name: "Cart" }));
+    expect(openDrawer).toHaveBeenCalledTimes(1);
   });
 
   it("search trigger opens the overlay shell on demand", async () => {

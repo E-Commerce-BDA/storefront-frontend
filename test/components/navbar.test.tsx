@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 /**
  * Navbar contract — regions gating, callbacks fire, --nb-* vars inline,
- * mobile/desktop branches, drawer open/close/Esc, logo faces. No cart:
- * NavCartButton stays unmounted until the cart slice (scope lock).
+ * mobile/desktop branches, drawer open/close/Esc, logo faces. Cart is wired
+ * (sf-051): the trigger paints the store count and fires onOpen.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
@@ -40,6 +40,7 @@ const BASE: NavbarProps = {
     onPrev: () => {},
     onNext: () => {},
   },
+  cart: { count: 0, onOpen: () => {} },
   isMobile: false,
   mobileOpen: false,
   mobileSide: "left",
@@ -125,19 +126,22 @@ describe("Navbar", () => {
     expect(screen.queryByRole("button", { name: "Search" })).toBeNull();
   });
 
-  it("mounts preview icons disabled with coming-soon labels (sf-047)", () => {
+  it("mounts account/wishlist as disabled previews; the cart is live (sf-051)", () => {
     render(<Navbar {...BASE} />);
-    for (const name of ["Account (coming soon)", "Wishlist (coming soon)", "Cart (coming soon)"]) {
+    for (const name of ["Account (coming soon)", "Wishlist (coming soon)"]) {
       const btn = screen.getByRole("button", { name }) as HTMLButtonElement;
       expect(btn.disabled).toBe(true);
     }
+    // Cart is no longer a preview — it renders enabled with the store's trigger.
+    const cart = screen.getByRole("button", { name: "Cart" }) as HTMLButtonElement;
+    expect(cart.disabled).toBe(false);
   });
 
   it("hides preview icons when their regions are off (sf-047)", () => {
     render(<Navbar {...BASE} regions={{ ...BASE.regions, account: false, wishlist: false, cart: false }} />);
     expect(screen.queryByRole("button", { name: "Account (coming soon)" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Wishlist (coming soon)" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Cart (coming soon)" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Cart" })).toBeNull();
   });
 
   it("shows hamburger on mobile, links on desktop; preloads on trigger hover", () => {
@@ -153,12 +157,12 @@ describe("Navbar", () => {
     expect(screen.queryByRole("button", { name: "Open menu" })).toBeNull();
   });
 
-  it("mounts cart as disabled preview only (functional wiring stays cart-slice)", () => {
-    const onCart = vi.fn();
-    render(<Navbar {...BASE} />);
-    const btn = screen.getByRole("button", { name: "Cart (coming soon)" }) as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
+  it("wires the cart trigger: count paints, click fires onOpen", () => {
+    const onOpen = vi.fn();
+    render(<Navbar {...BASE} cart={{ count: 3, onOpen }} />);
+    const btn = screen.getByRole("button", { name: /Cart, 3 items/ }) as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
     fireEvent.click(btn);
-    expect(onCart).not.toHaveBeenCalled();
+    expect(onOpen).toHaveBeenCalledTimes(1);
   });
 });

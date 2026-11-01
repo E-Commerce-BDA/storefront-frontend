@@ -24,6 +24,12 @@ import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import CartProvider, { useCart } from "@/app/_components/CartProvider";
 import type { CartItemDto } from "@/lib/cart/schemas";
 
+// The provider mounts the mini drawer and wires its checkout to the router; the
+// store tests do not navigate, so a headless router stub keeps the harness honest.
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
+}));
+
 interface Call {
   method: string;
   path: string;

@@ -55,6 +55,8 @@ export interface NavbarProps {
   };
   links: ResolvedNavLink[];
   announcement: NavbarAnnouncement;
+  /** Live cart region (sf-051): count from the store, onOpen raises the drawer. */
+  cart: { count: number; onOpen: () => void };
   isMobile: boolean;
   mobileOpen: boolean;
   mobileSide: "left" | "right";
@@ -72,6 +74,7 @@ export default function Navbar({
   colors,
   links,
   announcement,
+  cart,
   isMobile,
   mobileOpen,
   mobileSide,
@@ -132,18 +135,16 @@ export default function Navbar({
               <NavSearchTrigger onOpen={onSearchOpen} />
             </span>
           )}
-          {/* Preview icons (sf-047): present but disabled with coming-soon
-              labels — never a dead click. Noops never fire while disabled;
-              slices replace them with real handlers. */}
+          {/* Account + wishlist stay preview-disabled (deferred to sf-056 and the
+              account menu); the cart is live from sf-051 — count from the store,
+              onOpen raises the drawer. Never a dead click. */}
           {regions.account && (
             <NavAccountButton onAccount={() => {}} label="Account (coming soon)" disabled />
           )}
           {regions.wishlist && (
             <NavWishlistButton onWishlist={() => {}} label="Wishlist (coming soon)" disabled />
           )}
-          {regions.cart && (
-            <NavCartButton onCart={() => {}} label="Cart (coming soon)" disabled />
-          )}
+          {regions.cart && <NavCartButton count={cart.count} onCart={cart.onOpen} label="Cart" />}
         </span>
       </div>
       <MobileDrawer

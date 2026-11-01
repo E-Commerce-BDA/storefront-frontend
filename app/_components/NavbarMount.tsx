@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import Navbar from "@/components/shell/Navbar";
 import SearchMount, { preloadSearchOverlay } from "@/components/shell/SearchMount";
+import { useCart } from "./CartProvider";
 import type { ResolvedNavSettings } from "@/lib/shell/navSettings";
 
 /** Auth routes stay chromeless — the island self-suppresses (no
@@ -28,6 +29,7 @@ function prefersReducedMotion(): boolean {
  */
 export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
   const pathname = usePathname();
+  const cart = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -114,6 +116,7 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
         isMobile={isMobile}
         mobileOpen={mobileOpen}
         mobileSide={nav.mobile.drawerSide}
+        cart={{ count: cart.count, onOpen: cart.openDrawer }}
         onMenuOpen={() => setMobileOpen(true)}
         onMenuClose={() => setMobileOpen(false)}
         onSearchOpen={() => setSearchOpen(true)}

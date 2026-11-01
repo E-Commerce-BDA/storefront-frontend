@@ -38,7 +38,9 @@ import {
   useRef,
   useState,
 } from "react";
+import { useRouter } from "next/navigation";
 import Toast from "@/components/ui/Toast";
+import MiniCartDrawer from "@/components/shell/MiniCartDrawer";
 import {
   clearCart,
   deleteCartItem,
@@ -96,6 +98,7 @@ export function useCart(): CartContextValue {
 }
 
 export default function CartProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [state, setState] = useState<CartState>(emptyCart);
   const [status, setStatus] = useState<CartStatus>("idle");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -234,6 +237,19 @@ export default function CartProvider({ children }: { children: React.ReactNode }
   return (
     <CartContext.Provider value={value}>
       {children}
+      <MiniCartDrawer
+        open={value.drawerOpen}
+        onClose={value.closeDrawer}
+        items={value.items}
+        totals={{ subtotal: value.subtotal, itemCount: value.count }}
+        status={value.status}
+        onQty={value.setQty}
+        onRemove={value.remove}
+        onCheckout={() => {
+          value.closeDrawer();
+          router.push("/checkout");
+        }}
+      />
       <Toast
         open={notice !== null}
         title={notice ?? ""}
