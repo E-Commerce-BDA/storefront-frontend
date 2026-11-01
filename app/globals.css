@@ -2833,4 +2833,149 @@ body {
   margin-top: 24px;
 }
 
+/* Gallery — one frame plus a thumb rail (components/commerce/Gallery,
+   product.md §14). The frame's aspect ratio arrives as --gallery-ratio
+   inline (one table, PRODUCT_CARD_RATIOS), so the layout knob is a var and
+   every colour still resolves through a token. Active thumb via data-active;
+   no transitions by design (a photo swap should not animate under the
+   shopper's eye). */
+.sf-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sf-gallery__frame {
+  aspect-ratio: var(--gallery-ratio, 4 / 5);
+  overflow: hidden;
+  border-radius: var(--gallery-radius, var(--radius-card));
+  background: var(--gallery-bg, var(--color-image-bg));
+}
+.sf-gallery__img,
+.sf-gallery__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sf-gallery[data-fit="contain"] .sf-gallery__img {
+  object-fit: contain;
+}
+.sf-gallery__thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sf-gallery__thumb {
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--gallery-thumb-border, var(--border));
+  border-radius: var(--radius-button);
+  background: var(--gallery-bg, var(--color-image-bg));
+}
+.sf-gallery__thumb:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+/* Bare :hover would repaint the thumb the shopper already has open. */
+.sf-gallery__thumb:not([data-active="true"]):hover {
+  border-color: var(--color-accent);
+}
+.sf-gallery__thumb[data-active="true"] {
+  border-color: var(--gallery-thumb-active, var(--color-accent));
+  border-width: 2px;
+}
+
+/* VariantSelector — one row per option (components/commerce/VariantSelector,
+   product.md §14). Faces: text / pill / swatch, chosen by data-display.
+   Selected via data-active, unavailable via aria-disabled (kept in the row —
+   removing it reflows the swatches under the shopper's thumb). Swatch hex is
+   admin data and arrives inline; every other colour is a token. */
+.sf-variants {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.sf-variants__label {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--variants-label, var(--text-muted));
+}
+.sf-variants__picked {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  color: var(--variants-picked, var(--color-ink));
+}
+.sf-variants__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sf-variants__value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 36px;
+  padding: 0 12px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--variants-text, var(--color-ink));
+  background: var(--variants-bg, var(--color-navbar-bg));
+  border: 1px solid var(--variants-border, var(--border));
+  border-radius: var(--radius-button);
+}
+.sf-variants__value[data-display="pill"] {
+  border-radius: 999px;
+}
+.sf-variants__value[data-display="swatch"] {
+  width: 36px;
+  min-width: 36px;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--variants-swatch-fallback, var(--color-image-bg));
+}
+.sf-variants__swatch-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sf-variants__value:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.sf-variants__value:not([data-active="true"]):not([aria-disabled="true"]):hover {
+  border-color: var(--color-accent);
+}
+.sf-variants__value[data-active="true"] {
+  border-color: var(--variants-active-border, var(--color-accent));
+  border-width: 2px;
+  background: var(--variants-active-bg, var(--color-accent-50));
+  font-weight: 600;
+}
+/* Explicit solid, not opacity: a sold-out swatch must still read as a colour. */
+.sf-variants__value[aria-disabled="true"] {
+  cursor: not-allowed;
+  border-color: var(--variants-disabled-border, var(--border));
+  background: var(--variants-disabled-bg, var(--color-section-bg));
+  color: var(--variants-disabled-text, var(--text-muted));
+}
+.sf-variants__value[data-display="swatch"][aria-disabled="true"] {
+  /* A wash over the admin hex would need opacity; a ring says "no" instead. */
+  outline: 2px dashed var(--variants-disabled-border, var(--border));
+  outline-offset: -4px;
+}
+
 

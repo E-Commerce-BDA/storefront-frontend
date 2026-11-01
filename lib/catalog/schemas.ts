@@ -233,4 +233,6 @@ export type CardVariantDto = z.infer<typeof cardVariantSchema>;
 export type ProductListItemDto = z.infer<typeof productListItemSchema>;
 export type ProductDetailDto = z.infer<typeof productDetailSchema>;
 export type ProductVariantDto = z.infer<typeof productVariantSchema>;
+export type ProductOptionDto = z.infer<typeof productOptionSchema>;
+export type ProductOptionValueDto = z.infer<typeof productOptionValueSchema>;
 export type CatalogCategory = z.infer<typeof categorySchema>;
