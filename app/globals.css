@@ -3103,4 +3103,78 @@ body {
   object-fit: cover;
 }
 
+/* PageHeader — one title shell for every shop page (components/shell/PageHeader,
+   shell-cart.md §3, pages/routing.md §2). The crumb separator is *content*, so it
+   lives in the stylesheet where the style contract can read it; the row/column
+   layout is plain flex. Every colour resolves through a token. */
+.sf-page-header {
+  padding: var(--page-header-pad, 28px 0 20px);
+}
+.sf-page-header__crumbs {
+  margin-bottom: var(--page-header-crumb-gap, 12px);
+}
+.sf-page-header__crumb-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--page-header-crumb-gap, 12px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+.sf-page-header__crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--page-header-crumb-gap, 12px);
+  color: var(--page-header-crumb, var(--text-muted));
+}
+/* Separator via pseudo-content so the DOM stays a clean ordered list for a screen
+   reader (the "/" is decoration, never a crumb). */
+.sf-page-header__crumb + .sf-page-header__crumb::before {
+  content: "/";
+  color: var(--page-header-separator, var(--border));
+}
+.sf-page-header__crumb a {
+  color: var(--page-header-crumb-link, var(--color-accent));
+  text-decoration: none;
+}
+.sf-page-header__crumb a:hover {
+  text-decoration: underline;
+}
+.sf-page-header__crumb a:focus-visible {
+  outline: 2px solid var(--page-header-focus, var(--color-accent));
+  outline-offset: 2px;
+}
+.sf-page-header__crumb span[aria-current="page"] {
+  color: var(--page-header-crumb-current, var(--color-ink));
+}
+.sf-page-header__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--page-header-row-gap, 16px);
+}
+.sf-page-header__eyebrow {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--page-header-eyebrow, var(--text-muted));
+}
+.sf-page-header__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--page-header-title-size, 30px);
+  line-height: 1.15;
+  color: var(--page-header-title, var(--color-ink));
+}
+.sf-page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--page-header-action-gap, 12px);
+}
+
 
