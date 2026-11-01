@@ -18,8 +18,14 @@
  * header.
  */
 
-import { ACCESS_COOKIE, readCookie, type CookieReader } from "@/lib/auth/session";
-import { GUEST_COOKIE, isGuestId } from "@/lib/session/guest";
+import {
+  ACCESS_COOKIE,
+  isSecureCookie,
+  readCookie,
+  type CookieReader,
+  type CookieSpec,
+} from "@/lib/auth/session";
+import { GUEST_COOKIE, guestCookie, isGuestId, mintGuestId } from "@/lib/session/guest";
 import type { IdentityHeaders } from "@/lib/cart/client";
 
 export interface Identity {
@@ -63,4 +69,32 @@ export function identityHeaders(identity: Identity): IdentityHeaders {
   if (identity.accessToken !== null) headers.authorization = `Bearer ${identity.accessToken}`;
   if (identity.sessionId !== null) headers["x-session-id"] = identity.sessionId;
   return headers;
+}
+
+/**
+ * Identity for a **write**, with the proxy's failure mode covered.
+ *
+ * `sf_cid` is normally minted in the proxy before the first render. If a build
+ * ever stops propagating that request-cookie mutation, a cart write would
+ * arrive with no identity at all and cart-svc would answer 401 — the shopper
+ * would lose the item they just added. So a write mints on the spot and the
+ * handler puts the cookie on its own response: the item lands in a cart the
+ * browser will keep sending, and at worst the *previous* render showed empty.
+ *
+ * Read-only handlers must not use this — a GET should never create state.
+ */
+export function identityForWrite(cookies: CookieReader): {
+  identity: Identity;
+  minted: CookieSpec | null;
+} {
+  const identity = readIdentity(cookies);
+  if (identity.sessionId !== null || identity.accessToken !== null) {
+    return { identity, minted: null };
+  }
+
+  const id = mintGuestId();
+  return {
+    identity: { ...identity, sessionId: id },
+    minted: guestCookie(id, { secure: isSecureCookie() }),
+  };
 }

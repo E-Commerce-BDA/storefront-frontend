@@ -67,9 +67,14 @@ export interface AuthClient {
   register(input: RegisterInput): Promise<AuthResult<AuthSession>>;
   refresh(refreshToken: string): Promise<AuthResult<TokenPair>>;
   logout(refreshToken: string): Promise<AuthResult<null>>;
+  /**
+   * The caller's own profile. Used by `GET /api/account` (the account page
+   * wants `firstName`/`email`, which no cookie carries) — sf-051.
+   */
+  me(accessToken: string): Promise<AuthResult<AuthUser>>;
 }
 
-type Operation = "login" | "register" | "refresh" | "logout";
+type Operation = "login" | "register" | "refresh" | "logout" | "me";
 
 export const AUTH_SERVICE_TIMEOUT_MS = 3000;
 
@@ -128,6 +133,42 @@ export function createAuthClient(options: {
     }
   }
 
+  async function get(
+    path: string,
+    accessToken: string,
+    operation: Operation,
+  ): Promise<AuthResult<unknown>> {
+    let response: Response;
+    try {
+      response = await fetchFn(`${baseUrl}${path}`, {
+        method: "GET",
+        headers: {
+          accept: "application/json",
+          authorization: `Bearer ${accessToken}`,
+        },
+        signal: AbortSignal.timeout(timeoutMs),
+        // A profile is private data; a cached one is somebody else's.
+        cache: "no-store",
+      });
+    } catch {
+      return { ok: false, code: "SERVICE_UNAVAILABLE", status: 0 };
+    }
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        code: classify(response.status, await readMessage(response), operation),
+        status: response.status,
+      };
+    }
+
+    try {
+      return { ok: true, data: await response.json() };
+    } catch {
+      return { ok: false, code: "SERVICE_UNAVAILABLE", status: response.status };
+    }
+  }
+
   return {
     async login(input) {
       const result = await post("/api/v1/auth/login", input, "login");
@@ -165,6 +206,16 @@ export function createAuthClient(options: {
       );
       if (!result.ok) return result;
       return { ok: true, data: null };
+    },
+
+    async me(accessToken) {
+      const result = await get("/api/v1/auth/me", accessToken, "me");
+      if (!result.ok) return result;
+      const user = asUser(isRecord(result.data) ? result.data.user : undefined);
+      if (user === null) {
+        return { ok: false, code: "SERVICE_UNAVAILABLE", status: 200 };
+      }
+      return { ok: true, data: user };
     },
   };
 }
@@ -207,26 +258,28 @@ function classify(
 
 function asSession(value: unknown): AuthSession | null {
   if (!isRecord(value)) return null;
-  const user = value.user;
+  const user = asUser(value.user);
   const accessToken = value.accessToken;
   const refreshToken = value.refreshToken;
-  if (!isRecord(user)) return null;
+  if (user === null) return null;
   if (typeof accessToken !== "string" || typeof refreshToken !== "string") {
     return null;
   }
-  if (typeof user.id !== "string" || typeof user.email !== "string") return null;
+  return { user, accessToken, refreshToken };
+}
+
+/** One user parser for login, register and `/me` — same shape, same rules. */
+function asUser(value: unknown): AuthUser | null {
+  if (!isRecord(value)) return null;
+  if (typeof value.id !== "string" || typeof value.email !== "string") return null;
   return {
-    user: {
-      id: user.id,
-      email: user.email,
-      firstName: typeof user.firstName === "string" ? user.firstName : null,
-      lastName: typeof user.lastName === "string" ? user.lastName : null,
-      roles: Array.isArray(user.roles)
-        ? user.roles.filter((role): role is string => typeof role === "string")
-        : [],
-    },
-    accessToken,
-    refreshToken,
+    id: value.id,
+    email: value.email,
+    firstName: typeof value.firstName === "string" ? value.firstName : null,
+    lastName: typeof value.lastName === "string" ? value.lastName : null,
+    roles: Array.isArray(value.roles)
+      ? value.roles.filter((role): role is string => typeof role === "string")
+      : [],
   };
 }
 
