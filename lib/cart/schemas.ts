@@ -3,8 +3,9 @@
  * (cart-svc `src/cart/cart.types.ts`, read from source)
  *
  * Loose objects, strict on the fields the cart UI renders. `unitPrice` is a
- * **number** here (cart-svc prices at write time and stores dollars), which is
- * why the cart never needs `toMoney()` — only order rows do.
+ * **number** here (cart-svc prices at write time and normalises `DECIMAL` to a
+ * number in its mapper), the same shape order-svc sends after its NUMERIC type
+ * parser — so every price on the seam is a number and no view has to convert.
  */
 
 import { z } from "zod";

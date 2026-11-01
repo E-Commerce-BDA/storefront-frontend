@@ -15,11 +15,11 @@ const ORDER = {
   id: "o1",
   order_number: "SF-1001",
   status: "confirmed",
-  subtotal: "25.00",
-  shipping_fee: "0.00",
-  tax: "2.00",
-  discount: "0.00",
-  grand_total: "27.00",
+  subtotal: 25,
+  shipping_fee: 0,
+  tax: 2,
+  discount: 0,
+  grand_total: 27,
   shipping_address: { line1: "1 Main", city: "Austin", postalCode: "78701", country: "US" },
   created_at: "2026-11-01T10:00:00.000Z",
   items: [],
@@ -73,9 +73,9 @@ describe("GET /api/orders/[id]", () => {
     const response = await GET(request(`${ACCESS_COOKIE}=at_1`), context());
 
     expect(response.status).toBe(200);
-    // Money stays a string here: `toMoney()` normalises at the view layer, and
-    // the BFF must not quietly turn "25.00" into 25.
-    expect(await response.json()).toMatchObject({ id: "o1", grand_total: "27.00" });
+    // Money arrives as a number — order-svc parses `DECIMAL` at its own DB
+    // boundary — and the BFF passes it through untouched.
+    expect(await response.json()).toMatchObject({ id: "o1", grand_total: 27 });
 
     const [url, init] = callOf(fetchFn);
     expect(url).toBe("http://order.test/api/v1/order/orders/o1");

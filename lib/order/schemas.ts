@@ -2,10 +2,11 @@
  * Order schemas — sf-051
  * (order-svc `src/db/rows.ts`, `checkout.service.ts`, `orders.repository.ts`)
  *
- * The one place the storefront meets **snake_case** and **money as strings**:
- * `OrderRow` mirrors Postgres columns (`numeric(12,2)` arrives as `"129.90"` so
- * precision survives), while `CheckoutConfirmation` is camelCase with numbers.
- * Both shapes are described here; `toMoney()` bridges them at the view layer.
+ * order-svc answers **snake_case** rows for reads and **camelCase** objects for
+ * the checkout confirmation, but money is one type in both: `DECIMAL(12,2)` is
+ * parsed to a number at order-svc's persistence boundary (`src/db/pool.ts`), so
+ * the service never sends `"129.90"` where the shopper expects `129.9`. Nothing
+ * here coerces — a schema that accepts two types is a schema that hides a bug.
  *
  * Loose objects again — a new order column must not blank a confirmation page.
  * The fields the account and confirmation screens read are required.
@@ -15,8 +16,8 @@ import { z } from "zod";
 
 /* ── money ───────────────────────────────────────────────────────────────── */
 
-/** Accepts both `"129.90"` (rows) and `129.9` (checkout) — see `toMoney()`. */
-const money = z.union([z.string(), z.number()]);
+/** Dollars, as a number. The service owns the type; the view only formats it. */
+const money = z.number();
 
 /* ── checkout (write + its confirmation) ─────────────────────────────────── */
 
