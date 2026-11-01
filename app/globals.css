@@ -2723,4 +2723,114 @@ body {
   }
 }
 
+/* QuantityStepper — minus · number · plus (components/ui/QuantityStepper,
+   commerce.md §1). Paint rides --qty-* vars whose fallbacks mirror tokens, so
+   the block reads house tokens only and an admin theme can retint one face.
+   State via data-disabled/data-pending. No transitions by design: a stepper
+   must land instantly on the tapped number, which also leaves nothing to kill
+   under reduced-motion. Disabled faces are explicit solids — opacity would
+   destroy contrast (hard-ban). */
+.sf-qty {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  border: 1px solid var(--qty-border, var(--border));
+  border-radius: var(--radius-button);
+  background: var(--qty-bg, var(--color-navbar-bg));
+  color: var(--qty-text, var(--color-ink));
+  overflow: hidden;
+}
+/* :focus-within shows what :hover shows — the row is one control (AGENTS §3.6). */
+.sf-qty:focus-within,
+.sf-qty:not([data-disabled="true"]):hover {
+  border-color: var(--qty-accent, var(--color-accent));
+}
+.sf-qty__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.sf-qty__btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+/* Bare :hover matches disabled buttons too — gate it. */
+.sf-qty__btn:not([disabled]):hover {
+  background: var(--qty-hover-bg, var(--color-accent-50));
+}
+.sf-qty__btn[disabled] {
+  cursor: not-allowed;
+  background: var(--qty-disabled-bg, var(--color-section-bg));
+  color: var(--qty-disabled-text, var(--text-muted));
+}
+.sf-qty__input {
+  width: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: inherit;
+  text-align: center;
+}
+.sf-qty__input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+.sf-qty[data-disabled="true"] {
+  background: var(--qty-disabled-bg, var(--color-section-bg));
+  color: var(--qty-disabled-text, var(--text-muted));
+}
+/* Pending dims the digits only — the buttons keep their own faces. */
+.sf-qty[data-pending="true"] .sf-qty__input {
+  color: var(--qty-pending-text, var(--text-muted));
+}
+
+/* EmptyState — the one "nothing here" face (components/ui/EmptyState,
+   commerce.md §1). Glyph wash, title and body resolve through --empty-* vars
+   over tokens; copy and action are the caller's. */
+.sf-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 56px 24px;
+}
+.sf-empty__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 16px;
+  border-radius: 50%;
+  background: var(--empty-glyph-bg, var(--color-accent-50));
+  color: var(--empty-glyph-text, var(--color-accent));
+}
+.sf-empty__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--empty-title, var(--color-ink));
+}
+.sf-empty__body {
+  margin: 8px 0 0;
+  max-width: 46ch;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--empty-body, var(--text-muted));
+}
+.sf-empty__action {
+  margin-top: 24px;
+}
+
 

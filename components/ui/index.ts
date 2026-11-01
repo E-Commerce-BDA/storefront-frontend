@@ -19,3 +19,7 @@ export { default as Select } from "./Select";
 export { default as Slider } from "./Slider";
 export { default as Card } from "./Card";
 export { default as Dialog } from "./Dialog";
+export { default as QuantityStepper } from "./QuantityStepper";
+export type { QuantityStepperProps } from "./QuantityStepper";
+export { default as EmptyState } from "./EmptyState";
+export type { EmptyStateProps } from "./EmptyState";
