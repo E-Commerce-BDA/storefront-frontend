@@ -27,6 +27,7 @@
 
 import type { AuthSettings } from "@/lib/auth/settings";
 import type { ThemeSettings } from "@/lib/cms/themeSettings";
+import { serviceUrl } from "@/lib/services/urls";
 import type { NavSettings } from "@/lib/shell/navSettings";
 import { cmsTag, isPageKey } from "./tags";
 
@@ -61,13 +62,13 @@ export interface CmsClientOptions {
   revalidateSeconds?: number;
 }
 
-/** Read at call time so a test can set the variable before importing. */
+/**
+ * Where cms-svc lives. Read at call time, not at module load, so a test can
+ * set the variable before importing. The registry owns the fallback and the
+ * trailing-slash trim; `CMS_BASE_URL` keeps its historic name.
+ */
 export function cmsBaseUrl(): string {
-  const configured = process.env.CMS_BASE_URL?.trim();
-  return (configured && configured.length > 0 ? configured : "http://localhost:4050").replace(
-    /\/+$/,
-    "",
-  );
+  return serviceUrl("cms", process.env.CMS_BASE_URL);
 }
 
 export function createCmsClient(options: CmsClientOptions): CmsClient {

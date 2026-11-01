@@ -21,6 +21,7 @@
  * `TOKEN_REUSED`/`ACCOUNT_DISABLED` codes.
  */
 
+import { serviceUrl } from "@/lib/services/urls";
 import type { AuthErrorCode } from "./errors";
 
 export interface AuthUser {
@@ -74,14 +75,12 @@ export const AUTH_SERVICE_TIMEOUT_MS = 3000;
 
 /**
  * Where auth-svc lives. Read at call time, not at module load, so a test can
- * set the variable before importing a handler.
+ * set the variable before importing a handler. The literal `process.env.X` read
+ * stays here because `proxy.ts` (edge runtime) shares this function and the
+ * edge only inlines static references — the registry owns the rest.
  */
 export function authServiceUrl(): string {
-  const configured = process.env.AUTH_SVC_URL?.trim();
-  return (configured && configured.length > 0
-    ? configured
-    : "http://localhost:4010"
-  ).replace(/\/+$/, "");
+  return serviceUrl("auth", process.env.AUTH_SVC_URL);
 }
 
 export function createAuthClient(options: {
