@@ -8,11 +8,20 @@ import { describe, expect, it } from "vitest";
 import { CMS_STATIC_TAGS, cmsTag, isAllowedTag, isPageKey } from "@/lib/cms/tags";
 
 describe("cmsTag", () => {
-  it("builds the three documented tags", () => {
+  it("builds the documented tags", () => {
     expect(cmsTag.pageSettings("auth")).toBe("cms:page-settings:auth");
+    expect(cmsTag.sections("homepage")).toBe("cms:sections:homepage");
+    expect(cmsTag.pages("about-us")).toBe("cms:pages:about-us");
     expect(cmsTag.globalSettings).toBe("cms:global-settings");
     expect(cmsTag.navigation).toBe("cms:navigation");
-    expect(CMS_STATIC_TAGS).toEqual(["cms:global-settings", "cms:navigation"]);
+    expect(cmsTag.footer).toBe("cms:footer");
+    expect(cmsTag.blogs).toBe("cms:blogs");
+    expect(CMS_STATIC_TAGS).toEqual([
+      "cms:global-settings",
+      "cms:navigation",
+      "cms:footer",
+      "cms:blogs",
+    ]);
   });
 });
 
@@ -32,8 +41,12 @@ describe("isAllowedTag", () => {
   it.each([
     "cms:global-settings",
     "cms:navigation",
+    "cms:footer",
+    "cms:blogs",
     "cms:page-settings:auth",
     "cms:page-settings:home-2",
+    "cms:sections:homepage",
+    "cms:pages:about-us",
   ])("allows %s", (tag) => {
     expect(isAllowedTag(tag)).toBe(true);
   });
@@ -47,6 +60,12 @@ describe("isAllowedTag", () => {
     "cms:page-settings:../auth",
     "cms:page-settings:" + "a".repeat(33),
     "cms:page-settings",
+    "cms:sections:",
+    "cms:sections:Homepage",
+    "cms:sections:" + "a".repeat(33),
+    "cms:pages:",
+    "cms:pages:a/b",
+    "cms:footers",
     "other:navigation",
     "cms:navigation ",
   ])("rejects %s", (tag) => {

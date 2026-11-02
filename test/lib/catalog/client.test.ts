@@ -95,7 +95,28 @@ describe("listProducts", () => {
       sort: "price_asc",
       minPrice: 10,
       maxPrice: 100,
+      ids: undefined,
     });
+  });
+
+  it("sends manual picks as one comma-joined ids param, in order", async () => {
+    const { perform, calls } = stub({ data: [], nextCursor: null });
+
+    await createCatalogClient(perform).listProducts({
+      ids: ["3f2a1b6c-0000-4000-8000-000000000001", "9e8d7c6b-0000-4000-8000-000000000002"],
+    });
+
+    expect(calls[0].query).toMatchObject({
+      ids: "3f2a1b6c-0000-4000-8000-000000000001,9e8d7c6b-0000-4000-8000-000000000002",
+    });
+  });
+
+  it("drops an empty ids array instead of sending ids= (that would ask for nothing)", async () => {
+    const { perform, calls } = stub({ data: [], nextCursor: null });
+
+    await createCatalogClient(perform).listProducts({ ids: [], limit: 8 });
+
+    expect(calls[0].query).toMatchObject({ ids: undefined, limit: 8 });
   });
 
   it("unwraps catalog's envelope into { items, nextCursor }", async () => {
@@ -174,10 +195,33 @@ describe("categories", () => {
   });
 });
 
+describe("brands", () => {
+  it("lists brands and unwraps `data` on the 60 s cache", async () => {
+    const brand = { id: "b1", name: "Northwind", slug: "northwind", logoUrl: "/media/seed/brand-1.png" };
+    const { perform, calls } = stub({ data: [brand] });
+
+    const result = await createCatalogClient(perform).listBrands();
+
+    expect(calls[0].path).toBe("/api/v1/catalog/brands");
+    expect(calls[0].cache).toEqual({ revalidate: 60 });
+    expect(result.ok && result.data).toEqual([brand]);
+  });
+
+  it("reads one brand by slug and unwraps `brand`", async () => {
+    const { perform, calls } = stub({ brand: { id: "b1", name: "Northwind", slug: "northwind" } });
+
+    const result = await createCatalogClient(perform).getBrand("north wind");
+
+    expect(calls[0].path).toBe("/api/v1/catalog/brands/north%20wind");
+    expect(result.ok && result.data.name).toBe("Northwind");
+  });
+});
+
 describe("catalogClient()", () => {
   it("builds a client over the real transport without touching the network", () => {
     const client = catalogClient();
     expect(typeof client.listProducts).toBe("function");
     expect(typeof client.getProduct).toBe("function");
+    expect(typeof client.listBrands).toBe("function");
   });
 });

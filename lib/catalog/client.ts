@@ -21,10 +21,13 @@
 import { createServiceClient } from "@/lib/http/client";
 import type { Perform, ServiceResult } from "@/lib/http/result";
 import {
+  brandListResponseSchema,
+  brandResponseSchema,
   categoryListResponseSchema,
   categoryResponseSchema,
   productListResponseSchema,
   productResponseSchema,
+  type CatalogBrand,
   type CatalogCategory,
   type CatalogSort,
   type ProductDetailDto,
@@ -43,6 +46,12 @@ export interface CatalogQuery {
   sort?: CatalogSort;
   minPrice?: number;
   maxPrice?: number;
+  /**
+   * Manual curation (sf-060 "Most Popular"): fetch exactly these products,
+   * in this order, as long as they are active. Sent as a comma-joined list;
+   * catalog-svc splits it and pins the row order with `array_position`.
+   */
+  ids?: string[];
 }
 
 export interface CatalogPage {
@@ -56,6 +65,8 @@ export interface CatalogClient {
   getProductById(id: string): Promise<ServiceResult<ProductDetailDto>>;
   listCategories(): Promise<ServiceResult<CatalogCategory[]>>;
   getCategory(slug: string): Promise<ServiceResult<CatalogCategory>>;
+  listBrands(): Promise<ServiceResult<CatalogBrand[]>>;
+  getBrand(slug: string): Promise<ServiceResult<CatalogBrand>>;
 }
 
 const BASE = "/api/v1/catalog";
@@ -77,6 +88,7 @@ export function createCatalogClient(perform: Perform): CatalogClient {
           sort: query.sort,
           minPrice: query.minPrice,
           maxPrice: query.maxPrice,
+          ids: query.ids?.length ? query.ids.join(",") : undefined,
         },
         schema: productListResponseSchema,
         cache,
@@ -129,6 +141,26 @@ export function createCatalogClient(perform: Perform): CatalogClient {
       });
       if (!result.ok) return result;
       return { ok: true, data: result.data.category };
+    },
+
+    async listBrands() {
+      const result = await perform({
+        path: `${BASE}/brands`,
+        schema: brandListResponseSchema,
+        cache,
+      });
+      if (!result.ok) return result;
+      return { ok: true, data: result.data.data };
+    },
+
+    async getBrand(slug) {
+      const result = await perform({
+        path: `${BASE}/brands/${encodeURIComponent(slug)}`,
+        schema: brandResponseSchema,
+        cache,
+      });
+      if (!result.ok) return result;
+      return { ok: true, data: result.data.brand };
     },
   };
 }

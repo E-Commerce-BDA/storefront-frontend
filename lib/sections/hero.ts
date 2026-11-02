@@ -1,42 +1,56 @@
 /**
- * Hero model + resolver — sf-051 (sections.md §2/§3).
+ * Hero model + resolver — sf-051, CMS-driven at sf-060 (sections.md §2/§3).
  *
- * The home page shows one hero today and a CMS-driven one tomorrow (`sf-060`).
- * Both need the same three decisions — the CTA cap, the ratio fallback, and the
- * house copy a hero with no data still renders — so they live here instead of at
- * the call site, exactly as `clampQty` owns quantity and nothing else does.
+ * The shape the hero paints. There is deliberately **no default hero any
+ * more**: cms-svc owns the copy, so a hero with no slides is a section the
+ * resolver skips (`resolveSections`), not a house poem rendered in its place.
+ * What lives here is only the geometry the block cannot safely guess — the CTA
+ * cap, the ratio fallback, the trim rules.
  *
  * The block stays `props -> JSX`: it calls `resolveHero`, paints the result, and
- * learns nothing about the CMS. When cms-svc replaces `DEFAULT_HERO`, only the
- * route changes — the resolver and the block do not.
+ * learns nothing about the CMS. `resolveSections` maps a CMS slide to these
+ * fields; neither layer knows about the other's consumer.
  */
 
 export type HeroAlign = "left" | "center";
-export type HeroRatio = "4:3" | "1:1" | "16:9";
+export type HeroRatio = "4:3" | "1:1" | "3:4" | "16:9";
+export type HeroHeight = "auto" | "viewport";
 
 export interface HeroCta {
   text: string;
   href: string;
   /** Absent → primary at the block (Button's own default). Capped, never empty-forced. */
-  variant?: "primary" | "light";
+  variant?: "primary" | "light" | "ghost-ink";
+  /** CMS `ctas[]` paint keys, forwarded flat to `Button` when the admin set them. */
+  bg?: string;
+  textColor?: string;
+  borderColor?: string;
+  borderWidth?: number;
+  borderRadius?: number;
 }
 
 export interface HeroImage {
   src: string;
   /** Required when an image is present — an unnamed hero photo is unusable. */
   alt: string;
-  ratio?: HeroRatio;
+  /** Colon form (`"16:9"`) or a plain number (`"1.5"` from `customRatio`). */
+  ratio?: string;
 }
 
-/** What a caller may pass — every field optional except the title. */
+/** What a caller may pass — the CMS slide already decided the copy. */
 export interface HeroFields {
   eyebrow?: string;
-  title?: string;
+  title: string;
   body?: string;
-  /** `undefined` keeps the defaults; `[]` is an explicit "no CTA row". */
+  /** `undefined` and `[]` both mean "no CTA row" now that no copy is invented. */
   ctas?: HeroCta[];
   image?: HeroImage;
   align?: HeroAlign;
+  /** sf-060: `viewport` is a CMS knob, not a class — the CSS reads the data attr. */
+  height?: HeroHeight;
+  /** Admin hex overrides; absent keeps the token fallback in the stylesheet. */
+  bgColor?: string;
+  textColor?: string;
 }
 
 /** What the resolver guarantees the block can rely on. */
@@ -45,66 +59,57 @@ export interface ResolvedHero {
   title: string;
   body?: string;
   ctas: HeroCta[];
-  image?: HeroImage & { ratio: HeroRatio };
+  image?: HeroImage & { ratio: string };
   align: HeroAlign;
+  height: HeroHeight;
+  bgColor?: string;
+  textColor?: string;
 }
 
 /** CMS `z.array(ctaSchema).max(3)` mirror — a fourth CTA is dropped, not wrapped. */
 export const HERO_CTA_LIMIT = 3;
-export const HERO_DEFAULT_RATIO: HeroRatio = "4:3";
+/** The house media ratio, kept in the CSS form so the resolver has one shape. */
+export const HERO_DEFAULT_RATIO = "4 / 3";
 
-/** The face `/` shows until cms-svc owns hero content (sf-060). */
-export const DEFAULT_HERO: ResolvedHero = {
-  eyebrow: "New season",
-  title: "Everything for every day",
-  body: "Handpicked essentials, built to last and priced for the way you actually live.",
-  ctas: [
-    { text: "Shop now", href: "/products", variant: "primary" },
-    { text: "Browse categories", href: "/products", variant: "light" },
-  ],
-  image: undefined,
-  align: "left",
-};
+/** CMS `ratio` is an enum; the CSS wants `16 / 9`. A plain number passes through. */
+export function toCssRatio(ratio: string | undefined): string | undefined {
+  if (ratio === undefined || ratio.trim() === "") return undefined;
+  return ratio.replace(":", " / ");
+}
 
-function capCtas(ctas: HeroCta[]): HeroCta[] {
-  return ctas.slice(0, HERO_CTA_LIMIT);
+function trimmed(value: string | undefined): string | undefined {
+  return value !== undefined && value.trim() !== "" ? value : undefined;
 }
 
 /**
- * Merge a caller's fields over `DEFAULT_HERO` with flat-prop precedence.
+ * Normalise the fields a slide carries into what the block can paint blindly.
  *
  * Three rules the tests pin down:
- * - `ctas` keeps the defaults only when the key is **absent**; `[]` means "no row"
- *   and survives, because an empty CTA row and a missing CTA row are different
- *   requests.
- * - `image` is copied only when it has a `src`; its `ratio` gains a fallback so
- *   the block never has to guess.
- * - `title` is the one required field; an empty/whitespace title falls to the
- *   default rather than rendering a blank `<h1>`.
+ * - `ctas` is capped at three, and a CTA with no text or no link is dropped —
+ *   a button that goes nowhere is not a call to action.
+ * - `image` survives only with a `src`, and its `ratio` gains a fallback so the
+ *   block never has to guess; the value it gets is already a CSS form.
+ * - whitespace-only copy is absence, so an empty eyebrow renders no element
+ *   rather than an empty paragraph above the heading.
  */
-export function resolveHero(fields: HeroFields | null | undefined = {}): ResolvedHero {
-  const input = fields ?? {};
+export function resolveHero(fields: HeroFields): ResolvedHero {
+  const image = fields.image !== undefined && fields.image.src.trim() !== ""
+    ? { ...fields.image, ratio: toCssRatio(fields.image.ratio) ?? HERO_DEFAULT_RATIO }
+    : undefined;
 
-  const title = input.title !== undefined && input.title.trim() !== ""
-    ? input.title
-    : DEFAULT_HERO.title;
-
-  const ctas = input.ctas !== undefined ? capCtas(input.ctas) : DEFAULT_HERO.ctas;
-
-  let image: ResolvedHero["image"];
-  if (input.image && input.image.src.trim() !== "") {
-    image = { ...input.image, ratio: input.image.ratio ?? HERO_DEFAULT_RATIO };
-  }
-
-  const eyebrow = input.eyebrow ?? DEFAULT_HERO.eyebrow;
-  const body = input.body ?? DEFAULT_HERO.body;
+  const ctas = (fields.ctas ?? [])
+    .filter((cta) => cta.text.trim() !== "" && cta.href.trim() !== "")
+    .slice(0, HERO_CTA_LIMIT);
 
   return {
-    eyebrow: eyebrow !== undefined && eyebrow.trim() !== "" ? eyebrow : undefined,
-    title,
-    body: body !== undefined && body.trim() !== "" ? body : undefined,
+    title: fields.title,
+    ...(trimmed(fields.eyebrow) !== undefined ? { eyebrow: fields.eyebrow } : {}),
+    ...(trimmed(fields.body) !== undefined ? { body: fields.body } : {}),
     ctas,
-    image,
-    align: input.align === "center" ? "center" : "left",
+    ...(image !== undefined ? { image } : {}),
+    align: fields.align === "center" ? "center" : "left",
+    height: fields.height === "viewport" ? "viewport" : "auto",
+    ...(trimmed(fields.bgColor) !== undefined ? { bgColor: fields.bgColor } : {}),
+    ...(trimmed(fields.textColor) !== undefined ? { textColor: fields.textColor } : {}),
   };
 }

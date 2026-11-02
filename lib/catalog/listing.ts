@@ -11,11 +11,13 @@
  *
  * Two decisions worth stating:
  *
- * 1. **`?category=` is a slug, not a `categoryId`.** routing.md §1 makes it a
- *    filter on the ONE canonical listing route (never a path segment), and the
- *    URL speaks slugs, not ids. Resolving slug → id is a fetch (getCategory), so
- *    it is deliberately *not* done here — the page does that and folds the id
- *    into the query. This resolver only reports the slug it was given.
+ * 1. **`?category=` and `?brand=` are slugs, not ids.** routing.md §1 makes them
+ *    filters on the ONE canonical listing route (never path segments), and the
+ *    URL speaks slugs, not ids. Resolving slug → id is a fetch (getCategory /
+ *    getBrand), so it is deliberately *not* done here — the page does that and
+ *    folds the id into the query. This resolver only reports the slugs it was
+ *    given. `?brand=` arrived with sf-060: the brand marquee links every cell,
+ *    so a brand slug that silently narrowed to nothing would be a dead logo.
  * 2. **A junk value falls to the default, never to a guess at intent.** `?sort=`
  *    not in `CATALOG_SORTS` becomes "no sort" (catalog's own default), not the
  *    nearest valid key. Silently reinterpreting a typo would make the URL lie
@@ -36,9 +38,11 @@ export type SearchParamValue = string | string[] | undefined;
 export interface ListingParams {
   /** `?category=` slug — the page resolves it to a `categoryId`. */
   categorySlug: string | undefined;
+  /** `?brand=` slug — the page resolves it to a `brandId`. */
+  brandSlug: string | undefined;
   /**
-   * A ready query. `status` is not here (the client pins `active`) and
-   * `categoryId` is not here (it needs the slug → id fetch), so this is the
+   * A ready query. `status` is not here (the client pins `active`) and neither
+   * is `categoryId`/`brandId` (they need a slug → id fetch), so this is the
    * subset of `CatalogQuery` a query string alone can express.
    */
   query: Pick<CatalogQuery, "limit" | "q" | "sort" | "cursor">;
@@ -80,6 +84,7 @@ export function parseListingParams(
   params: Record<string, SearchParamValue>,
 ): ListingParams {
   const categorySlug = trimmed(params.category);
+  const brandSlug = trimmed(params.brand);
   const q = trimmed(params.q);
   const sort = toSort(params.sort);
   const cursor = trimmed(params.cursor);
@@ -89,7 +94,7 @@ export function parseListingParams(
   if (sort !== undefined) query.sort = sort;
   if (cursor !== undefined) query.cursor = cursor;
 
-  return { categorySlug, query };
+  return { categorySlug, brandSlug, query };
 }
 
 /**
@@ -100,12 +105,14 @@ export function parseListingParams(
  */
 export function buildListingQuery(filters: {
   categorySlug?: string | undefined;
+  brandSlug?: string | undefined;
   q?: string | undefined;
   sort?: string | undefined;
   cursor?: string | null | undefined;
 }): string {
   const sp = new URLSearchParams();
   if (filters.categorySlug) sp.set("category", filters.categorySlug);
+  if (filters.brandSlug) sp.set("brand", filters.brandSlug);
   if (filters.q) sp.set("q", filters.q);
   if (filters.sort) sp.set("sort", filters.sort);
   if (filters.cursor) sp.set("cursor", filters.cursor);

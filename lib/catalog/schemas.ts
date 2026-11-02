@@ -226,6 +226,29 @@ export const categoryListResponseSchema = z
 
 export const categoryResponseSchema = z.object({ category: categorySchema }).loose();
 
+/* ── brands ──────────────────────────────────────────────────────────────── */
+
+export const brandSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    slug: z.string(),
+    logoUrl: z.string().nullish(),
+    description: z.string().nullish(),
+    isActive: z.boolean().optional(),
+    sortOrder: z.number().optional(),
+  })
+  .loose();
+
+export const brandListResponseSchema = z
+  .object({ data: z.array(brandSchema) })
+  .loose();
+
+/** `GET /catalog/brands/:slug` — catalog wraps a detail read in `{ brand }`. */
+export const brandResponseSchema = z
+  .object({ brand: brandSchema })
+  .loose();
+
 export type ProductImageDto = z.infer<typeof productImageSchema>;
 export type ProductCardBadgeDto = z.infer<typeof cardBadgeSchema>;
 export type ProductCardOptionDto = z.infer<typeof cardOptionSchema>;
@@ -236,3 +259,4 @@ export type ProductVariantDto = z.infer<typeof productVariantSchema>;
 export type ProductOptionDto = z.infer<typeof productOptionSchema>;
 export type ProductOptionValueDto = z.infer<typeof productOptionValueSchema>;
 export type CatalogCategory = z.infer<typeof categorySchema>;
+export type CatalogBrand = z.infer<typeof brandSchema>;

@@ -5,18 +5,18 @@ import Button from "@/components/ui/Button";
 import { catalogClient } from "@/lib/catalog/client";
 import { buildListingQuery, parseListingParams } from "@/lib/catalog/listing";
 import { fromCatalogList } from "@/lib/commerce/fromCatalog";
-import ProductGridIsland from "../_components/ProductGridIsland";
+import ProductGridIsland from "@/components/commerce/ProductGridIsland";
 
 /**
  * `/products` — the ONE canonical listing route (routing.md §1; plan §8).
  *
- * Server-rendered catalog (decision 5: SEO, no BFF hop). `?category=` is a filter
- * on this route, never a path segment, and a filtered URL canonicalizes to the
- * bare listing (§5.3) — so this is the only products page.
+ * Server-rendered catalog (decision 5: SEO, no BFF hop). `?category=` and
+ * `?brand=` are filters on this route, never path segments, and a filtered URL
+ * canonicalizes to the bare listing (§5.3) — so this is the only products page.
  *
  * The whole flow is: parse the untrusted query (once, in `lib/catalog/listing`),
- * resolve a category slug to an id, list, map, render. Data reaches the client
- * island already mapped to card shapes; the page owns no interactivity.
+ * resolve a slug to an id, list, map, render. Data reaches the client island
+ * already mapped to card shapes; the page owns no interactivity.
  */
 
 export const revalidate = 60;
@@ -26,52 +26,93 @@ export const metadata: Metadata = {
   alternates: { canonical: "/products" },
 };
 
+/** A filter whose slug could not be resolved: a dead link, not a server error. */
+function filterNotFound(kind: "category" | "brand", slug: string) {
+  return (
+    <>
+      <PageHeader title={`${kind[0].toUpperCase()}${kind.slice(1)} not found`} />
+      <EmptyState
+        title={`No ${kind} “${slug}”.`}
+        body={`That link points at a ${kind} that does not exist.`}
+        action={
+          <Button variant="light" href="/products">
+            Browse all products
+          </Button>
+        }
+      />
+    </>
+  );
+}
+
+/** The catalog could not be consulted about a slug at all — say so, keep the URL. */
+function filterUnavailable(kind: "category" | "brand", slug: string) {
+  return (
+    <>
+      <PageHeader title="Products" />
+      <EmptyState
+        title="Products are temporarily unavailable"
+        body="The catalog could not be reached. Please try again shortly."
+        action={
+          <Button
+            variant="light"
+            href={`/products${buildListingQuery(
+              kind === "category" ? { categorySlug: slug } : { brandSlug: slug },
+            )}`}
+          >
+            Retry
+          </Button>
+        }
+      />
+    </>
+  );
+}
+
 export default async function ProductsPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const { categorySlug, query } = parseListingParams(sp);
+  const { categorySlug, brandSlug, query } = parseListingParams(sp);
   const catalog = catalogClient();
 
-  let title = "All products";
+  const titles: string[] = [];
   let categoryId: string | undefined;
+  let brandId: string | undefined;
 
-  // A `?category=` slug is a filter, not an identity: an unknown slug is not a
-  // 404 — it simply narrows to nothing. Report it as an empty listing so the URL
-  // never lies about the page it produced.
+  // A slug is a filter, not an identity: an unknown slug is not a 404 — it
+  // simply narrows to nothing. Report it as an empty listing so the URL never
+  // lies about the page it produced, and keep the filter on a transient failure
+  // so a Retry lands back on the page the shopper asked for.
   if (categorySlug !== undefined) {
     const category = await catalog.getCategory(categorySlug);
     if (!category.ok) {
-      const missing = category.kind === "not-found";
-      // A dead link drops the filter (browse everything); a transient failure
-      // keeps it so a Retry lands back on the page the shopper asked for.
-      const retryHref = missing ? "/products" : `/products?category=${encodeURIComponent(categorySlug)}`;
-      return (
-        <>
-          <PageHeader title={missing ? "Category not found" : "Products"} />
-          <EmptyState
-            title={missing ? `No category “${categorySlug}”.` : "Products are temporarily unavailable"}
-            body={
-              missing
-                ? "That link points at a category that does not exist."
-                : "The catalog could not be reached. Please try again shortly."
-            }
-            action={
-              <Button variant="light" href={retryHref}>
-                {missing ? "Browse all products" : "Retry"}
-              </Button>
-            }
-          />
-        </>
-      );
+      return category.kind === "not-found"
+        ? filterNotFound("category", categorySlug)
+        : filterUnavailable("category", categorySlug);
     }
     categoryId = category.data.id;
-    title = category.data.name;
+    titles.push(category.data.name);
   }
 
-  const page = await catalog.listProducts({ ...query, ...(categoryId ? { categoryId } : {}) });
+  if (brandSlug !== undefined) {
+    const brand = await catalog.getBrand(brandSlug);
+    if (!brand.ok) {
+      return brand.kind === "not-found"
+        ? filterNotFound("brand", brandSlug)
+        : filterUnavailable("brand", brandSlug);
+    }
+    brandId = brand.data.id;
+    titles.push(brand.data.name);
+  }
+
+  const title = titles.length > 0 ? titles.join(" · ") : "All products";
+
+  const page = await catalog.listProducts({
+    ...query,
+    ...(categoryId ? { categoryId } : {}),
+    ...(brandId ? { brandId } : {}),
+  });
   if (!page.ok) {
     return (
       <>
@@ -82,7 +123,7 @@ export default async function ProductsPage({
           action={
             <Button
               variant="light"
-              href={`/products${buildListingQuery({ categorySlug, q: query.q, sort: query.sort })}`}
+              href={`/products${buildListingQuery({ categorySlug, brandSlug, q: query.q, sort: query.sort })}`}
             >
               Retry
             </Button>
@@ -97,15 +138,16 @@ export default async function ProductsPage({
     page.data.nextCursor !== null
       ? `/products${buildListingQuery({
           categorySlug,
+          brandSlug,
           q: query.q,
           sort: query.sort,
           cursor: page.data.nextCursor,
         })}`
       : undefined;
 
-  // `?category=` is the one path-like key, so keep the header bare (a listing gets
-  // no breadcrumb — routing.md §2). A next-page link rides in the actions slot;
-  // the full filter/sort rail is sf-054.
+  // `?category=`/`?brand=` are the path-like keys, so keep the header bare (a
+  // listing gets no breadcrumb — routing.md §2). A next-page link rides in the
+  // actions slot; the full filter/sort rail is sf-054.
   return (
     <>
       <PageHeader
@@ -126,7 +168,9 @@ export default async function ProductsPage({
             body={
               query.q
                 ? `Nothing matched “${query.q}”.`
-                : "This category has no products yet."
+                : categoryId || brandId
+                  ? "Nothing is listed under this filter yet."
+                  : "The catalog has no products yet."
             }
             action={
               <Button variant="light" href="/products">

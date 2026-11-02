@@ -23,11 +23,36 @@ const css = rawCss.replace(/\/\*[\s\S]*?\*\//g, "");
 
 const MIN_PARK_BUFFER_PX = 8;
 
+/**
+ * The bug is a *park*: a travelling layer that rests off-screen inside a
+ * clipping parent, where a percentage-only offset leaves ~0.5px of hiding
+ * margin. That is the button wave and nothing else, so the guard scans the
+ * `.sf-btn` vocabulary only. A percentage translate elsewhere is a different
+ * mechanism and must stay legal: the marquee loop parks nowhere — it translates
+ * exactly `-50%` of a duplicated track, and a px buffer there would break the
+ * seam (`components/sections.md` §1.5).
+ */
+function buttonWaveCss(text: string): string {
+  const bodies: string[] = [];
+  for (const match of text.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
+    if (match[1].includes(".sf-btn")) bodies.push(match[2]);
+  }
+  return bodies.join("\n");
+}
+
+const WAVE_CSS = buttonWaveCss(css);
+
 describe("wave park position (subpixel-bleed guard)", () => {
+  it("found the button-wave vocabulary it claims to guard", () => {
+    // Guards the matcher itself: a renamed class would empty WAVE_CSS and the
+    // ban below would pass while a real park went unwatched.
+    expect(WAVE_CSS).toContain("translate");
+  });
+
   it("contains no bare-percentage parks (the original bug)", () => {
     // Matches translateX/Y(±101%) — a %-only park has ~0.5px of hiding
     // margin and bleeds at some zooms. calc(100% + Npx) does NOT match.
-    const barePark = css.match(/translate[XY]\(\s*-?\d+(\.\d+)?%\s*\)/g) ?? [];
+    const barePark = WAVE_CSS.match(/translate[XY]\(\s*-?\d+(\.\d+)?%\s*\)/g) ?? [];
     expect(
       barePark,
       `bare-percentage park transforms bleed at some zooms; use calc(100% + Npx) with N >= ${MIN_PARK_BUFFER_PX}. Found: ${barePark.join(", ")}`,

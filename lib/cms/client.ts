@@ -17,14 +17,26 @@
  * 2 s: a slow CMS is a slow render, and a shopper would rather see yesterday's
  * navbar than a blank one.
  *
- * Note on validation: the guard checks the envelope (`version` is a number,
- * the payload is an object) and then trusts the body. That is deliberate —
- * `resolveAuthSettings`/`resolveNavSettings` already treat a wrong-typed field
- * as a miss and fall back to builtins, so a stricter schema here would only
- * duplicate them. Swapping in `@ecom/contracts` schemas once the storefront
- * repins past 1.7.0 is recorded as a follow-up.
+ * Note on validation: the settings readers keep the historical envelope guard
+ * (`version` is a number, the payload is an object) because their fallbacks
+ * already treat a wrong-typed field as a miss. The sf-060 readers
+ * (`getSections`/`getFooter`/`listBlogs`/`getBlog`/`getPage`) instead parse
+ * through the `@ecom/contracts` response schemas — the storefront repinned to
+ * 1.12.0, so CMS bodies are shape-checked at the boundary exactly once.
  */
 
+import {
+  blogListResponseSchema,
+  blogSchema,
+  type Blog,
+  type BlogListResponse,
+  footerResponseSchema,
+  type FooterResponse,
+  pageSchema,
+  type Page,
+  sectionListResponseSchema,
+  type SectionListResponse,
+} from "@ecom/contracts";
 import type { AuthSettings } from "@/lib/auth/settings";
 import type { ThemeSettings } from "@/lib/cms/themeSettings";
 import { serviceUrl } from "@/lib/services/urls";
@@ -53,6 +65,18 @@ export interface CmsClient {
   getPageSettings(pageKey: string): Promise<CmsPageSettings | null>;
   getGlobalSettings(): Promise<CmsGlobalSettings | null>;
   getNavigation(): Promise<CmsNavigation | null>;
+  getSections(pageKey: string): Promise<SectionListResponse | null>;
+  getFooter(): Promise<FooterResponse | null>;
+  listBlogs(query?: CmsBlogListQuery): Promise<BlogListResponse | null>;
+  getBlog(slug: string): Promise<Blog | null>;
+  getPage(slug: string): Promise<Page | null>;
+}
+
+/** Filters the storefront may pass to the public blog list. */
+export interface CmsBlogListQuery {
+  category?: string;
+  cursor?: string;
+  limit?: number;
 }
 
 export interface CmsClientOptions {
@@ -120,6 +144,67 @@ export function createCmsClient(options: CmsClientOptions): CmsClient {
       return envelope === null
         ? null
         : { navbar: envelope.payload as NavSettings, version: envelope.version };
+    },
+
+    // --- sf-060 readers: parsed through @ecom/contracts response schemas ----
+
+    async getSections(pageKey) {
+      // A bad key would mint an off-allowlist tag — refuse before the request.
+      if (!isPageKey(pageKey)) return null;
+      const body = await get(
+        `/api/v1/cms/sections?pageKey=${encodeURIComponent(pageKey)}`,
+        cmsTag.sections(pageKey),
+      );
+      const parsed = sectionListResponseSchema.safeParse(body);
+      return parsed.success ? parsed.data : null;
+    },
+
+    async getFooter() {
+      const body = await get("/api/v1/cms/footer", cmsTag.footer);
+      const parsed = footerResponseSchema.safeParse(body);
+      return parsed.success ? parsed.data : null;
+    },
+
+    async listBlogs(query) {
+      const params = new URLSearchParams();
+      if (query?.category) params.set("category", query.category);
+      if (query?.cursor) params.set("cursor", query.cursor);
+      if (query?.limit) params.set("limit", String(query.limit));
+      const qs = params.toString();
+      const path = `/api/v1/cms/blogs${qs ? `?${qs}` : ""}`;
+      const body = await get(path, cmsTag.blogs);
+      const parsed = blogListResponseSchema.safeParse(body);
+      return parsed.success ? parsed.data : null;
+    },
+
+    async getBlog(slug) {
+      if (!isPageKey(slug)) return null;
+      const body = await get(
+        `/api/v1/cms/blogs/${encodeURIComponent(slug)}`,
+        cmsTag.blogs,
+      );
+      // The controller wraps the post in `{ blog }`; unwrap before parsing.
+      const blog =
+        typeof body === "object" && body !== null && "blog" in body
+          ? (body as { blog: unknown }).blog
+          : body;
+      const parsed = blogSchema.safeParse(blog);
+      return parsed.success ? parsed.data : null;
+    },
+
+    async getPage(slug) {
+      if (!isPageKey(slug)) return null;
+      const body = await get(
+        `/api/v1/cms/pages/${encodeURIComponent(slug)}`,
+        cmsTag.pages(slug),
+      );
+      // The controller wraps the page in `{ page }`; unwrap before parsing.
+      const page =
+        typeof body === "object" && body !== null && "page" in body
+          ? (body as { page: unknown }).page
+          : body;
+      const parsed = pageSchema.safeParse(page);
+      return parsed.success ? parsed.data : null;
     },
   };
 }

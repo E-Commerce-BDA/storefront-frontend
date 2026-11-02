@@ -53,6 +53,20 @@ describe("parseListingParams", () => {
     expect(query).not.toHaveProperty("categoryId");
   });
 
+  it("reports a brand slug the same way (the marquee links on it)", () => {
+    const { brandSlug, query } = parseListingParams({ brand: " northwind " });
+    expect(brandSlug).toBe("northwind");
+    expect(query).not.toHaveProperty("brandId");
+    expect(parseListingParams({}).brandSlug).toBeUndefined();
+    expect(parseListingParams({ brand: "  " }).brandSlug).toBeUndefined();
+  });
+
+  it("keeps category and brand as independent filters", () => {
+    const parsed = parseListingParams({ category: "shoes", brand: "northwind" });
+    expect(parsed.categorySlug).toBe("shoes");
+    expect(parsed.brandSlug).toBe("northwind");
+  });
+
   it("takes the first value when a key is repeated", () => {
     expect(parseListingParams({ sort: ["name_asc", "price_desc"] }).query.sort).toBe("name_asc");
     expect(parseListingParams({ q: ["shoes", "boots"] }).query.q).toBe("shoes");
@@ -74,6 +88,13 @@ describe("buildListingQuery", () => {
     expect(
       buildListingQuery({ categorySlug: "shoes", q: "linen", sort: "price_asc", cursor: "c1" }),
     ).toBe("?category=shoes&q=linen&sort=price_asc&cursor=c1");
+  });
+
+  it("carries a brand filter beside the others, in the same fixed order", () => {
+    expect(buildListingQuery({ brandSlug: "northwind" })).toBe("?brand=northwind");
+    expect(
+      buildListingQuery({ categorySlug: "shoes", brandSlug: "northwind", cursor: "c1" }),
+    ).toBe("?category=shoes&brand=northwind&cursor=c1");
   });
 
   it("drops the cursor for the first page but keeps the filters", () => {

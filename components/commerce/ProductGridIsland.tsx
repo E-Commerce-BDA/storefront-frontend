@@ -1,8 +1,15 @@
 "use client";
 
 /**
- * ProductGridIsland — the listing's one client boundary — sf-051
- * (plan §8 route table + decision 16: `(shop)` group islands live together)
+ * ProductGridIsland — the product grid's one client boundary — sf-051, moved to
+ * the shared commerce layer at sf-060
+ * (plan §8 route table + decision 16: islands live with the grid they drive)
+ *
+ * It moved out of `app/(shop)/_components` the moment a second surface needed
+ * it: the CMS `product_collection` section lives in `components/sections`, and a
+ * shared block importing a route-group file would invert the dependency. The
+ * listing, the PDP's related rail and the home sections all drive this one
+ * island, so quick-add behaves identically everywhere products appear.
  *
  * Catalog data is fetched in the RSC (decision 5: SEO, no extra hop) and arrives
  * here already mapped to `ProductCardData`. Everything interactive needs a

@@ -8,7 +8,7 @@ import { toGalleryImages } from "@/lib/commerce/gallery";
 import { buildProductJsonLd } from "@/lib/commerce/jsonLd";
 import type { BreadcrumbItem } from "@/lib/shell/pageHeader";
 import PurchasePanel from "../../_components/PurchasePanel";
-import ProductGridIsland from "../../_components/ProductGridIsland";
+import ProductGridIsland from "@/components/commerce/ProductGridIsland";
 
 /**
  * `/products/[slug]` — the PDP (plan §8: static ISR 60; A3.*).

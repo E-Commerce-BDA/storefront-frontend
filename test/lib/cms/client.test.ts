@@ -6,6 +6,7 @@
  * working. That is exactly the kind of regression a test has to catch.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { Blog, Page, Section } from "@ecom/contracts";
 import { cmsBaseUrl, createCmsClient, CMS_TIMEOUT_MS } from "@/lib/cms/client";
 
 const BASE = "http://cms.test";
@@ -73,6 +74,153 @@ describe("getGlobalSettings / getNavigation", () => {
     const [url, init] = callOf(fetchFn);
     expect(url).toBe(`${BASE}/api/v1/cms/navigation`);
     expect(init.next?.tags).toEqual(["cms:navigation"]);
+  });
+});
+
+// --- sf-060 reader fixtures: schema-valid against @ecom/contracts 1.12.0 ----
+
+const SECTION = {
+  key: "hero-home",
+  pageKey: "homepage",
+  type: "hero",
+  sortOrder: 0,
+  isActive: true,
+  content: { slides: [{ id: "slide-1", headline: "New season", image: "/media/seed/hero-1.jpg" }] },
+} satisfies Section;
+
+const BLOG = {
+  id: "b1",
+  slug: "field-notes",
+  title: "Field notes",
+  content: [{ type: "paragraph", id: "blk-1", text: "Hello." }],
+  categoryId: "cat-1",
+  status: "published",
+} satisfies Blog;
+
+const PAGE = {
+  id: "p1",
+  slug: "about-us",
+  title: "About us",
+  blocks: [{ type: "rich_text", id: "blk-1", body: "<p>We build things.</p>" }],
+  // `isActive` is `.default(true)` in the contract, so it is present post-parse.
+  isActive: true,
+} satisfies Page;
+
+describe("getSections", () => {
+  it("hits the list URL with the per-page tag and parses the envelope", async () => {
+    const { cms, fetchFn } = client(async () => json({ sections: [SECTION], version: 3 }));
+
+    const result = await cms.getSections("homepage");
+
+    expect(result).toEqual({ sections: [SECTION], version: 3 });
+    const [url, init] = callOf(fetchFn);
+    expect(url).toBe(`${BASE}/api/v1/cms/sections?pageKey=homepage`);
+    expect(init.next).toEqual({ tags: ["cms:sections:homepage"], revalidate: 300 });
+  });
+
+  it("refuses a bad page key before the request (it would mint an off-allowlist tag)", async () => {
+    const { cms, fetchFn } = client(async () => json({ sections: [], version: 1 }));
+
+    expect(await cms.getSections("../admin")).toBeNull();
+    expect(await cms.getSections("Homepage")).toBeNull();
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it("returns null when a section fails the contracts union", async () => {
+    const { cms } = client(async () =>
+      json({ sections: [{ ...SECTION, type: "carousel" }], version: 1 }),
+    );
+    expect(await cms.getSections("homepage")).toBeNull();
+  });
+});
+
+describe("getFooter", () => {
+  it("reads the footer document with the static tag", async () => {
+    const footer = { wordmark: "FOREAF", columns: [{ title: "Shop", links: [{ label: "Products", href: "/products" }] }] };
+    const { cms, fetchFn } = client(async () => json({ footer, version: 7 }));
+
+    expect(await cms.getFooter()).toEqual({ footer, version: 7 });
+    const [url, init] = callOf(fetchFn);
+    expect(url).toBe(`${BASE}/api/v1/cms/footer`);
+    expect(init.next?.tags).toEqual(["cms:footer"]);
+  });
+
+  it("accepts the empty pre-publish document", async () => {
+    const { cms } = client(async () => json({ footer: {}, version: 0 }));
+    expect(await cms.getFooter()).toEqual({ footer: {}, version: 0 });
+  });
+
+  it("returns null on a body the contract refuses", async () => {
+    const { cms } = client(async () => json({ footer: { newsletterForm: true }, version: 1 }));
+    expect(await cms.getFooter()).toBeNull();
+  });
+});
+
+describe("listBlogs / getBlog", () => {
+  it("builds the query string and pins the blogs tag", async () => {
+    const { cms, fetchFn } = client(async () => json({ data: [BLOG], nextCursor: null }));
+
+    const result = await cms.listBlogs({ category: "news", cursor: "c-2", limit: 9 });
+
+    expect(result).toEqual({ data: [BLOG], nextCursor: null });
+    const [url, init] = callOf(fetchFn);
+    expect(url).toBe(`${BASE}/api/v1/cms/blogs?category=news&cursor=c-2&limit=9`);
+    expect(init.next?.tags).toEqual(["cms:blogs"]);
+  });
+
+  it("sends no query string when there is nothing to filter", async () => {
+    const { cms, fetchFn } = client(async () => json({ data: [], nextCursor: null }));
+
+    await cms.listBlogs();
+
+    expect(callOf(fetchFn)[0]).toBe(`${BASE}/api/v1/cms/blogs`);
+  });
+
+  it("unwraps the { blog } detail envelope", async () => {
+    const { cms, fetchFn } = client(async () => json({ blog: BLOG }));
+
+    expect(await cms.getBlog("field-notes")).toEqual(BLOG);
+    const [url, init] = callOf(fetchFn);
+    expect(url).toBe(`${BASE}/api/v1/cms/blogs/field-notes`);
+    expect(init.next?.tags).toEqual(["cms:blogs"]);
+  });
+
+  it("refuses a bad slug and rejects a draft-shaped hole in the contract", async () => {
+    const { cms, fetchFn } = client(async () => json({ blog: BLOG }));
+
+    expect(await cms.getBlog("a/b")).toBeNull();
+    expect(fetchFn).not.toHaveBeenCalled();
+
+    const bad = client(async () => json({ blog: { ...BLOG, status: "scheduled" } }));
+    expect(await bad.cms.getBlog("field-notes")).toBeNull();
+  });
+});
+
+describe("getPage", () => {
+  it("unwraps the { page } envelope with the per-slug tag", async () => {
+    const { cms, fetchFn } = client(async () => json({ page: PAGE }));
+
+    expect(await cms.getPage("about-us")).toEqual(PAGE);
+    const [url, init] = callOf(fetchFn);
+    expect(url).toBe(`${BASE}/api/v1/cms/pages/about-us`);
+    expect(init.next).toEqual({ tags: ["cms:pages:about-us"], revalidate: 300 });
+  });
+
+  it("refuses a bad slug before the request", async () => {
+    const { cms, fetchFn } = client(async () => json({ page: PAGE }));
+
+    expect(await cms.getPage("About")).toBeNull();
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it("returns null on a non-2xx and on a malformed block", async () => {
+    const down = client(async () => json({ error: "nope" }, 503));
+    expect(await down.cms.getPage("about-us")).toBeNull();
+
+    const malformed = client(async () =>
+      json({ page: { ...PAGE, blocks: [{ type: "video", id: "v1" }] } }),
+    );
+    expect(await malformed.cms.getPage("about-us")).toBeNull();
   });
 });
 

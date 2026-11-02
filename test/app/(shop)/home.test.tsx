@@ -1,0 +1,86 @@
+// @vitest-environment jsdom
+/**
+ * `/` — the CMS-composed home page — sf-060 (plan §6, routing.md §2).
+ *
+ * There is no home content in the route any more, so the test is about the three
+ * faces the route can take and the two rules that make them honest: the page
+ * renders whatever the resolver returned, in that order, and every degraded face
+ * still offers a real route instead of a scaffold.
+ */
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+
+const harness = vi.hoisted(() => ({
+  sections: null as { sections: unknown[]; version: number } | null,
+  models: [] as unknown[],
+}));
+
+vi.mock("@/lib/cms/client", () => ({
+  cmsBaseUrl: () => "http://cms.test",
+  createCmsClient: () => ({ getSections: async () => harness.sections }),
+}));
+vi.mock("@/lib/sections/resolveSections", async () => {
+  const actual = await import("@/lib/sections/resolveSections");
+  return {
+    ...actual,
+    resolveSections: async () => harness.models,
+  };
+});
+vi.mock("@/components/sections/ProductGridIsland", () => ({
+  default: () => <div data-testid="grid-island" />,
+}));
+
+import * as homeRoute from "@/app/(shop)/page";
+
+afterEach(() => {
+  cleanup();
+  harness.sections = { sections: [], version: 1 };
+  harness.models = [];
+});
+
+const heroModel = {
+  key: "hero-home",
+  type: "hero",
+  height: "auto",
+  slides: [{ id: "s1", headline: "Winter drop", ctas: [] }],
+};
+
+describe("home page", () => {
+  it("revalidates on a ceiling, not a poll", () => {
+    expect(homeRoute.revalidate).toBe(300);
+  });
+
+  it("renders the resolved sections, not a hard-coded face", async () => {
+    harness.sections = { sections: [heroModel], version: 2 };
+    harness.models = [heroModel];
+    render(await homeRoute.default());
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Winter drop");
+    expect(screen.queryByText(/content service is not/i)).toBeNull();
+  });
+
+  it("says the content service is unreachable and still links to the catalog", async () => {
+    harness.sections = null;
+    render(await homeRoute.default());
+    expect(screen.getByText(/content service is not/i)).toBeDefined();
+    const link = screen.getByRole("link", { name: "Browse products" }) as HTMLAnchorElement;
+    expect(link.getAttribute("href")).toBe("/products");
+    // No scaffold hero, no invented strip: the degraded face is the whole page.
+    expect(document.querySelector(".sf-hero")).toBeNull();
+    expect(document.querySelectorAll(".sf-section")).toHaveLength(1);
+  });
+
+  it("says nothing is published when the CMS answered with an empty page", async () => {
+    harness.sections = { sections: [], version: 1 };
+    harness.models = [];
+    render(await homeRoute.default());
+    expect(screen.getByText(/Nothing is published/i)).toBeDefined();
+    expect(screen.getByRole("link", { name: "Browse products" })).toBeDefined();
+  });
+
+  it("treats an all-skipped page the same as an empty one", async () => {
+    harness.sections = { sections: [{ key: "x" }], version: 3 };
+    harness.models = []; // every section was inactive, empty, or its service was down
+    render(await homeRoute.default());
+    expect(screen.getByText(/Nothing is published/i)).toBeDefined();
+  });
+});

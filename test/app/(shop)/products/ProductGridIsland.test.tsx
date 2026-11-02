@@ -17,7 +17,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, waitFor } from "@testing-library/react";
 import type { ProductCardData } from "@/lib/commerce/productCard";
-import ProductGridIsland from "@/app/(shop)/_components/ProductGridIsland";
+import ProductGridIsland from "@/components/commerce/ProductGridIsland";
 
 const harness = vi.hoisted(() => ({
   push: vi.fn(),

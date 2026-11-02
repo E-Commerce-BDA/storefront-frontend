@@ -3,7 +3,9 @@ import { Fraunces, Outfit } from "next/font/google";
 import "./globals.css";
 import { resolveNavSettings } from "@/lib/shell/resolveNav";
 import { fetchNavSettings } from "@/lib/cms/navigation";
+import { fetchFooter } from "@/lib/cms/footer";
 import NavbarMount from "./_components/NavbarMount";
+import FooterMount from "./_components/FooterMount";
 import CartProvider from "./_components/CartProvider";
 
 const fraunces = Fraunces({
@@ -34,19 +36,31 @@ export const metadata: Metadata = {
  * That ordering matters here more than anywhere else, because a throw in the
  * root layout blanks every route in the app.
  *
+ * `fetchFooter` follows the same rule with a different fallback: the footer has
+ * no builtin document to invent, so an outage yields `null` and the shell draws
+ * its minimal face (four real routes). The two reads are issued together and
+ * awaited together — they are one service and one budget, and serialising them
+ * would double the worst-case added latency of a slow CMS.
+ *
+ * Mount order is navbar → page → footer. Plan §7 wrote "directly after
+ * `NavbarMount`", which is right about *the layout owning the shell* and wrong
+ * about *position*: a footer has to follow `{children}` to be at the bottom of
+ * the document. Same owner, same props, DOM order corrected.
+ *
  * `CartProvider` wraps the chrome *and* the page: the navbar badge, the drawer
  * and whatever route is rendering must all read one cart. It fetches once on
  * mount and holds no server data of its own, so the layout stays static.
  */
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { settings } = await fetchNavSettings();
-  const nav = resolveNavSettings({ settings, global: null });
+  const [navResult, footerResult] = await Promise.all([fetchNavSettings(), fetchFooter()]);
+  const nav = resolveNavSettings({ settings: navResult.settings, global: null });
   return (
     <html lang="en" className={`${fraunces.variable} ${outfit.variable}`}>
       <body>
         <CartProvider>
           <NavbarMount nav={nav} />
           {children}
+          <FooterMount footer={footerResult.footer} />
         </CartProvider>
       </body>
     </html>

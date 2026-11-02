@@ -37,6 +37,12 @@
   --radius-card: 12px;
   --font-sans: "Outfit", system-ui, sans-serif;
   --font-display: "Fraunces", serif;
+  /* Page-shell gutter (sf-060, design-system §4/§8). Full-bleed pages carry no
+     max-width; this single token is the only horizontal edge gap. On desktop it
+     is padding-only and never exceeds 50px; on narrow viewports the 4vw clamp
+     keeps a sane floor above 16px. Navbar, Footer and every (shop) page share it
+     so the shell and the pages align on one gutter. */
+  --sf-page-pad: clamp(16px, 4vw, 50px);
 }
 
 @theme inline {
@@ -616,7 +622,9 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 0 20px;
+  /* Shares the page-shell gutter so the bar aligns with every (shop) page
+     (design-system §8). Geometry only; paint stays through --nb-* vars. */
+  padding: 0 var(--sf-page-pad);
   border-bottom: 1px solid var(--border);
 }
 .sf-navbar[data-sticky="always"] {
@@ -3038,7 +3046,10 @@ body {
   grid-template-columns: 1fr;
   align-items: center;
   gap: var(--hero-gap, 32px);
-  padding: var(--hero-pad-y, 56px) var(--hero-pad-x, 24px);
+  /* Vertical rhythm only. The horizontal edge belongs to `.sf-shop`
+     (`--sf-page-pad`, §4) — a hero that padded itself would double the gutter
+     and break the ≤50px promise on the page with the biggest headline. */
+  padding: var(--hero-pad-y, 56px) var(--hero-pad-x, 0);
   background: var(--hero-bg, var(--color-section-bg));
   color: var(--hero-text, var(--color-ink));
 }
@@ -3088,7 +3099,8 @@ body {
 .sf-hero[data-align="center"] .sf-hero__ctas {
   justify-content: center;
 }
-/* Media box — ratio arrives as the inline `--hero-ratio` the block sets, so the
+/* Media box — the ratio arrives as the inline `--hero-ratio` the block sets on
+   the *section root*, so one style attribute covers the slide and its box; the
    layout knob is a var and the backing fill is still a token. */
 .sf-hero__media {
   aspect-ratio: var(--hero-ratio, 4 / 3);
@@ -3101,6 +3113,421 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* ── CMS home sections — sf-060 (components/sections/*, sections.md §2) ─────
+   One shell for every section type, then the per-block paint. The shell carries
+   the vertical rhythm and the admin's `bgColor`; the horizontal edge is *not*
+   here, because the page shell already owns `--sf-page-pad` (§4) and a section
+   that padded itself would double the gutter. Every value resolves through a
+   var over a token, so a retheme or a per-section knob is a data change, never
+   a stylesheet edit. State (motion, direction, pause, photos, active slide) is
+   read from data attrs — the blocks set attrs, the CSS does the painting. */
+.sf-section {
+  display: grid;
+  gap: var(--section-gap, 24px);
+  padding: var(--section-pad-y, 48px) var(--section-pad-x, 0);
+  background: var(--section-bg, transparent);
+  color: var(--section-text, var(--color-ink));
+}
+.sf-section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--section-head-gap, 12px);
+}
+.sf-section__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3vw, 32px);
+  line-height: 1.2;
+  color: var(--section-title, var(--color-ink));
+}
+
+/* Hero: `height: viewport` is a CMS knob, capped so a short slide never leaves
+   a wall of background colour. */
+.sf-hero[data-height="viewport"] {
+  min-height: min(88vh, 820px);
+}
+
+/* Slideshow — the hero's multi-slide shell. Inactive slides are `hidden`, so
+   they are out of the a11y tree *and* the layout: nothing to position, nothing
+   to overlap, and the first paint is exactly one hero (the LCP face). */
+.sf-slideshow {
+  position: relative;
+}
+.sf-slideshow__slide[hidden] {
+  display: none;
+}
+.sf-slideshow__slide {
+  animation: sf-slide-in var(--slideshow-fade, 260ms) ease;
+}
+@keyframes sf-slide-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.sf-slideshow__dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--slideshow-dots-bottom, 18px);
+  display: flex;
+  justify-content: center;
+  gap: var(--slideshow-dot-gap, 8px);
+  z-index: 1;
+}
+.sf-slideshow__dot {
+  width: var(--slideshow-dot-size, 10px);
+  height: var(--slideshow-dot-size, 10px);
+  padding: 0;
+  border: 1px solid var(--slideshow-dot-border, var(--color-accent));
+  border-radius: 999px;
+  background: var(--slideshow-dot-bg, var(--color-navbar-bg));
+  cursor: pointer;
+}
+.sf-slideshow__dot[aria-selected="true"] {
+  background: var(--slideshow-dot-active, var(--color-accent));
+}
+/* The fade is decoration; the dots are navigation. Reduced motion loses the
+   first and keeps the second. */
+@media (prefers-reduced-motion: reduce) {
+  .sf-slideshow__slide {
+    animation: none;
+  }
+}
+
+/* ProductCollectionSection — the grid the CMS curated. `layout: carousel` is not
+   a JS carousel: it is the same `.sf-grid` cells laid out as a native scroll row
+   with snap points, so the cards, the quick-add island and the keyboard all stay
+   exactly as they are on `/products`. A row you can scroll is honest; a row that
+   looked scrollable and was not is the thing this rule prevents. */
+.sf-collection[data-layout="carousel"] .sf-grid {
+  display: flex;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  padding-block-end: var(--collection-rail-pad, 8px);
+}
+.sf-collection[data-layout="carousel"] .sf-grid__cell {
+  flex: 0 0 var(--collection-cell-w, 260px);
+  scroll-snap-align: start;
+}
+
+/* BrandStripSection — the logo row. `motion: marquee` duplicates the track in
+   the markup and translates `-50%`, so one loop is exactly one copy wide and
+   the duration the block computes (lib/sections/marquee.ts) is honest about
+   px/s. Cell width is fixed for the same reason: a track that sized to its
+   content would change speed with the viewport. */
+.sf-strip__viewport {
+  overflow: hidden;
+}
+.sf-strip__track {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--grid-gap, 32px);
+}
+.sf-strip__cell {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--strip-label-gap, 10px);
+  width: var(--strip-cell, 180px);
+  min-height: var(--strip-cell-h, 64px);
+  padding: var(--strip-cell-pad, 10px 14px);
+  border: 1px solid var(--strip-cell-border, var(--border));
+  border-radius: var(--strip-cell-radius, var(--radius-card));
+  background: var(--strip-cell-bg, var(--color-navbar-bg));
+  text-decoration: none;
+  color: inherit;
+}
+.sf-strip__logo {
+  max-width: 100%;
+  max-height: var(--strip-logo-h, 36px);
+  object-fit: contain;
+}
+.sf-strip__wordmark {
+  font-family: var(--font-display);
+  font-size: var(--strip-wordmark-size, 18px);
+  color: var(--strip-wordmark, var(--color-ink));
+}
+.sf-strip__label {
+  min-width: 0;
+  font-size: var(--strip-label-size, 14px);
+  color: var(--strip-label, var(--text-muted));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sf-strip[data-motion="marquee"] .sf-strip__track {
+  flex-wrap: nowrap;
+  width: max-content;
+  animation: sf-marquee var(--marquee-duration, 30s) linear infinite;
+}
+.sf-strip[data-motion="marquee"][data-direction="right"] .sf-strip__track {
+  animation-direction: reverse;
+}
+/* Pause is a promise to the shopper: reading a row that moves is work. Both
+   pointer hover and keyboard focus hold the track, only when the admin left
+   `pauseOnHover` on. */
+.sf-strip[data-motion="marquee"][data-pause="true"]:hover .sf-strip__track,
+.sf-strip[data-motion="marquee"][data-pause="true"]:focus-within .sf-strip__track,
+.sf-testimonials[data-layout="marquee"][data-pause="true"]:hover .sf-testimonials__track,
+.sf-testimonials[data-layout="marquee"][data-pause="true"]:focus-within .sf-testimonials__track {
+  animation-play-state: paused;
+}
+@keyframes sf-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+/* Reduced motion: the loop copy exists only to feed the animation, so the static
+   face hides it and lets the row wrap — every brand and every quote still paints
+   exactly once, and nothing that moved is now unreachable. */
+@media (prefers-reduced-motion: reduce) {
+  .sf-strip[data-motion="marquee"] .sf-strip__track,
+  .sf-testimonials[data-layout="marquee"] .sf-testimonials__track {
+    animation: none;
+    flex-wrap: wrap;
+    width: auto;
+  }
+  .sf-strip__cell[aria-hidden="true"],
+  .sf-quote[aria-hidden="true"] {
+    display: none;
+  }
+  .sf-testimonials[data-layout="marquee"] .sf-quote {
+    width: min(100%, var(--quote-cell, 340px));
+  }
+}
+
+/* CategoryShowcaseSection — tiles that are links, not pictures with a label. */
+.sf-showcase__grid {
+  display: grid;
+  grid-template-columns: repeat(var(--showcase-cols-phone, 2), 1fr);
+  gap: var(--grid-gap, 16px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 640px) {
+  .sf-showcase__grid {
+    grid-template-columns: repeat(var(--showcase-cols, 3), 1fr);
+  }
+}
+.sf-showcase__tile {
+  display: grid;
+  gap: var(--showcase-name-gap, 10px);
+  align-content: start;
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--showcase-radius, var(--radius-card));
+  overflow: hidden;
+  border: 1px solid var(--showcase-border, var(--border));
+  background: var(--showcase-bg, var(--color-navbar-bg));
+  padding: var(--showcase-pad, 12px);
+}
+.sf-showcase__media {
+  display: block;
+  aspect-ratio: var(--showcase-ratio, 4 / 3);
+  overflow: hidden;
+  border-radius: var(--showcase-media-radius, 8px);
+  background: var(--showcase-media-bg, var(--color-accent-50));
+}
+.sf-showcase__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sf-showcase__name {
+  font-weight: 600;
+  color: var(--showcase-name, var(--color-ink));
+}
+/* `showPhotos: false` keeps the box but not the artwork — a name-only tile is
+   what the admin asked for, so it gets its own centring, not a collapsed gap. */
+.sf-showcase[data-photos="false"] .sf-showcase__tile {
+  align-items: center;
+  justify-items: center;
+  min-height: var(--showcase-nameonly-h, 88px);
+}
+
+/* TestimonialSection — quotes the CMS wrote. */
+.sf-testimonials__grid {
+  display: grid;
+  grid-template-columns: repeat(var(--quote-cols-phone, 1), 1fr);
+  gap: var(--grid-gap, 20px);
+}
+@media (min-width: 640px) {
+  .sf-testimonials__grid {
+    grid-template-columns: repeat(var(--quote-cols, 3), 1fr);
+  }
+}
+.sf-testimonials__viewport {
+  overflow: hidden;
+}
+.sf-testimonials__track {
+  display: flex;
+  gap: var(--grid-gap, 20px);
+  width: max-content;
+}
+.sf-testimonials[data-layout="marquee"] .sf-testimonials__track {
+  animation: sf-marquee var(--marquee-duration, 40s) linear infinite;
+}
+.sf-testimonials[data-layout="marquee"] .sf-quote {
+  flex: 0 0 auto;
+  width: var(--quote-cell, 340px);
+}
+.sf-quote {
+  display: grid;
+  gap: var(--quote-gap, 12px);
+  margin: 0;
+  padding: var(--quote-pad, 20px);
+  border: 1px solid var(--quote-border, var(--border));
+  border-radius: var(--quote-radius, var(--radius-card));
+  background: var(--quote-bg, var(--color-navbar-bg));
+}
+.sf-quote__text {
+  margin: 0;
+  font-size: var(--quote-size, 16px);
+  line-height: 1.6;
+  color: var(--quote-text, var(--color-ink));
+}
+.sf-quote__by {
+  display: flex;
+  align-items: center;
+  gap: var(--quote-by-gap, 12px);
+  flex-wrap: wrap;
+}
+.sf-quote__avatar {
+  width: var(--quote-avatar-size, 36px);
+  height: var(--quote-avatar-size, 36px);
+  border-radius: 999px;
+  object-fit: cover;
+  background: var(--quote-avatar-bg, var(--color-accent-50));
+}
+.sf-quote__who {
+  display: grid;
+  margin-right: auto;
+}
+.sf-quote__name {
+  font-weight: 600;
+  color: var(--quote-name, var(--color-ink));
+}
+.sf-quote__role {
+  font-size: 13px;
+  color: var(--quote-role, var(--text-muted));
+}
+.sf-quote__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sf-quote__date {
+  font-size: 13px;
+  color: var(--quote-date, var(--text-muted));
+}
+.sf-stars {
+  display: inline-flex;
+  gap: var(--star-gap, 2px);
+}
+.sf-stars__star {
+  color: var(--star-off, var(--border));
+  font-size: var(--star-size, 15px);
+  line-height: 1;
+}
+.sf-stars__star[data-on="true"] {
+  color: var(--star-on, var(--color-warning));
+}
+.sf-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--pill-pad, 2px 8px);
+  border-radius: 999px;
+  font-size: var(--pill-size, 12px);
+  font-weight: 600;
+  border: 1px solid var(--pill-border, var(--color-success-border));
+  background: var(--pill-bg, var(--color-success-bg));
+  color: var(--pill-text, var(--color-success));
+}
+
+/* BlogTeaserSection — cards that go to /blog/[slug]. */
+.sf-blog__grid {
+  display: grid;
+  grid-template-columns: repeat(var(--blog-cols-phone, 1), 1fr);
+  gap: var(--grid-gap, 20px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 768px) {
+  .sf-blog__grid {
+    grid-template-columns: repeat(var(--blog-cols, 3), 1fr);
+  }
+}
+.sf-blog-card {
+  display: grid;
+  gap: var(--blog-gap, 12px);
+  height: 100%;
+  padding: var(--blog-pad, 16px);
+  border: 1px solid var(--blog-border, var(--border));
+  border-radius: var(--blog-radius, var(--radius-card));
+  background: var(--blog-bg, var(--color-navbar-bg));
+  text-decoration: none;
+  color: inherit;
+}
+.sf-blog-card__media {
+  display: block;
+  aspect-ratio: var(--blog-ratio, 16 / 9);
+  overflow: hidden;
+  border-radius: var(--blog-media-radius, 8px);
+  background: var(--blog-media-bg, var(--color-accent-50));
+}
+.sf-blog-card__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sf-blog-card__body {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+.sf-blog-card__date {
+  font-size: 12px;
+  color: var(--blog-date, var(--text-muted));
+}
+.sf-blog-card__title {
+  font-family: var(--font-display);
+  font-size: var(--blog-title-size, 18px);
+  line-height: 1.3;
+  color: var(--blog-title, var(--color-ink));
+}
+.sf-blog-card__excerpt {
+  font-size: var(--blog-excerpt-size, 14px);
+  line-height: 1.6;
+  color: var(--blog-excerpt, var(--text-muted));
+}
+
+/* The home page's honest degraded face: a real message and a real route, not a
+   scaffold. Two states, one shape (CMS unreachable / nothing published). */
+.sf-degraded__body {
+  margin: 0;
+  max-width: 60ch;
+  line-height: 1.6;
+  color: var(--degraded-body, var(--text-muted));
+}
+.sf-degraded__link {
+  color: var(--degraded-link, var(--color-accent));
+  font-weight: 600;
 }
 
 /* PageHeader — one title shell for every shop page (components/shell/PageHeader,
@@ -3333,13 +3760,365 @@ body {
   font-weight: 700;
 }
 
-/* (shop) route container — the one 1280px / 24px grid every commerce page sits in
-   (pages/routing.md §2, design-system §8). Carried by app/(shop)/layout.tsx so a
-   route is only content. Geometry only, no paint — nothing here resolves a token. */
+/* (shop) route container — the full-bleed page shell every commerce page sits in
+   (pages/routing.md §2, design-system §4/§8). sf-060 removed the old 1280px cap:
+   the page spans the viewport and the only horizontal gap is `--sf-page-pad`
+   (padding-only, ≤50px on desktop), so nothing needs rebuilding when a wider
+   layout or a new section arrives. Vertical rhythm is unchanged. Geometry only,
+   no paint — nothing here resolves a color token. */
 .sf-shop {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 28px 24px 64px;
+  margin-inline: 0;
+  padding-inline: var(--sf-page-pad);
+  padding-block: 28px 64px;
 }
+
+/* Footer — the global link shell from cms-svc (components/shell/Footer,
+   shell-cart.md §5, plan §7). Geometry is fixed here; every fill, text color and
+   size resolves through a --footer-* var with a token fallback, because the
+   document is admin data and the theme is the designer's. The inner container
+   shares `--sf-page-pad` with the navbar and every (shop) page so the shell
+   aligns on one gutter. The minimal (CMS-down) face changes layout only through
+   `[data-face="minimal"]` — same block, fewer rows, no invented content. */
+.sf-footer {
+  padding: var(--footer-pad-block, 48px) var(--sf-page-pad) var(--footer-pad-block-end, 28px);
+  background: var(--footer-bg, var(--color-ink));
+  color: var(--footer-text, #ffffff);
+  font-size: var(--footer-size, 14px);
+  line-height: 1.6;
+}
+.sf-footer__inner {
+  display: grid;
+  gap: var(--footer-gap, 32px);
+  margin-inline: auto;
+  max-width: var(--footer-measure, 1400px);
+}
+.sf-footer a {
+  color: var(--footer-link, #ffffff);
+  text-decoration: none;
+}
+.sf-footer a:hover {
+  color: var(--footer-link-hover, var(--color-accent-50));
+  text-decoration: underline;
+}
+.sf-footer a:focus-visible {
+  outline: 2px solid var(--footer-focus, var(--color-accent));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.sf-footer ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--footer-list-gap, 8px);
+}
+.sf-footer__brand {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.sf-footer__logo {
+  display: block;
+  height: var(--footer-logo-height, 32px);
+  width: auto;
+}
+.sf-footer__wordmark {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--footer-wordmark-size, 18px);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.sf-footer__tagline {
+  margin: 0;
+  max-width: var(--footer-tagline-measure, 34ch);
+  color: var(--footer-tagline, var(--text-muted));
+}
+/* Columns: an admin-authored count (1..6) must never look broken, so the row
+   wraps instead of stretching to a fixed count. */
+.sf-footer__columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--footer-col-min, 160px), 1fr));
+  gap: var(--footer-col-gap, 24px);
+}
+.sf-footer__col-title {
+  margin: 0 0 12px;
+  font-size: var(--footer-col-title-size, 12px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--footer-col-title, var(--color-accent-50));
+}
+.sf-footer__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--footer-meta-gap, 24px);
+}
+.sf-footer__contact {
+  font-style: normal;
+  display: grid;
+  gap: 4px;
+}
+.sf-footer__contact-line {
+  color: var(--footer-contact, var(--color-accent-50));
+}
+.sf-footer__social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.sf-footer__payments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+.sf-footer__pay {
+  padding: 4px 10px;
+  border: 1px solid var(--footer-pay-border, rgba(255, 255, 255, 0.28));
+  border-radius: 6px;
+  font-size: var(--footer-pay-size, 11px);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--footer-pay-text, var(--color-accent-50));
+}
+.sf-footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: var(--footer-legal-pad, 20px);
+  border-top: 1px solid var(--footer-legal-border, rgba(255, 255, 255, 0.18));
+}
+.sf-footer__legal-nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.sf-footer__copyright {
+  margin: 0;
+  color: var(--footer-copyright, var(--text-muted));
+  font-size: var(--footer-copyright-size, 12px);
+}
+/* Minimal face: the honest outage shell — four real routes, no columns. Only
+   spacing differs; the fills above are the same tokens on purpose. */
+.sf-footer--minimal .sf-footer__fallback ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+@media (min-width: 900px) {
+  .sf-footer__inner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    align-items: start;
+  }
+  .sf-footer__meta,
+  .sf-footer__legal {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Blog list + post + legal pages — sf-063 (plan §7). The list reuses the home
+   teaser's `.sf-blog-card` painter, so only the page framing lives here. The
+   article and page bodies carry a *text measure* (a max-width on the prose
+   element, never on the page — design-system §4 / decision §10.2): a
+   full-bleed 50 000-character legal page is unreadable, and capping the running
+   line keeps the "no page max-width" promise intact. All fills resolve through a
+   doc-scoped custom property with a token fallback, like every other block. */
+.sf-post,
+.sf-page {
+  display: grid;
+  gap: var(--doc-gap, 20px);
+}
+.sf-post__head,
+.sf-page__head {
+  display: grid;
+  gap: 10px;
+}
+.sf-post__title,
+.sf-page__title {
+  margin: 0;
+  max-width: var(--doc-title-measure, 24ch);
+  font-family: var(--font-display);
+  font-size: var(--doc-title-size, 34px);
+  line-height: 1.15;
+  color: var(--doc-title, var(--color-ink));
+}
+.sf-post__standfirst {
+  margin: 0;
+  max-width: var(--prose-measure, 72ch);
+  font-size: var(--post-standfirst-size, 18px);
+  line-height: 1.6;
+  color: var(--post-standfirst, var(--text-muted));
+}
+.sf-post__byline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: var(--post-byline-size, 13px);
+  color: var(--post-byline, var(--text-muted));
+}
+.sf-post__author {
+  font-weight: 600;
+  color: var(--post-author, var(--color-ink));
+}
+.sf-post__cover,
+.sf-post__figure,
+.sf-page__figure {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+.sf-post__cover-img,
+.sf-post__img,
+.sf-page__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--doc-img-radius, var(--radius-card));
+  background: var(--doc-img-bg, var(--color-accent-50));
+}
+.sf-post__caption,
+.sf-page__caption {
+  font-size: var(--doc-caption-size, 13px);
+  color: var(--doc-caption, var(--text-muted));
+}
+.sf-post__blocks,
+.sf-page__blocks {
+  display: grid;
+  gap: var(--doc-block-gap, 22px);
+}
+/* Sanitized rich_text lands here. Descendant selectors style the allowlist's
+   tags (p/h2-h4/ul/ol/li) so the sanitizer stays attribute-free; the measure is
+   on the prose wrapper, the running line, not the page. */
+.sf-prose {
+  max-width: var(--prose-measure, 72ch);
+  font-size: var(--prose-size, 16px);
+  line-height: var(--prose-line, 1.7);
+  color: var(--prose-text, var(--color-ink));
+}
+.sf-prose p {
+  margin: 0 0 1em;
+}
+.sf-prose :is(h2, h3, h4) {
+  margin: 1.6em 0 0.6em;
+  font-family: var(--font-display);
+  line-height: 1.25;
+  color: var(--prose-heading, var(--color-ink));
+}
+.sf-prose :is(ul, ol) {
+  margin: 0 0 1em;
+  padding-left: 1.4em;
+}
+.sf-prose ul {
+  list-style: disc;
+}
+.sf-prose ol {
+  list-style: decimal;
+}
+.sf-prose li {
+  margin-bottom: 0.4em;
+}
+.sf-prose a {
+  color: var(--prose-link, var(--color-accent));
+  text-decoration: underline;
+}
+.sf-post p,
+.sf-page p {
+  /* Plain-text blocks (post paragraph, faq answer) honour the author's line
+     breaks with no HTML sink — the only markup a `paragraph` block can carry. */
+  margin: 0;
+  max-width: var(--prose-measure, 72ch);
+  white-space: pre-line;
+  line-height: var(--prose-line, 1.7);
+  color: var(--prose-text, var(--color-ink));
+}
+.sf-post__quote {
+  margin: 0;
+  padding-left: var(--post-quote-pad, 20px);
+  border-left: 3px solid var(--post-quote-border, var(--color-accent));
+  font-family: var(--font-display);
+  font-size: var(--post-quote-size, 20px);
+  line-height: 1.5;
+  color: var(--post-quote, var(--color-ink));
+}
+.sf-post__quote footer {
+  margin-top: 8px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-style: normal;
+  color: var(--post-quote-cite, var(--text-muted));
+}
+/* FAQ disclosure: `<details>`/`<summary>`, closed by default, zero JS. The
+   marker is replaced with a real glyph so the row reads as a control. */
+.sf-faq {
+  display: grid;
+  gap: 8px;
+  max-width: var(--prose-measure, 72ch);
+}
+.sf-faq__item {
+  border: 1px solid var(--faq-border, var(--border));
+  border-radius: var(--faq-radius, 10px);
+  background: var(--faq-bg, var(--color-navbar-bg));
+  overflow: hidden;
+}
+.sf-faq__q {
+  cursor: pointer;
+  list-style: none;
+  padding: var(--faq-pad, 16px);
+  font-weight: 600;
+  color: var(--faq-q, var(--color-ink));
+}
+.sf-faq__q::-webkit-details-marker {
+  display: none;
+}
+.sf-faq__q::after {
+  content: "+";
+  float: right;
+  color: var(--faq-marker, var(--color-accent));
+}
+.sf-faq__item[open] .sf-faq__q::after {
+  content: "\2013";
+}
+.sf-faq__a {
+  margin: 0;
+  padding: 0 var(--faq-pad, 16px) var(--faq-pad, 16px);
+  color: var(--faq-a, var(--text-muted));
+}
+.sf-page__cta {
+  display: grid;
+  gap: 14px;
+}
+.sf-page__cta-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--cta-title-size, 22px);
+  color: var(--cta-title, var(--color-ink));
+}
+.sf-page__cta-row,
+.sf-post__more-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.sf-post__more-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex-direction: column;
+}
+.sf-post__more-list a {
+  color: var(--post-more, var(--color-accent));
+  text-decoration: none;
+}
+.sf-post__more-list a:hover {
+  text-decoration: underline;
+}
+.sf-bloglist {
+  margin-top: var(--bloglist-gap, 8px);
+}
+
 
 
