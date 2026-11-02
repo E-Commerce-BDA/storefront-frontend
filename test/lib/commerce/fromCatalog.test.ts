@@ -20,6 +20,7 @@ const listRow = (over: Partial<ProductListItemDto> = {}): ProductListItemDto => 
   id: "p1",
   name: "Ocean Linen Shirt",
   slug: "ocean-linen-shirt",
+  status: "active",
   price: 40,
   stock: 12,
   categoryName: "Shirts",

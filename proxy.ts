@@ -45,6 +45,13 @@ import {
   type CookieSpec,
 } from "@/lib/auth/session";
 import { GUEST_COOKIE, guestCookie, mintGuestId } from "@/lib/session/guest";
+import {
+  RECENTLY_VIEWED_COOKIE,
+  RECENTLY_VIEWED_TTL_SECONDS,
+  appendRecentlyViewed,
+  parseRecentlyViewed,
+  serializeRecentlyViewed,
+} from "@/lib/recently-viewed/cookie";
 
 const SESSION_PATH = "/api/auth/session";
 const REFRESH_ROUTE = "/api/auth/refresh";
@@ -139,4 +146,30 @@ function forwardSession(request: NextRequest): NextResponse {
   return NextResponse.rewrite(new URL(`${authServiceUrl()}/api/v1/auth/me`), {
     request: { headers },
   });
+}
+
+function ensureRecentlyViewed(request: NextRequest, pathname: string): CookieSpec | null {
+  const match = pathname.match(/^\/products\/([a-z0-9-]+)/);
+  if (!match) return null;
+  const isPrefetch =
+    request.headers.get("purpose") === "prefetch" ||
+    request.headers.get("x-purpose") === "prefetch" ||
+    Boolean(request.headers.get("next-router-prefetch"));
+  if (isPrefetch) return null;
+
+  const slug = match[1];
+  const existingHeader = readCookie(request.cookies, RECENTLY_VIEWED_COOKIE);
+  const current = parseRecentlyViewed(existingHeader);
+  const updated = appendRecentlyViewed(current, slug);
+  const val = serializeRecentlyViewed(updated);
+  request.cookies.set(RECENTLY_VIEWED_COOKIE, val);
+  return {
+    name: RECENTLY_VIEWED_COOKIE,
+    value: val,
+    httpOnly: true,
+    secure: isSecureCookie(),
+    sameSite: "lax",
+    path: "/",
+    maxAge: RECENTLY_VIEWED_TTL_SECONDS,
+  };
 }

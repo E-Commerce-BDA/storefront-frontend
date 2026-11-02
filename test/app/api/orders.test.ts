@@ -9,6 +9,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { GET } from "@/app/api/orders/[id]/route";
+import { GET as listGET } from "@/app/api/orders/route";
 import { ACCESS_COOKIE } from "@/lib/auth/session";
 
 const ORDER = {
@@ -91,5 +92,38 @@ describe("GET /api/orders/[id]", () => {
 
     expect(response.status).toBe(404);
     expect(await response.json()).toMatchObject({ error: { code: "ORDER_NOT_FOUND" } });
+  });
+});
+
+
+describe("GET /api/orders", () => {
+  it("refuses a guest", async () => {
+    vi.stubEnv("ORDER_SVC_URL", "http://order.test");
+    const fetchFn = stubOrder(200, { data: [ORDER], nextCursor: null });
+
+    const req = new NextRequest("http://localhost/api/orders");
+    const response = await listGET(req);
+
+    expect(response.status).toBe(401);
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it("forwards the Bearer and returns order list with cursor", async () => {
+    vi.stubEnv("ORDER_SVC_URL", "http://order.test");
+    const fetchFn = stubOrder(200, { data: [ORDER], nextCursor: "cursor-1" });
+
+    const req = new NextRequest("http://localhost/api/orders?limit=10", {
+      headers: { cookie: `${ACCESS_COOKIE}=at_1` },
+    });
+    const response = await listGET(req);
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.orders).toHaveLength(1);
+    expect(body.nextCursor).toBe("cursor-1");
+
+    const [url, init] = callOf(fetchFn);
+    expect(url).toContain("http://order.test/api/v1/order/me/orders");
+    expect((init.headers as Record<string, string>).authorization).toBe("Bearer at_1");
   });
 });

@@ -27,7 +27,7 @@
  * offer (the plan's A5.5), so the select has exactly one real option.
  */
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Checkbox, Input, Select, Textarea } from "@/components/ui";
 import CartLineItem from "@/components/shell/CartLineItem";
 import { useCart } from "@/app/_components/CartProvider";
@@ -112,6 +112,9 @@ const COUNTRY_OPTIONS = [
 export default function CheckoutForm() {
   const cart = useCart();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialCoupon = searchParams.get("coupon") ?? "";
+  const [discountCode, setDiscountCode] = useState(initialCoupon);
 
   const [shipping, setShipping] = useState<AddressForm>(EMPTY_ADDRESS);
   const [sameBilling, setSameBilling] = useState(true);
@@ -142,6 +145,7 @@ export default function CheckoutForm() {
       })),
       shippingAddress: stripAddress(shipping),
       billingAddress: stripAddress(sameBilling ? shipping : billing),
+      discountCode: discountCode.trim() === "" ? undefined : discountCode.trim(),
       payment: { provider: "mock" },
       notes: notes.trim() === "" ? undefined : notes.trim(),
     };
@@ -262,6 +266,7 @@ export default function CheckoutForm() {
         <fieldset className="grid gap-4 border-0 p-0 min-w-0" disabled={submitting}>
           <legend className="mb-2 p-0 text-base font-semibold text-[var(--color-ink)]">Payment</legend>
           <Select label="Provider" value="mock" onChange={() => {}} options={[{ value: "mock", label: "Mock card (no real charge)" }]} />
+          <Input label="Discount code (optional)" value={discountCode} onChange={(v) => setDiscountCode(v)} placeholder="e.g. SUMMER20" />
           <Textarea label="Order notes" value={notes} onChange={(v) => setNotes(v)} placeholder="Delivery instructions, gift message…" rows={3} />
         </fieldset>
 

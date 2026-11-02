@@ -25,6 +25,11 @@ afterEach(cleanup);
 let mockPath = "/";
 vi.mock("next/navigation", () => ({
   usePathname: () => mockPath,
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
+vi.mock("@/app/_components/WishlistProvider", () => ({
+  useWishlist: () => ({ count: 0, has: () => false, pendingIds: [] }),
 }));
 
 // NavbarMount reads the cart store only to pass count + onOpen to the navbar;
@@ -60,11 +65,10 @@ describe("NavbarMount", () => {
     expect(screen.getByRole("link", { name: "SHOP" })).not.toBeNull();
   });
 
-  it("self-suppresses on auth paths (chromeless conversion routes)", () => {
+  it("renders on auth paths (navbar chrome retained)", () => {
     mockPath = "/signin";
     const { container } = render(<NavbarMount nav={DEFAULT_NAV_SETTINGS} />);
-    expect(container.querySelector(".sf-navbar")).toBeNull();
-    expect(container.firstChild).toBeNull();
+    expect(container.querySelector(".sf-navbar")).not.toBeNull();
   });
 
   it("hamburger opens the drawer on mobile, Esc closes it", () => {

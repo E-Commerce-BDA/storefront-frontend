@@ -1,15 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/shell/Navbar";
 import SearchMount, { preloadSearchOverlay } from "@/components/shell/SearchMount";
 import { useCart } from "./CartProvider";
+import { useWishlist } from "./WishlistProvider";
 import type { ResolvedNavSettings } from "@/lib/shell/navSettings";
-
-/** Auth routes stay chromeless — the island self-suppresses (no
- * conditional markup in the shell; layout always mounts this). */
-const AUTH_PATHS = ["/signin", "/signup", "/forgot"];
 
 const COLLAPSE_MS = 220;
 
@@ -28,8 +25,9 @@ function prefersReducedMotion(): boolean {
  * live here — values and copy stay server-resolved props.
  */
 export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
-  const pathname = usePathname();
   const cart = useCart();
+  const wishlist = useWishlist();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -90,9 +88,6 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
     preloadSearchOverlay(nav.search.overlayVariant);
   }, [nav.search.overlayVariant]);
 
-  if (AUTH_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
-    return null;
-  }
 
   return (
     <>
@@ -117,6 +112,8 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
         mobileOpen={mobileOpen}
         mobileSide={nav.mobile.drawerSide}
         cart={{ count: cart.count, onOpen: cart.openDrawer }}
+        account={{ onOpen: () => router.push("/account") }}
+        wishlist={{ count: wishlist.count, onOpen: () => router.push("/wishlist") }}
         onMenuOpen={() => setMobileOpen(true)}
         onMenuClose={() => setMobileOpen(false)}
         onSearchOpen={() => setSearchOpen(true)}

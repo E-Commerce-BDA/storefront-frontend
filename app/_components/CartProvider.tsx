@@ -245,6 +245,10 @@ export default function CartProvider({ children }: { children: React.ReactNode }
         status={value.status}
         onQty={value.setQty}
         onRemove={value.remove}
+        onViewCart={() => {
+          value.closeDrawer();
+          router.push("/cart");
+        }}
         onCheckout={() => {
           value.closeDrawer();
           router.push("/checkout");

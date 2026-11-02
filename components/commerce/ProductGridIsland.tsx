@@ -29,10 +29,12 @@
  * vocabularies straight: `quickAdd(id)` for the network, url-keyed sets for the
  * paint.
  */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProductGrid from "@/components/commerce/ProductGrid";
+import QuickViewDialog from "@/components/commerce/QuickViewDialog";
 import { useCart } from "@/app/_components/CartProvider";
+import { useWishlist } from "@/app/_components/WishlistProvider";
 import { useQuickAdd } from "@/app/hooks/useQuickAdd";
 import { createCartPort } from "@/lib/cart/port";
 import type { ProductCardData } from "@/lib/commerce/productCard";
@@ -54,7 +56,10 @@ export default function ProductGridIsland({
 }: ProductGridIslandProps) {
   const router = useRouter();
   const cart = useCart();
+  const wishlist = useWishlist();
   const refresh = cart.refresh;
+
+  const [activeQuickView, setActiveQuickView] = useState<ProductCardData | null>(null);
 
   const port = useMemo(
     () => createCartPort({ onAdded: () => void refresh() }),
@@ -72,17 +77,32 @@ export default function ProductGridIsland({
     ids.map((id) => cellKeyById.get(id) ?? id);
 
   return (
-    <ProductGrid
-      items={items}
-      columns={columns}
-      empty={empty}
-      label={label}
-      pendingIds={toCellKeys(pendingIds)}
-      addedIds={toCellKeys(addedIds)}
-      onOpen={(product) => {
-        if (product.url) router.push(product.url);
-      }}
-      onQuickAdd={(product) => quickAdd(product.id)}
-    />
+    <>
+      <ProductGrid
+        items={items}
+        columns={columns}
+        empty={empty}
+        label={label}
+        pendingIds={toCellKeys(pendingIds)}
+        addedIds={toCellKeys(addedIds)}
+        wishlistedIds={wishlist.ids}
+        onOpen={(product) => {
+          if (product.url) router.push(product.url);
+        }}
+        onQuickAdd={(product) => quickAdd(product.id)}
+        onQuickView={(product) => setActiveQuickView(product)}
+        onWishlist={(product) => void wishlist.toggle(product.id)}
+      />
+
+      <QuickViewDialog
+        product={activeQuickView}
+        open={activeQuickView !== null}
+        onClose={() => setActiveQuickView(null)}
+        onAddToCart={async (productId, variantId, qty) => {
+          await cart.add(productId, { variantId, qty });
+          cart.openDrawer();
+        }}
+      />
+    </>
   );
 }

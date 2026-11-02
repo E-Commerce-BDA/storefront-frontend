@@ -22,7 +22,15 @@ import { bff } from "@/lib/http/browser";
 import { orderSchema, type OrderDto } from "@/lib/order/schemas";
 import type { ServiceResult } from "@/lib/http/result";
 
-export default function OrderConfirmation({ orderId }: { orderId: string }) {
+export interface OrderConfirmationProps {
+  orderId: string;
+  signinNextPath?: string;
+}
+
+export default function OrderConfirmation({
+  orderId,
+  signinNextPath,
+}: OrderConfirmationProps) {
   const router = useRouter();
   const [result, setResult] = useState<ServiceResult<OrderDto> | null>(null);
 
@@ -48,7 +56,11 @@ export default function OrderConfirmation({ orderId }: { orderId: string }) {
 
   if (!result.ok) {
     if (result.kind === "unauthorized") {
-      router.push(`/signin?next=${encodeURIComponent(`/checkout/confirmation/${orderId}`)}`);
+      router.push(
+        `/signin?next=${encodeURIComponent(
+          signinNextPath ?? `/checkout/confirmation/${orderId}`,
+        )}`,
+      );
       return null;
     }
     return (

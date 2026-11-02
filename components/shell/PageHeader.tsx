@@ -16,7 +16,7 @@ import { resolveBreadcrumbs, type BreadcrumbItem } from "@/lib/shell/pageHeader"
  */
 export interface PageHeaderProps {
   eyebrow?: string;
-  title: string;
+  title?: string;
   breadcrumb?: BreadcrumbItem[];
   /** Rendered at the trailing edge of the header — a `Button` or a filter row. */
   actions?: ReactNode;
@@ -52,13 +52,15 @@ export default function PageHeader({
         </nav>
       ) : null}
 
-      <div className="sf-page-header__row">
-        <div className="sf-page-header__titles">
-          {eyebrow ? <p className="sf-page-header__eyebrow">{eyebrow}</p> : null}
-          <h1 className="sf-page-header__title">{title}</h1>
+      {title || eyebrow || actions ? (
+        <div className="sf-page-header__row">
+          <div className="sf-page-header__titles">
+            {eyebrow ? <p className="sf-page-header__eyebrow">{eyebrow}</p> : null}
+            {title ? <h1 className="sf-page-header__title">{title}</h1> : null}
+          </div>
+          {actions ? <div className="sf-page-header__actions">{actions}</div> : null}
         </div>
-        {actions ? <div className="sf-page-header__actions">{actions}</div> : null}
-      </div>
+      ) : null}
     </header>
   );
 }

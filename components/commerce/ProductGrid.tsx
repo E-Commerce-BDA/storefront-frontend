@@ -31,6 +31,9 @@ export interface ProductGridProps {
   addedIds?: readonly string[];
   onOpen?: (product: ProductCardData) => void;
   onQuickAdd?: (product: ProductCardData) => void;
+  onQuickView?: (product: ProductCardData) => void;
+  onWishlist?: (product: ProductCardData) => void;
+  wishlistedIds?: readonly string[] | Set<string>;
   /** Theme `productCard.cols*`; absent or out-of-range falls to the defaults. */
   columns?: Partial<GridColumns> | null;
   /** Rendered in place of the grid when `items` is empty (an `EmptyState`). */
@@ -45,12 +48,26 @@ function marks(ids: readonly string[] | undefined, product: ProductCardData): bo
   return ids.includes(product.url ?? product.id);
 }
 
+function isWishlisted(
+  wishlistedIds: readonly string[] | Set<string> | undefined,
+  productId: string,
+): boolean {
+  if (!wishlistedIds) return false;
+  if (wishlistedIds instanceof Set) {
+    return wishlistedIds.has(productId);
+  }
+  return wishlistedIds.includes(productId);
+}
+
 export default function ProductGrid({
   items,
   pendingIds,
   addedIds,
   onOpen,
   onQuickAdd,
+  onQuickView,
+  onWishlist,
+  wishlistedIds,
   columns,
   empty,
   label = "Products",
@@ -79,16 +96,34 @@ export default function ProductGrid({
         } as CSSProperties
       }
     >
-      {items.map((item) => (
-        <li
-          key={item.url ?? item.id}
-          className="sf-grid__cell"
-          data-pending={marks(pendingIds, item)}
-          data-added={marks(addedIds, item)}
-        >
-          <ProductCard product={item} onOpen={onOpen} onQuickAdd={onQuickAdd} />
-        </li>
-      ))}
+      {items.map((item) => {
+        const wishlisted =
+          item.wishlisted !== undefined
+            ? item.wishlisted
+            : wishlistedIds !== undefined
+              ? isWishlisted(wishlistedIds, item.id)
+              : undefined;
+
+        const product =
+          wishlisted !== undefined ? { ...item, wishlisted } : item;
+
+        return (
+          <li
+            key={item.url ?? item.id}
+            className="sf-grid__cell"
+            data-pending={marks(pendingIds, item)}
+            data-added={marks(addedIds, item)}
+          >
+            <ProductCard
+              product={product}
+              onOpen={onOpen}
+              onQuickAdd={onQuickAdd}
+              onQuickView={onQuickView}
+              onWishlist={onWishlist}
+            />
+          </li>
+        );
+      })}
     </ul>
   );
 }

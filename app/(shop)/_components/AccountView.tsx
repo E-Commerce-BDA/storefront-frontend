@@ -16,6 +16,7 @@
  * links into an unbuilt page would be the fake this wave promised not to ship.
  */
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { Badge, Button, EmptyState, Icon } from "@/components/ui";
@@ -120,7 +121,15 @@ export default function AccountView() {
           </Button>
         }
       />
-      <p className="-mt-4 mb-8 text-sm text-[var(--text-muted)]">{data.user.email}</p>
+      <p className="-mt-4 mb-4 text-sm text-[var(--text-muted)]">{data.user.email}</p>
+      <div className="mb-8 flex gap-3">
+        <Button variant="light" size="sm" onClick={() => router.push("/account/orders")}>
+          View all orders
+        </Button>
+        <Button variant="light" size="sm" onClick={() => router.push("/wishlist")}>
+          My wishlist
+        </Button>
+      </div>
 
       <section aria-label="Order history" className="grid gap-4">
         <h2 className="m-0 text-base font-semibold text-[var(--color-ink)]">Recent orders</h2>
@@ -154,7 +163,11 @@ export default function AccountView() {
 
 function OrderRow({ order }: { order: OrderDto }) {
   return (
-    <li className="flex items-baseline justify-between gap-4 rounded-[var(--radius-md,10px)] border border-[var(--border)] px-4 py-3">
+    <li>
+      <Link
+        href={`/account/orders/${encodeURIComponent(order.id)}`}
+        className="flex items-baseline justify-between gap-4 rounded-[var(--radius-md,10px)] border border-[var(--border)] px-4 py-3 transition-colors hover:border-[var(--color-navy)] hover:bg-[var(--surface-hover)]"
+      >
       <div className="grid gap-1">
         <span className="text-sm font-medium text-[var(--color-ink)]">{order.order_number}</span>
         <span className="text-xs text-[var(--text-muted)]">{formatDate(order.created_at)}</span>
@@ -165,6 +178,7 @@ function OrderRow({ order }: { order: OrderDto }) {
         </Badge>
         <span className="text-sm font-semibold text-[var(--color-ink)]">${order.grand_total}</span>
       </div>
+      </Link>
     </li>
   );
 }

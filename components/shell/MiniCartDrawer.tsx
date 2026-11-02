@@ -30,6 +30,7 @@ export interface MiniCartDrawerProps {
   status: "idle" | "loading" | "ready" | "error";
   onQty: (itemId: string, qty: number) => void;
   onRemove: (itemId: string) => void;
+  onViewCart?: () => void;
   onCheckout: () => void;
   className?: string;
 }
@@ -42,6 +43,7 @@ export default function MiniCartDrawer({
   status,
   onQty,
   onRemove,
+  onViewCart,
   onCheckout,
   className = "",
 }: MiniCartDrawerProps) {
@@ -136,6 +138,11 @@ export default function MiniCartDrawer({
             <p className="sf-minicart__subtotal">
               Subtotal <span>${totals.subtotal}</span>
             </p>
+            {onViewCart ? (
+              <Button variant="light" fullWidth onClick={onViewCart}>
+                View cart
+              </Button>
+            ) : null}
             <Button fullWidth onClick={onCheckout}>
               Checkout
             </Button>

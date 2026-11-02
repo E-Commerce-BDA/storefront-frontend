@@ -34,7 +34,7 @@ export const CMS_STATIC_TAGS = [
 ] as const;
 
 /** Page keys / slugs cms-svc accepts: lowercase slugs, deliberately short. */
-const PAGE_KEY_RE = /^[a-z0-9-]{1,32}$/;
+const PAGE_KEY_RE = /^[a-z0-9-]{1,80}$/;
 
 export const cmsTag = {
   pageSettings(pageKey: string): string {

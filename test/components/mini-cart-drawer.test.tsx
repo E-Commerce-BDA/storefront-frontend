@@ -80,6 +80,13 @@ describe("MiniCartDrawer", () => {
     expect(onRemove).toHaveBeenCalledWith("ci_1");
   });
 
+  it("fires onViewCart when View cart button is clicked", () => {
+    const onViewCart = vi.fn();
+    openDrawer({ onViewCart });
+    fireEvent.click(screen.getByRole("button", { name: "View cart" }));
+    expect(onViewCart).toHaveBeenCalledTimes(1);
+  });
+
   it("closes on Escape and on overlay click, never on panel click", () => {
     const onClose = vi.fn();
     openDrawer({ onClose });

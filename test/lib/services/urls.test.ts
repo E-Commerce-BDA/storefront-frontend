@@ -23,6 +23,7 @@ describe("serviceUrl", () => {
     expect(serviceUrl("catalog")).toBe("http://localhost:4020");
     expect(serviceUrl("cart")).toBe("http://localhost:4030");
     expect(serviceUrl("order")).toBe("http://localhost:4040");
+    expect(serviceUrl("search")).toBe("http://localhost:4090");
   });
 
   it("reads the env var at call time, not at import time", () => {
@@ -41,6 +42,7 @@ describe("serviceUrl", () => {
   it("treats an empty or blank env var as unset", () => {
     vi.stubEnv("ORDER_SVC_URL", "   ");
     expect(serviceUrl("order")).toBe("http://localhost:4040");
+    expect(serviceUrl("search")).toBe("http://localhost:4090");
   });
 
   it("prefers an explicit value — the edge-safe path proxy.ts uses", () => {
@@ -63,6 +65,6 @@ describe("serviceTimeout", () => {
   });
 
   it("declares exactly the five registered services", () => {
-    expect(SERVICE_NAMES).toEqual(["auth", "cms", "catalog", "cart", "order"]);
+    expect(SERVICE_NAMES).toEqual(["auth", "cms", "catalog", "cart", "order", "search"]);
   });
 });

@@ -9,6 +9,14 @@ import { cleanup, render, screen, fireEvent, act } from "@testing-library/react"
 import SearchMount, { preloadSearchOverlay } from "@/components/shell/SearchMount";
 import { DEFAULT_NAV_SETTINGS } from "@/lib/shell/navSettings";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
+vi.mock("@/app/_components/CartProvider", () => ({
+  useCart: () => ({ refresh: vi.fn(), add: vi.fn() }),
+}));
+
 afterEach(() => {
   cleanup();
   vi.useRealTimers();

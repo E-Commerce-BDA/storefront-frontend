@@ -10,26 +10,18 @@
  * The page is a server component; it maps the detail row to plain props and hands
  * them here.
  *
- * Three rules the panel is responsible for:
- *
- * 1. **Price/stock follow the resolved variant, not the row.** `resolveVariant`
- *    picks the variant a full selection names (purchasable preferred); a product
- *    with no fully-resolved variant falls back to the product's own effective
- *    price and stock. Two faces of one product must not disagree about its price.
- * 2. **The add path is the store, once.** `cart.add()` is already optimistic and
- *    reverts-with-toast on failure, so the panel awaits its boolean and opens the
- *    drawer on success — no parallel fetch, no second optimistic write.
- * 3. **Quantity is reeled in when the variant changes.** A shopper who picked "3"
- *    then switches to a variant with 1 left must not POST a qty the service will
- *    reject; `clampQty` bounds the *shown* number so display and submit agree.
+ * Product title (h1) lives in the right column above ratings, price and buy box.
  */
 import { useMemo, useState } from "react";
 import Gallery from "@/components/commerce/Gallery";
 import VariantSelector from "@/components/commerce/VariantSelector";
+import WishlistButton from "@/components/commerce/WishlistButton";
 import QuantityStepper from "@/components/ui/QuantityStepper";
 import Button from "@/components/ui/Button";
+import { Icon } from "@/components/ui";
 import { useCart } from "@/app/_components/CartProvider";
 import { clampQty, QTY_LIMITS } from "@/lib/commerce/quantity";
+import { PRODUCT_TRUST_ITEMS } from "@/lib/commerce/productTrust";
 import {
   defaultSelection,
   resolveVariant,
@@ -51,6 +43,8 @@ export interface PurchasePanelProps {
   compareAt?: number | null;
   /** Product stock, the fallback when the product carries no variants. */
   stock: number;
+  rating?: number | null;
+  ratingCount?: number | null;
 }
 
 export default function PurchasePanel({
@@ -62,6 +56,8 @@ export default function PurchasePanel({
   price,
   compareAt = null,
   stock,
+  rating,
+  ratingCount,
 }: PurchasePanelProps) {
   const cart = useCart();
   const [activeIndex, setActiveIndex] = useState(0);
@@ -103,6 +99,28 @@ export default function PurchasePanel({
       <Gallery images={images} activeIndex={activeIndex} onIndexChange={setActiveIndex} />
 
       <div className="flex flex-col gap-5">
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--color-ink)] sm:text-3xl">
+            {name}
+          </h1>
+          <WishlistButton productId={productId} />
+        </div>
+
+        {rating != null && ratingCount != null && ratingCount > 0 ? (
+          <a
+            href="#reviews"
+            className="inline-flex items-center gap-1.5 text-sm text-[var(--text-muted)] transition-colors hover:text-[var(--color-ink)]"
+          >
+            <span className="flex items-center text-[var(--color-terracotta)]" aria-hidden="true">
+              ★
+            </span>
+            <span className="font-semibold text-[var(--color-ink)]">
+              {rating.toFixed(1)}
+            </span>
+            <span>({ratingCount} {ratingCount === 1 ? "review" : "reviews"})</span>
+          </a>
+        ) : null}
+
         <div className="flex items-baseline gap-3">
           <span className="text-2xl font-semibold text-[var(--color-ink)]">${displayed}</span>
           {showCompare ? (
@@ -136,6 +154,18 @@ export default function PurchasePanel({
         <Button onClick={() => void addToCart()} disabled={outOfStock}>
           {outOfStock ? "Unavailable" : "Add to cart"}
         </Button>
+
+        <div className="mt-4 grid gap-3 border-t border-[var(--border)] pt-4">
+          {PRODUCT_TRUST_ITEMS.map((item) => (
+            <div key={item.title} className="flex items-center gap-3 text-xs text-[var(--text-muted)]">
+              <Icon name={item.icon as any} size={16} className="text-[var(--color-navy)]" />
+              <span>
+                <strong className="font-semibold text-[var(--color-ink)]">{item.title}:</strong>{" "}
+                {item.description}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

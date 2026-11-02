@@ -22,6 +22,9 @@ import {
   type CheckoutConfirmationDto,
   type CheckoutInput,
   type OrderDto,
+  type ValidateDiscountCodeInput,
+  discountValidationResultSchema,
+  type DiscountValidationResult,
 } from "@/lib/order/schemas";
 
 export interface OrderPage {
@@ -45,6 +48,7 @@ export interface OrderClient {
     query?: ListOrdersQuery,
   ): Promise<ServiceResult<OrderPage>>;
   getOrder(identity: IdentityHeaders, orderId: string): Promise<ServiceResult<OrderDto>>;
+  validateDiscountCode(input: ValidateDiscountCodeInput): Promise<ServiceResult<DiscountValidationResult>>;
 }
 
 const BASE = "/api/v1/order";
@@ -87,6 +91,15 @@ export function createOrderClient(perform: Perform): OrderClient {
       });
       if (!result.ok) return result;
       return { ok: true, data: result.data.order };
+    },
+    validateDiscountCode(input) {
+      return perform({
+        method: "POST",
+        path: `${BASE}/discount-codes/validate`,
+        body: input,
+        schema: discountValidationResultSchema,
+        cache: "no-store",
+      });
     },
   };
 }

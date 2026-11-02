@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import PageHeader from "@/components/shell/PageHeader";
 import CheckoutForm from "../_components/CheckoutForm";
 
@@ -18,7 +19,9 @@ export default function CheckoutPage() {
   return (
     <>
       <PageHeader title="Checkout" />
-      <CheckoutForm />
+      <Suspense fallback={<p className="text-sm text-[var(--text-muted)]">Loading checkout…</p>}>
+        <CheckoutForm />
+      </Suspense>
     </>
   );
 }

@@ -32,7 +32,7 @@ describe("isPageKey", () => {
     expect(isPageKey("Auth")).toBe(false);
     expect(isPageKey("auth/admin")).toBe(false);
     expect(isPageKey("../auth")).toBe(false);
-    expect(isPageKey("a".repeat(33))).toBe(false);
+    expect(isPageKey("a".repeat(81))).toBe(false);
     expect(isPageKey(7)).toBe(false);
   });
 });
@@ -58,11 +58,11 @@ describe("isAllowedTag", () => {
     "cms:page-settings:",
     "cms:page-settings:Auth",
     "cms:page-settings:../auth",
-    "cms:page-settings:" + "a".repeat(33),
+    "cms:page-settings:" + "a".repeat(81),
     "cms:page-settings",
     "cms:sections:",
     "cms:sections:Homepage",
-    "cms:sections:" + "a".repeat(33),
+    "cms:sections:" + "a".repeat(81),
     "cms:pages:",
     "cms:pages:a/b",
     "cms:footers",

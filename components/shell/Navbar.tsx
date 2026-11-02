@@ -57,6 +57,8 @@ export interface NavbarProps {
   announcement: NavbarAnnouncement;
   /** Live cart region (sf-051): count from the store, onOpen raises the drawer. */
   cart: { count: number; onOpen: () => void };
+  account?: { onOpen: () => void; disabled?: boolean };
+  wishlist?: { count: number; onOpen: () => void; disabled?: boolean };
   isMobile: boolean;
   mobileOpen: boolean;
   mobileSide: "left" | "right";
@@ -75,6 +77,8 @@ export default function Navbar({
   links,
   announcement,
   cart,
+  account,
+  wishlist,
   isMobile,
   mobileOpen,
   mobileSide,
@@ -139,10 +143,19 @@ export default function Navbar({
               account menu); the cart is live from sf-051 — count from the store,
               onOpen raises the drawer. Never a dead click. */}
           {regions.account && (
-            <NavAccountButton onAccount={() => {}} label="Account (coming soon)" disabled />
+            <NavAccountButton
+              onAccount={account?.onOpen ?? (() => {})}
+              label="Account"
+              disabled={account?.disabled ?? false}
+            />
           )}
           {regions.wishlist && (
-            <NavWishlistButton onWishlist={() => {}} label="Wishlist (coming soon)" disabled />
+            <NavWishlistButton
+              count={wishlist?.count}
+              onWishlist={wishlist?.onOpen ?? (() => {})}
+              label="Wishlist"
+              disabled={wishlist?.disabled ?? false}
+            />
           )}
           {regions.cart && <NavCartButton count={cart.count} onCart={cart.onOpen} label="Cart" />}
         </span>

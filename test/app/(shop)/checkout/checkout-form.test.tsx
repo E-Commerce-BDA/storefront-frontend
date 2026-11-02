@@ -34,7 +34,10 @@ vi.mock("@/app/_components/CartProvider", () => ({
     clear: cart.clear,
   }),
 }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push, replace }),
+  useSearchParams: () => new URLSearchParams(),
+}));
 vi.mock("@/lib/http/browser", () => ({ bff }));
 // The summary rows are CartLineItem's tested face; the island test only counts them.
 vi.mock("@/components/shell/CartLineItem", () => ({
@@ -118,6 +121,18 @@ describe("CheckoutForm", () => {
 
     await waitFor(() => expect(push).toHaveBeenCalledWith("/checkout/confirmation/o1"));
     expect(cart.clear).toHaveBeenCalled();
+  });
+
+  it("submits the discountCode when filled in", async () => {
+    bff.mockResolvedValue(ok(confirmation));
+    render(<CheckoutForm />);
+    fillAddress();
+    fireEvent.change(screen.getByLabelText(/Discount code/), { target: { value: "SAVE10" } });
+    submit();
+
+    await waitFor(() => expect(bff).toHaveBeenCalledTimes(1));
+    const [, opts] = bff.mock.calls[0];
+    expect(opts.body.discountCode).toBe("SAVE10");
   });
 
   it("replays a retry of the same attempt with the SAME key (charged once)", async () => {

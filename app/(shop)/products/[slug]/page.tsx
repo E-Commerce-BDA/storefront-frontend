@@ -2,12 +2,16 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/shell/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
+import SectionRenderer from "@/components/sections/SectionRenderer";
 import { catalogClient } from "@/lib/catalog/client";
+import { cmsBaseUrl, createCmsClient } from "@/lib/cms/client";
 import { fromCatalogList } from "@/lib/commerce/fromCatalog";
 import { toGalleryImages } from "@/lib/commerce/gallery";
 import { buildProductJsonLd } from "@/lib/commerce/jsonLd";
+import { resolveSections } from "@/lib/sections/resolveSections";
 import type { BreadcrumbItem } from "@/lib/shell/pageHeader";
 import PurchasePanel from "../../_components/PurchasePanel";
+import RecentlyViewed from "../../_components/RecentlyViewed";
 import ProductGridIsland from "@/components/commerce/ProductGridIsland";
 
 /**
@@ -15,11 +19,8 @@ import ProductGridIsland from "@/components/commerce/ProductGridIsland";
  *
  * Rendered from catalog-svc in the RSC (decision 5: SEO, one canonical bare
  * slug), then handed to one client island (`PurchasePanel`) for the interactive
- * buy box. The rest of the page — description, attributes, related — is static
- * markup, so a shopper with JS off still reads the product.
- *
- * `getProduct` is called by both `generateMetadata` and the page; Next dedupes
- * the identical fetch (same URL, same `revalidate`) so the catalog is hit once.
+ * buy box. The rest of the page — description, attributes, CMS sections,
+ * recently viewed, related — is static markup, so a shopper with JS off still reads the product.
  */
 
 export const revalidate = 60;
@@ -35,7 +36,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const result = await loadProduct(slug);
-  if (!result.ok) return { title: "Product not found" };
+  if (!result.ok || result.data.status !== "active") {
+    return { title: "Product not found" };
+  }
 
   const product = result.data;
   return {
@@ -59,8 +62,6 @@ export default async function ProductPage({
   const result = await loadProduct(slug);
 
   if (!result.ok) {
-    // A genuine 404 is a different fact from "the catalog is down"; only the
-    // first belongs on the not-found page. A transient failure says so plainly.
     if (result.kind === "not-found") notFound();
     return (
       <>
@@ -74,6 +75,12 @@ export default async function ProductPage({
   }
 
   const product = result.data;
+
+  // Inactive or draft products must return 404
+  if (product.status !== "active") {
+    notFound();
+  }
+
   const displayed = product.effectivePrice ?? product.price;
 
   const breadcrumb: BreadcrumbItem[] = [
@@ -89,25 +96,46 @@ export default async function ProductPage({
     { label: product.name },
   ];
 
-  // Related ships from the same category, minus the product on screen. A failure
-  // here is not worth blanking the PDP, so the rail simply omits itself.
-  const related = product.category
-    ? await catalogClient().listProducts({ categoryId: product.category.id, limit: 12 })
-    : null;
+  // Concurrently fetch CMS sections for this PDP and related category items
+  const [cmsSectionsResponse, related] = await Promise.all([
+    createCmsClient({ baseUrl: cmsBaseUrl() }).getSections(`pdp-${product.slug}`),
+    product.category
+      ? catalogClient().listProducts({ categoryId: product.category.id, limit: 12 })
+      : Promise.resolve(null),
+  ]);
+
+  const resolvedSections = cmsSectionsResponse?.sections
+    ? await resolveSections(cmsSectionsResponse.sections)
+    : [];
+
+  // Compute rating and ratingCount from active testimonial items
+  const testimonialItems = resolvedSections
+    .filter((s): s is Extract<typeof s, { type: "testimonial" }> => s.type === "testimonial")
+    .flatMap((s) => s.items);
+
+  const ratings = testimonialItems
+    .map((i) => i.rating)
+    .filter((r): r is number => typeof r === "number" && r > 0);
+
+  const rating =
+    ratings.length > 0 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : null;
+  const ratingCount = ratings.length > 0 ? ratings.length : null;
+
   const relatedItems =
     related && related.ok
-      ? fromCatalogList(related.data.items.filter((row) => row.id !== product.id)).slice(0, 8)
+      ? fromCatalogList(related.data.items.filter((row: { id: string; status: string }) => row.id !== product.id && row.status === "active")).slice(0, 8)
       : [];
 
   const jsonLd = buildProductJsonLd(product);
 
   const attributes = Object.entries(product.attributes ?? {}).filter(
-    ([, value]) => typeof value === "string" || typeof value === "number" || typeof value === "boolean",
+    ([, value]) =>
+      typeof value === "string" || typeof value === "number" || typeof value === "boolean",
   );
 
   return (
     <>
-      <PageHeader title={product.name} breadcrumb={breadcrumb} />
+      <PageHeader breadcrumb={breadcrumb} />
 
       <PurchasePanel
         productId={product.id}
@@ -118,6 +146,8 @@ export default async function ProductPage({
         price={displayed}
         compareAt={product.compareAtPrice}
         stock={product.stock}
+        rating={rating}
+        ratingCount={ratingCount}
       />
 
       {product.description ? (
@@ -143,6 +173,14 @@ export default async function ProductPage({
         </section>
       ) : null}
 
+      {resolvedSections.length > 0 ? (
+        <div id="reviews" className="mt-12">
+          <SectionRenderer models={resolvedSections} />
+        </div>
+      ) : null}
+
+      <RecentlyViewed excludeSlug={product.slug} />
+
       {relatedItems.length > 0 ? (
         <section className="mt-12">
           <h2 className="mb-4 font-display text-lg text-[var(--color-ink)]">You may also like</h2>
@@ -152,7 +190,6 @@ export default async function ProductPage({
 
       <script
         type="application/ld+json"
-        // JSON-LD is inert text, not markup; Next requires the raw insertion here.
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
     </>

@@ -13,6 +13,7 @@ const detail = (over: Partial<ProductDetailDto> = {}): ProductDetailDto => ({
   id: "p1",
   name: "Ocean Linen Shirt",
   slug: "ocean-linen-shirt",
+  status: "active",
   price: 40,
   stock: 10,
   images: [],

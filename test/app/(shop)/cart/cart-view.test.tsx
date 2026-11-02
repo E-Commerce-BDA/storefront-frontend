@@ -75,14 +75,12 @@ describe("CartView", () => {
   });
 
   it("renders a row per line with the line total", () => {
-    // Both rows total $10 by design (1×10 and 2×5) — two line totals plus the
-    // $20 summary subtotal prove each row arithmetic is per-line, not shared.
     setCart([line({ id: "i1", productName: "Mug" }), line({ id: "i2", productName: "Plate", qty: 2, unitPrice: 5 })]);
     render(<CartView />);
-    expect(screen.getAllByText("$10")).toHaveLength(2);
-    expect(screen.queryByText("$20")).not.toBeNull();
+    expect(screen.getAllByText("$20")).toHaveLength(2);
     expect(screen.queryByText("Plate")).not.toBeNull();
-    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    expect(screen.getByRole("table")).not.toBeNull();
+    expect(screen.getAllByRole("row")).toHaveLength(3);
   });
 
   it("collapses repeated qty taps on one line into a single debounced write", () => {

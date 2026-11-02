@@ -15,6 +15,7 @@ import PurchasePanel, { type PurchasePanelProps } from "@/app/(shop)/_components
 
 const add = vi.fn(async () => true);
 const openDrawer = vi.fn();
+vi.mock("@/app/_components/WishlistProvider", () => ({ useWishlist: () => ({ has: () => false, toggle: vi.fn(), pendingIds: [] }) }));
 vi.mock("@/app/_components/CartProvider", () => ({
   useCart: () => ({ add, openDrawer }),
 }));

@@ -27,6 +27,9 @@ const harness = vi.hoisted(() => ({
 }));
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: harness.push }) }));
+vi.mock("@/app/_components/WishlistProvider", () => ({
+  useWishlist: () => ({ ids: [], pendingIds: [], has: () => false, toggle: vi.fn(), remove: vi.fn() }),
+}));
 vi.mock("@/app/_components/CartProvider", () => ({
   useCart: () => ({ refresh: harness.refresh, add: harness.add }),
 }));

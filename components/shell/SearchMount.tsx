@@ -10,20 +10,19 @@ import {
   type ComponentType,
   type LazyExoticComponent,
 } from "react";
+import { useRouter } from "next/navigation";
 import { Icon, Toast } from "@/components/ui";
 import { resolveSearchOverlay, type SearchOverlayId } from "./searchRegistry";
 import { useSearch } from "@/app/hooks/useSearch";
 import { useRecentSearches } from "@/app/hooks/useRecentSearches";
 import { useQuickAdd } from "@/app/hooks/useQuickAdd";
-import { createDemoSource, DEMO_CATALOG, DEMO_TRENDING } from "@/lib/search/demoSource";
-import { createDemoQuickAdd } from "@/lib/cart/quickAdd";
+import { useCart } from "@/app/_components/CartProvider";
+import { createHttpSearchSource } from "@/lib/search/httpSource";
+import { createCartPort } from "@/lib/cart/port";
 import type { SearchResult } from "@/lib/search/source";
 import type { ResolvedNavSettings } from "@/lib/shell/navSettings";
 import type { ResolvedOverlayMotion } from "@/lib/search/motion";
 
-// TODO(cms-svc): curated/trending/sources arrive as props from the CMS
-// read (same shapes); demo imports below are the throwaway seam —
-// search-svc/cart-svc swap one line each, callers never change.
 type AnyOverlay = ComponentType<Record<string, unknown>>;
 
 const lazyCache = new Map<string, LazyExoticComponent<AnyOverlay>>();
@@ -40,8 +39,6 @@ function loaderFor(variant: SearchOverlayId): (() => Promise<{ default: AnyOverl
 export function preloadSearchOverlay(variant: SearchOverlayId): void {
   const key = variant === "classic" ? "sheet" : variant;
   if (lazyCache.has(key)) return;
-  // Null loader means classic requested with no classic file — the sheet
-  // is the production fallback (documented; a Classic file flips this).
   const loader = loaderFor(key as SearchOverlayId) ?? loaderFor("sheet");
   if (!loader) return;
   lazyCache.set(key, lazy(loader));
@@ -65,8 +62,16 @@ export interface SearchMountProps {
  * Closed overlay mounts nothing (chunk + DOM both absent until open).
  */
 export default function SearchMount({ search, open, onClose }: SearchMountProps) {
-  const source = useMemo(() => createDemoSource(), []);
-  const quickAddPort = useMemo(() => createDemoQuickAdd(), []);
+  const router = useRouter();
+  const cart = useCart();
+  const refresh = cart.refresh;
+
+  const source = useMemo(() => createHttpSearchSource(), []);
+  const quickAddPort = useMemo(
+    () => createCartPort({ onAdded: () => void refresh() }),
+    [refresh],
+  );
+
   const live = useSearch(source);
   const recents = useRecentSearches();
   const quickAdd = useQuickAdd(quickAddPort);
@@ -83,10 +88,7 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
         ? search.editorial.editorialAnimation
         : search.palette.paletteAnimation;
 
-  const departments = useMemo(() => {
-    const cats = Array.from(new Set(DEMO_CATALOG.map((p) => p.category)));
-    return ["All", ...cats];
-  }, []);
+  const departments = useMemo(() => ["All", "Products"], []);
 
   // Two-phase close: closing flag plays the exit, unmount follows after
   // the resolved duration. Instant when motion is off.
@@ -105,11 +107,12 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
   function select(r: SearchResult) {
     recents.push(r.name);
     close();
+    if (r.url) {
+      router.push(r.url);
+    }
   }
 
-  // Notify demo (notifyOnQuickAdd default on): Toast follows addedIds,
-  // auto-dismisses in 3s. The assembler owns the effect — the Toast
-  // holds no timers itself.
+  // Notify on quick add
   useEffect(() => {
     if (variant !== "palette" || !search.palette.notifyOnQuickAdd) {
       addedCountRef.current = quickAdd.addedIds.length;
@@ -117,7 +120,7 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
     }
     if (quickAdd.addedIds.length > addedCountRef.current) {
       const id = quickAdd.addedIds[quickAdd.addedIds.length - 1];
-      const row = [...DEMO_CATALOG, ...live.results].find((p) => p.id === id);
+      const row = live.results.find((p) => p.id === id);
       setToast({ title: "Added to bag", message: row ? row.name : "" });
       const t = setTimeout(() => setToast(null), 3000);
       addedCountRef.current = quickAdd.addedIds.length;
@@ -138,59 +141,58 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
     dept: live.dept,
     departments,
     placeholder: search.placeholder,
-    activeIndex,
-    closing,
-    onQuery: (q: string) => {
-      live.setQuery(q);
-      setActiveIndex(0);
-    },
-    onDept: live.setDept,
-    onActive: setActiveIndex,
+    onQueryChange: live.setQuery,
+    onDeptChange: live.setDept,
     onSelect: select,
     onClose: close,
-    motion,
+    onClear: () => live.setQuery(""),
   };
 
-  // Per-variant props (registry erases types at the boundary; props are
-  // checked here at the call site — the documented cast point).
-  const props: Record<string, unknown> =
-    variant === "sheet"
-      ? { ...shared }
-      : variant === "editorial"
-        ? {
-            ...shared,
-            curated: DEMO_CATALOG,
-            theme: search.editorial,
-          }
-        : {
-            ...shared,
-            trending: DEMO_TRENDING,
-            recent: recents.recent,
-            curated: DEMO_CATALOG,
-            addedIds: quickAdd.addedIds,
-            pendingIds: quickAdd.pendingIds,
-            onQuickAdd: (r: SearchResult) => quickAdd.quickAdd(r.id),
-            onTrending: (t: string) => {
-              live.setQuery(t);
-              setActiveIndex(0);
-              recents.push(t);
-            },
-            onClearRecent: recents.clear,
-            theme: search.palette,
-          };
+  const overlayNode =
+    variant === "sheet" ? (
+      <LazyOverlay
+        {...shared}
+        motion={search.sheetAnimation}
+        onQuickAdd={(item: SearchResult) => quickAdd.quickAdd(item.id)}
+        addedIds={quickAdd.addedIds}
+        pendingIds={quickAdd.pendingIds}
+      />
+    ) : variant === "editorial" ? (
+      <LazyOverlay
+        {...shared}
+        motion={search.editorial.editorialAnimation}
+        activeIndex={activeIndex}
+        onActiveChange={setActiveIndex}
+        onQuickAdd={(item: SearchResult) => quickAdd.quickAdd(item.id)}
+        addedIds={quickAdd.addedIds}
+        pendingIds={quickAdd.pendingIds}
+      />
+    ) : (
+      <LazyOverlay
+        {...shared}
+        motion={search.palette.paletteAnimation}
+        settings={search.palette}
+        recents={recents.recent}
+        onClearRecents={recents.clear}
+        activeIndex={activeIndex}
+        onActiveChange={setActiveIndex}
+        onQuickAdd={(item: SearchResult) => quickAdd.quickAdd(item.id)}
+        addedIds={quickAdd.addedIds}
+        pendingIds={quickAdd.pendingIds}
+      />
+    );
 
   return (
     <>
-      <Suspense fallback={null}>
-        <LazyOverlay {...props} />
-      </Suspense>
-      <Toast
-        open={toast !== null}
-        title={toast?.title ?? ""}
-        message={toast?.message}
-        icon={<Icon name="check" size={16} />}
-        onClose={() => setToast(null)}
-      />
+      <Suspense fallback={null}>{overlayNode}</Suspense>
+      {toast ? (
+        <Toast
+          open={true}
+          title={toast.title}
+          message={toast.message}
+          onClose={() => setToast(null)}
+        />
+      ) : null}
     </>
   );
 }

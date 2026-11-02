@@ -14,6 +14,7 @@ export interface SearchResult {
   price: number;
   image: string;
   category: string;
+  url?: string;
   tag?: string;
   rating?: number;
   /** Review count beside the rating (palette rows). Optional — absent renders no count. */

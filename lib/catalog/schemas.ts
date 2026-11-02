@@ -92,6 +92,7 @@ export const productListItemSchema = z
     id: z.string(),
     name: z.string(),
     slug: z.string(),
+    status: z.enum(["active", "draft", "archived"]).default("active"),
     shortDescription: z.string().nullish(),
     price: z.number(),
     compareAtPrice: z.number().nullish(),
@@ -174,6 +175,7 @@ export const productDetailSchema = z
     sku: z.string().optional(),
     name: z.string(),
     slug: z.string(),
+    status: z.enum(["active", "draft", "archived"]).default("active"),
     shortDescription: z.string().nullish(),
     description: z.string().nullish(),
     price: z.number(),
@@ -214,6 +216,7 @@ export const categorySchema = z
     id: z.string(),
     name: z.string(),
     slug: z.string(),
+    status: z.enum(["active", "draft", "archived"]).default("active"),
     parentId: z.string().nullish(),
     description: z.string().nullish(),
     imageUrl: z.string().nullish(),
@@ -233,6 +236,7 @@ export const brandSchema = z
     id: z.string(),
     name: z.string(),
     slug: z.string(),
+    status: z.enum(["active", "draft", "archived"]).default("active"),
     logoUrl: z.string().nullish(),
     description: z.string().nullish(),
     isActive: z.boolean().optional(),
@@ -260,3 +264,5 @@ export type ProductOptionDto = z.infer<typeof productOptionSchema>;
 export type ProductOptionValueDto = z.infer<typeof productOptionValueSchema>;
 export type CatalogCategory = z.infer<typeof categorySchema>;
 export type CatalogBrand = z.infer<typeof brandSchema>;
+
+export type ProductStatus = "active" | "draft" | "archived";

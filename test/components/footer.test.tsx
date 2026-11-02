@@ -170,11 +170,11 @@ describe("FooterMount", () => {
     expect(container.querySelector('[data-face="minimal"]')).not.toBeNull();
   });
 
-  it("self-suppresses on auth paths, exactly like the navbar", () => {
+  it("renders on auth paths, keeping global chrome", () => {
     for (const path of ["/signin", "/signup", "/forgot", "/forgot/reset"]) {
       mockPath = path;
       const { container } = render(<FooterMount footer={CMS_FOOTER} />);
-      expect(container.firstChild, path).toBeNull();
+      expect(container.firstChild, path).not.toBeNull();
       cleanup();
     }
   });

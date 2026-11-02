@@ -7,6 +7,7 @@ import { fetchFooter } from "@/lib/cms/footer";
 import NavbarMount from "./_components/NavbarMount";
 import FooterMount from "./_components/FooterMount";
 import CartProvider from "./_components/CartProvider";
+import { WishlistProvider } from "./_components/WishlistProvider";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -58,9 +59,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" className={`${fraunces.variable} ${outfit.variable}`}>
       <body>
         <CartProvider>
-          <NavbarMount nav={nav} />
-          {children}
-          <FooterMount footer={footerResult.footer} />
+          <WishlistProvider>
+            <NavbarMount nav={nav} />
+            {children}
+            <FooterMount footer={footerResult.footer} />
+          </WishlistProvider>
         </CartProvider>
       </body>
     </html>

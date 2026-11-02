@@ -126,21 +126,20 @@ describe("Navbar", () => {
     expect(screen.queryByRole("button", { name: "Search" })).toBeNull();
   });
 
-  it("mounts account/wishlist as disabled previews; the cart is live (sf-051)", () => {
+  it("mounts account and wishlist as active triggers; the cart is live", () => {
     render(<Navbar {...BASE} />);
-    for (const name of ["Account (coming soon)", "Wishlist (coming soon)"]) {
+    for (const name of ["Account", "Wishlist"]) {
       const btn = screen.getByRole("button", { name }) as HTMLButtonElement;
-      expect(btn.disabled).toBe(true);
+      expect(btn.disabled).toBe(false);
     }
-    // Cart is no longer a preview — it renders enabled with the store's trigger.
     const cart = screen.getByRole("button", { name: "Cart" }) as HTMLButtonElement;
     expect(cart.disabled).toBe(false);
   });
 
   it("hides preview icons when their regions are off (sf-047)", () => {
     render(<Navbar {...BASE} regions={{ ...BASE.regions, account: false, wishlist: false, cart: false }} />);
-    expect(screen.queryByRole("button", { name: "Account (coming soon)" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Wishlist (coming soon)" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Account" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Wishlist" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Cart" })).toBeNull();
   });
 

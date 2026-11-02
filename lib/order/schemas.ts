@@ -172,3 +172,28 @@ export type CheckoutConfirmationDto = z.infer<typeof checkoutConfirmationSchema>
 export type CheckoutItemInput = z.infer<typeof checkoutItemInputSchema>;
 export type OrderItemRowDto = z.infer<typeof orderItemRowSchema>;
 export type OrderDto = z.infer<typeof orderSchema>;
+
+/* ── discount code validation ────────────────────────────────────────────── */
+
+export const validateDiscountCodeSchema = z
+  .object({
+    code: z.string().trim().min(1),
+    cartTotal: z.number().min(0),
+  })
+  .loose();
+
+export type ValidateDiscountCodeInput = z.infer<typeof validateDiscountCodeSchema>;
+
+export const discountValidationResultSchema = z
+  .object({
+    valid: z.boolean(),
+    code: z.string().optional(),
+    discountType: z.enum(["percent", "fixed"]).optional(),
+    value: z.number().optional(),
+    discount: z.number().optional(),
+    message: z.string().optional(),
+    id: z.string().optional(),
+  })
+  .loose();
+
+export type DiscountValidationResult = z.infer<typeof discountValidationResultSchema>;
