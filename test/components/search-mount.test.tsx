@@ -34,13 +34,17 @@ describe("SearchMount", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("renders the sheet variant on open", async () => {
+  it("renders the sheet variant on open and allows typing a query", async () => {
     render(<SearchMount search={SHEET_SEARCH} open onClose={() => {}} />);
     expect(await screen.findByRole("dialog", { name: "Search" })).not.toBeNull();
-    expect(screen.getByLabelText("Search products")).not.toBeNull();
+    const input = screen.getByLabelText("Search products");
+    expect(input).not.toBeNull();
+    expect(() => {
+      fireEvent.change(input, { target: { value: "linen" } });
+    }).not.toThrow();
   });
 
-  it("renders the editorial variant on open", async () => {
+  it("renders the editorial variant on open and allows typing a query", async () => {
     render(
       <SearchMount
         search={{ ...DEFAULT_NAV_SETTINGS.search, overlayVariant: "editorial" }}
@@ -48,10 +52,14 @@ describe("SearchMount", () => {
         onClose={() => {}}
       />,
     );
-    expect(await screen.findByLabelText("Search the archive")).not.toBeNull();
+    const input = await screen.findByLabelText("Search the archive");
+    expect(input).not.toBeNull();
+    expect(() => {
+      fireEvent.change(input, { target: { value: "sweater" } });
+    }).not.toThrow();
   });
 
-  it("renders the palette variant on open", async () => {
+  it("renders the palette variant on open and allows typing a query", async () => {
     render(
       <SearchMount
         search={{ ...DEFAULT_NAV_SETTINGS.search, overlayVariant: "palette" }}
@@ -59,7 +67,11 @@ describe("SearchMount", () => {
         onClose={() => {}}
       />,
     );
-    expect(await screen.findByLabelText("Search products, materials, or categories")).not.toBeNull();
+    const input = await screen.findByLabelText("Search products, materials, or categories");
+    expect(input).not.toBeNull();
+    expect(() => {
+      fireEvent.change(input, { target: { value: "boots" } });
+    }).not.toThrow();
   });
 
   it("falls back to sheet for classic (no classic production file)", async () => {

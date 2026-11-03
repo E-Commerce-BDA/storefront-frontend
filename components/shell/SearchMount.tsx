@@ -141,17 +141,22 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
     dept: live.dept,
     departments,
     placeholder: search.placeholder,
+    onQuery: live.setQuery,
     onQueryChange: live.setQuery,
+    onDept: live.setDept,
     onDeptChange: live.setDept,
     onSelect: select,
     onClose: close,
     onClear: () => live.setQuery(""),
+    closing,
   };
 
   const overlayNode =
     variant === "sheet" ? (
       <LazyOverlay
         {...shared}
+        activeIndex={activeIndex}
+        onActive={setActiveIndex}
         motion={search.sheetAnimation}
         onQuickAdd={(item: SearchResult) => quickAdd.quickAdd(item.id)}
         addedIds={quickAdd.addedIds}
@@ -160,8 +165,10 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
     ) : variant === "editorial" ? (
       <LazyOverlay
         {...shared}
+        theme={search.editorial}
         motion={search.editorial.editorialAnimation}
         activeIndex={activeIndex}
+        onActive={setActiveIndex}
         onActiveChange={setActiveIndex}
         onQuickAdd={(item: SearchResult) => quickAdd.quickAdd(item.id)}
         addedIds={quickAdd.addedIds}
@@ -170,11 +177,16 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
     ) : (
       <LazyOverlay
         {...shared}
-        motion={search.palette.paletteAnimation}
+        theme={search.palette}
         settings={search.palette}
+        motion={search.palette.paletteAnimation}
+        recent={recents.recent}
         recents={recents.recent}
+        onClearRecent={recents.clear}
         onClearRecents={recents.clear}
+        onTrending={(term: string) => live.setQuery(term)}
         activeIndex={activeIndex}
+        onActive={setActiveIndex}
         onActiveChange={setActiveIndex}
         onQuickAdd={(item: SearchResult) => quickAdd.quickAdd(item.id)}
         addedIds={quickAdd.addedIds}
