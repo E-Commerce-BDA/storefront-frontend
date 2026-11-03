@@ -113,4 +113,27 @@ describe("QuickViewDialog", () => {
     const addBtn = screen.getByRole("button", { name: "Out of stock" });
     expect(addBtn.hasAttribute("disabled")).toBe(true);
   });
+
+  it("preserves hook order across null to active product transitions", () => {
+    // Initial render with null product and closed state (mirrors initial ProductGridIsland state)
+    const { rerender } = render(
+      <QuickViewDialog product={null} open={false} onClose={vi.fn()} />,
+    );
+
+    // Transition to open with active product
+    expect(() => {
+      rerender(
+        <QuickViewDialog product={sampleProduct} open={true} onClose={vi.fn()} />,
+      );
+    }).not.toThrow();
+
+    expect(screen.getByRole("heading", { name: "Linen Shirt" })).not.toBeNull();
+
+    // Transition back to closed with null product
+    expect(() => {
+      rerender(
+        <QuickViewDialog product={null} open={false} onClose={vi.fn()} />,
+      );
+    }).not.toThrow();
+  });
 });

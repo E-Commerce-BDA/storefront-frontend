@@ -44,17 +44,18 @@ export default function QuickViewDialog({
     return resolveQuickViewSelection(product, selectedOptions);
   }, [product, selectedOptions]);
 
-  if (!product || !resolved) return null;
-
-  const productName = product.name ?? (product as { title?: string }).title ?? "Product";
-  const productImage = product.image ?? (product as { imageUrl?: string }).imageUrl ?? "";
+  const productName = product?.name ?? (product as { title?: string } | null)?.title ?? "Product";
+  const productImage = product?.image ?? (product as { imageUrl?: string } | null)?.imageUrl ?? "";
 
   const images = useMemo(() => {
+    if (!product) return [];
     if (product.images && product.images.length > 0) {
       return product.images;
     }
-    return [{ url: productImage, alt: productName }];
+    return productImage ? [{ url: productImage, alt: productName }] : [];
   }, [product, productImage, productName]);
+
+  if (!open || !product || !resolved) return null;
 
   const activeImageUrl =
     resolved.imageUrl || images[selectedImageIndex]?.url || productImage;
