@@ -41,6 +41,17 @@ describe("product grid style contract", () => {
     expect(css).toMatch(/\.sf-grid__cell::after\s*\{[^}]*pointer-events:\s*none/);
   });
 
+  it("never paints an opaque fill over the card in the quick-add state", () => {
+    // The ring is feedback; the fill must stay transparent so image/name/price
+    // remain readable. The --grid-*-bg hooks still allow a CMS tint on top.
+    expect(css).toMatch(
+      /\.sf-grid__cell\[data-added="true"\]::after\s*\{[^}]*background:\s*var\(--grid-added-bg,\s*transparent\)/,
+    );
+    expect(css).toMatch(
+      /\.sf-grid__cell\[data-pending="true"\]::after\s*\{[^}]*background:\s*var\(--grid-pending-bg,\s*transparent\)/,
+    );
+  });
+
   it("keeps no motion in the grid", () => {
     expect(gridCss).not.toMatch(/transition|animation/);
   });

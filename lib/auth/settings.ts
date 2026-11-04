@@ -267,7 +267,7 @@ const DEFAULT_ELEMENT = (size: number, weight: number, color: string, align: Tex
 
 const DEFAULT_STYLE_BODY = {
   layout: { mode: "split" as AuthMode, panelSide: "left" as PanelSide, ratio: "50-50" as SplitRatio, mobile: "stacked" as AuthMobile },
-  form: { surface: "white" as FormSurface, radius: 12, width: 400, elevation: "border" as FormElevation },
+  form: { surface: "white" as FormSurface, radius: 12, width: 400, elevation: "floating" as FormElevation },
   inputs: {
     bg: "#ffffff",
     border: "#dce8ee",
@@ -280,7 +280,7 @@ const DEFAULT_STYLE_BODY = {
     errorBorder: "#d92d20",
   },
   panel: {
-    bgMode: "gradient" as PanelBgMode,
+    bgMode: "image" as PanelBgMode,
     solid: "#0077b6",
     gradient: {
       type: "linear" as const,
@@ -291,10 +291,13 @@ const DEFAULT_STYLE_BODY = {
         { color: "#48cae4", at: 100 },
       ],
     },
-    imageUrl: "",
+    // Admin knob: any swap lands through resolveSettings (page > shared >
+    // global > builtin). Default reuses a seed ocean photo; veil below keeps
+    // overlaid copy legible.
+    imageUrl: "/media/seed/about-banner.png",
     imageFit: "cover" as ImageFit,
     imagePosition: "center",
-    overlay: 0,
+    overlay: 55,
     logoUrl: "",
     logoHeight: 28,
   },
@@ -308,10 +311,10 @@ const DEFAULT_STYLE_BODY = {
     labels: DEFAULT_ELEMENT(12, 600, "#0a2540", "left"),
   },
   content: {
-    headline: "",
-    sub: "",
-    bullets: "",
-    quote: "",
+    headline: "Welcome back to the shore.",
+    sub: "Sign in to pick up where you left off — your cart, wishlist, and orders, all in one place.",
+    bullets: "<ul><li>Track orders and returns</li><li>Save your wishlist</li><li>Checkout faster</li></ul>",
+    quote: "Members check out 2x faster.",
     microcopy: "",
     formTitle: "",
     footerLinks: [] as { label: string; href: string }[],

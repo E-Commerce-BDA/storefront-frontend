@@ -19,7 +19,7 @@ describe("auth style contract", () => {
     for (const prop of [
       /background:\s*var\(--auth-form-bg/,
       /border-radius:\s*var\(--auth-form-radius/,
-      /background:\s*var\(--auth-panel-bg/,
+      /background-image:\s*var\(--auth-panel-bg/,
       /font-size:\s*var\(--auth-headline-size/,
       /font-size:\s*var\(--auth-form-title-size/,
       /opacity:\s*var\(--auth-panel-overlay-opacity/,

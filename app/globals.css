@@ -778,6 +778,14 @@ body {
   box-shadow: var(--auth-form-shadow, none);
   padding: 28px;
 }
+/* In a split, the grid card is the only frame — flatten the inner card so
+   the form column doesn't double-border/double-shadow inside it. */
+.sf-auth__split .sf-auth__card {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+}
 .sf-auth__fields {
   display: grid;
   gap: 12px;
@@ -790,6 +798,8 @@ body {
 .sf-auth__split {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  min-height: min(640px, calc(100vh - 180px));
   background: var(--auth-form-bg, #ffffff);
   border: var(--auth-form-border, 1px solid #dce8ee);
   border-radius: var(--auth-form-radius, 12px);
@@ -810,8 +820,12 @@ body {
 }
 .sf-auth__panel {
   position: relative;
-  background: var(--auth-panel-bg);
-  padding: 36px 32px;
+  background-color: var(--color-ink);
+  background-image: var(--auth-panel-bg);
+  background-size: var(--auth-panel-image-fit, cover);
+  background-position: var(--auth-panel-image-position, center);
+  background-repeat: no-repeat;
+  padding: 40px 36px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -835,6 +849,7 @@ body {
   align-self: flex-start;
 }
 .sf-auth__headline {
+  font-family: var(--font-display);
   font-size: var(--auth-headline-size, 30px);
   font-weight: var(--auth-headline-weight, 700);
   color: var(--auth-headline-color, #ffffff);
@@ -857,6 +872,31 @@ body {
   text-align: var(--auth-bullets-align, left);
   display: grid;
   gap: 8px;
+}
+/* Admin bullets arrive as allowlisted <ul><li>. Give them foam check markers
+   (Tailwind preflight strips default list-style) so the panel reads as value
+   props rather than bare text. */
+.sf-auth__bullets ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sf-auth__bullets li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.sf-auth__bullets li::before {
+  content: "";
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 9999px;
+  background: var(--color-accent-50) center / 12px no-repeat;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230077b6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
 }
 .sf-auth__quote {
   font-size: var(--auth-quote-size, 13px);
@@ -911,9 +951,12 @@ body {
   margin: 0;
 }
 .sf-auth__footer {
-  margin-top: 16px;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
   font-size: 13px;
   color: var(--text-muted);
+  text-align: center;
 }
 @media (max-width: 640px) {
   .sf-auth__split[data-mobile="stacked"] {
@@ -3022,16 +3065,37 @@ body {
   border: 2px dashed transparent;
   border-radius: var(--grid-cell-radius, var(--radius-card));
 }
-/* Explicit solids, never `opacity` — a dimmed card loses its own contrast and
-   a shopper cannot read a price through a veil. */
+/* A ring, never a veil: the cell border carries the quick-add state, while the
+   fill defaults to transparent so image/name/price stay fully readable. The
+   --grid-*-bg hooks remain so an admin can still layer a CMS tint on top. */
 .sf-grid__cell[data-pending="true"]::after {
   border-color: var(--grid-pending-border, var(--border));
-  background: var(--grid-pending-bg, var(--color-section-bg));
+  background: var(--grid-pending-bg, transparent);
 }
 .sf-grid__cell[data-added="true"]::after {
   border-style: solid;
   border-color: var(--grid-added-border, var(--color-success));
-  background: var(--grid-added-bg, var(--color-success-bg));
+  background: var(--grid-added-bg, transparent);
+}
+/* A small corner check makes "added" obvious without covering the product. */
+.sf-grid__cell[data-added="true"]::before {
+  content: "\2713";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 6;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--grid-added-badge-bg, var(--color-success));
+  color: var(--grid-added-badge-text, var(--color-button-text));
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
 }
 
 /* HeroSection — one static slide (components/sections/HeroSection,

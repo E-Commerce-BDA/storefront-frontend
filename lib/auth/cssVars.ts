@@ -93,6 +93,8 @@ export function authCssVars(style: ResolvedAuthStyle): Record<string, string> {
     "--auth-input-focus-shadow": `0 0 0 ${style.inputs.focusRingWidth}px ${style.inputs.focusRing}`,
     "--auth-input-error-border": style.inputs.errorBorder,
     "--auth-panel-bg": panelBackground(style),
+    "--auth-panel-image-fit": style.panel.imageFit,
+    "--auth-panel-image-position": style.panel.imagePosition,
     "--auth-panel-overlay-opacity": String(style.panel.overlay / 100),
     "--auth-panel-logo-height": `${style.panel.logoHeight}px`,
     "--auth-font": FONT_STACKS[style.typography.family],

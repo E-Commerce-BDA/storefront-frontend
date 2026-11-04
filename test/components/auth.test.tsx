@@ -25,7 +25,7 @@ describe("AuthPage", () => {
     const root = screen.getByText("inner").parentElement as HTMLElement;
     expect(root.getAttribute("data-mode")).toBe("centered");
     expect(root.style.getPropertyValue("--auth-form-radius")).toBe("12px");
-    expect(root.style.getPropertyValue("--auth-panel-bg")).toContain("linear-gradient");
+    expect(root.style.getPropertyValue("--auth-panel-bg")).toContain("url(");
   });
 });
 

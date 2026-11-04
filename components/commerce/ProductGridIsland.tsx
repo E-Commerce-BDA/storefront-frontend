@@ -29,7 +29,7 @@
  * vocabularies straight: `quickAdd(id)` for the network, url-keyed sets for the
  * paint.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProductGrid from "@/components/commerce/ProductGrid";
 import QuickViewDialog from "@/components/commerce/QuickViewDialog";
@@ -67,6 +67,34 @@ export default function ProductGridIsland({
   );
   const { addedIds, pendingIds, quickAdd } = useQuickAdd(port);
 
+  // The ring/check is a confirmation, not a permanent banner: useQuickAdd keeps
+  // addedIds until the owner clears them, so the island holds a short-lived
+  // flash set that decays ~1.6s after each add. The dumb grid and the shared
+  // hook API stay untouched — only the ids we forward to the cell change.
+  const FLASH_MS = 1600;
+  const [flashIds, setFlashIds] = useState<string[]>([]);
+  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  useEffect(() => {
+    for (const id of addedIds) {
+      if (timersRef.current.has(id)) continue;
+      setFlashIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      const timer = setTimeout(() => {
+        setFlashIds((prev) => prev.filter((x) => x !== id));
+        timersRef.current.delete(id);
+      }, FLASH_MS);
+      timersRef.current.set(id, timer);
+    }
+  }, [addedIds]);
+
+  useEffect(() => {
+    const timers = timersRef.current;
+    return () => {
+      timers.forEach((t) => clearTimeout(t));
+      timers.clear();
+    };
+  }, []);
+
   const cellKeyById = useMemo(() => {
     const map = new Map<string, string>();
     for (const item of items) map.set(item.id, item.url ?? item.id);
@@ -84,7 +112,7 @@ export default function ProductGridIsland({
         empty={empty}
         label={label}
         pendingIds={toCellKeys(pendingIds)}
-        addedIds={toCellKeys(addedIds)}
+        addedIds={toCellKeys(flashIds)}
         wishlistedIds={wishlist.ids}
         onOpen={(product) => {
           if (product.url) router.push(product.url);
