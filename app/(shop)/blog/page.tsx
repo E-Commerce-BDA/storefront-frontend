@@ -26,9 +26,9 @@ import { loadPublishedBlogs } from "@/lib/cms/loadDocuments";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Journal — foreafcbeta",
+  title: "Journal — Next.7",
   description:
-    "Field notes, buying guides and stories from the foreafcbeta team. Published by the store, straight from the CMS.",
+    "Field notes, buying guides and stories from the Next.7 team. Published by the store, straight from the CMS.",
   alternates: { canonical: "/blog" },
 };
 

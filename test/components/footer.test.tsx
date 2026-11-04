@@ -118,7 +118,7 @@ describe("Footer — the CMS face", () => {
     );
   });
 
-  it("carries platform as state, not as a fake glyph", () => {
+  it("paints a brand glyph per platform, keeping the label as the accessible name", () => {
     const { container } = render(<Footer footer={CMS_FOOTER} />);
     const rows = container.querySelectorAll(".sf-footer__social li");
 
@@ -126,7 +126,20 @@ describe("Footer — the CMS face", () => {
       "instagram",
       "youtube",
     ]);
-    expect(rows[0].textContent).toBe("Instagram");
+    // A known platform is an inline SVG mark, not the platform name in text.
+    expect(rows[0].querySelector("svg")).not.toBeNull();
+    expect(rows[0].querySelector("a")?.getAttribute("aria-label")).toBe("Instagram");
+    // The glyph is decorative, so the link itself carries no text node.
+    expect(rows[0].textContent).toBe("");
+  });
+
+  it("falls back to the label text for an unknown social platform", () => {
+    const { container } = render(
+      <Footer footer={{ social: [{ platform: "mastodon", label: "Mastodon", url: "https://mastodon.social/" }] }} />,
+    );
+    const row = container.querySelector(".sf-footer__social li");
+    expect(row?.querySelector("svg")).toBeNull();
+    expect(row?.querySelector("a")?.textContent).toBe("Mastodon");
   });
 
   it("falls back to the label for an unknown payment key", () => {

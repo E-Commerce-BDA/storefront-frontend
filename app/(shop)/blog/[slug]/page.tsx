@@ -111,7 +111,16 @@ export default async function BlogPostPage({
 
       {blog.coverUrl !== undefined && blog.coverUrl !== "" ? (
         <figure className="sf-post__cover">
-          <img className="sf-post__cover-img" src={blog.coverUrl} alt="" loading="lazy" />
+          {/* Eager, but unimportant: the CSS gives this image a fixed box, so
+              lazy-loading bought no layout stability and only left a grey band
+              where the cover belongs, just above the first line of prose. */}
+          <img
+            className="sf-post__cover-img"
+            src={blog.coverUrl}
+            alt=""
+            fetchPriority="low"
+            decoding="async"
+          />
         </figure>
       ) : null}
 

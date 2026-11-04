@@ -1,5 +1,6 @@
 import type { Footer } from "@ecom/contracts";
 import PaymentIcon from "@/components/shell/PaymentIcon";
+import SocialIcon from "@/components/shell/SocialIcon";
 
 /**
  * Footer — the global link shell, from cms-svc — sf-062
@@ -23,9 +24,11 @@ import PaymentIcon from "@/components/shell/PaymentIcon";
  *   would add a client router to a server-only shell for no benefit.
  * - Anything absolute is external by definition and gets
  *   `rel="noopener noreferrer"`.
- * - `social[].platform` becomes `data-platform` and nothing else: an icon sprite
- *   is a stylesheet decision, and drawing a fake glyph for a network we have no
- *   artwork for is exactly the invented content this wave refuses.
+ * - `social[].platform` becomes `data-platform` and drives a `SocialIcon`: a
+ *   known network paints a committed monochrome glyph (inheriting the footer's
+ *   text color), and an unknown one falls back to its label — the same
+ *   fail-closed rule `PaymentIcon` follows, so a new link is never a blank box.
+ *   The glyph is decorative; the link's accessible name is `social[].label`.
  * - Payment keys are platform strings (`visa`, `gpay`) drawn from the CMS footer
  *   document; `PaymentIcon` maps each to a committed brand mark and falls back
  *   to the label for an unknown key. They sit in a single horizontal row on the
@@ -137,8 +140,12 @@ export default function Footer({ footer, className = "" }: FooterProps) {
             <ul className="sf-footer__social" role="list">
               {social.map((link) => (
                 <li key={link.platform} data-platform={link.platform}>
-                  <a href={link.url} rel="noopener noreferrer" target="_blank">
-                    {link.label}
+                  <a href={link.url} rel="noopener noreferrer" target="_blank" aria-label={link.label}>
+                    <SocialIcon
+                      platform={link.platform}
+                      label={link.label}
+                      className="sf-footer__social-icon"
+                    />
                   </a>
                 </li>
               ))}

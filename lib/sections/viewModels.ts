@@ -95,11 +95,13 @@ export interface CategoryShowcaseViewModel {
 
 export interface BrandCellModel {
   id: string;
-  /** Admin-entered name beside the logo (the per-item `label` switch); absent
-   * when the admin left it off — the logo then stands alone. */
+  /** Admin's override of the displayed name (the per-item `label`); when absent
+   * the cell shows `name`. It never renders as a second text beside the name. */
   label?: string;
+  /** Admin-customizable brand mark, painted as a small icon beside the name. */
   logo?: string;
-  /** Wordmark fallback so a logoless brand is never an empty cell. */
+  /** The brand's real name — always shown (single line), so a logoless brand is
+   * never an empty cell. */
   name: string;
   href?: string;
 }

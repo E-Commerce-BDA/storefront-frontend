@@ -45,10 +45,13 @@ describe("variant selector style contract", () => {
   it("keeps unavailable values solid — no opacity, no removal", () => {
     expect(css).toMatch(/\.sf-variants__value\[aria-disabled="true"\]\s*\{[^}]*cursor:\s*not-allowed/);
     expect(variantsCss).not.toMatch(/opacity/);
-    // A dead swatch keeps the admin's colour and gains a ring instead of a wash.
+    // A dead swatch keeps the admin's colour and is lightened by a white wash
+    // drawn in a ::after — a ring read as a spinner, and the `opacity` property
+    // would fade the hue toward the page. Neither is used.
     expect(css).toMatch(
-      /\.sf-variants__value\[data-display="swatch"\]\[aria-disabled="true"\]\s*\{[^}]*outline:\s*2px dashed/,
+      /\.sf-variants__value\[data-display="swatch"\]\[aria-disabled="true"\]::after\s*\{[^}]*background:\s*var\(--variants-disabled-wash/,
     );
+    expect(css).not.toMatch(/outline:\s*2px dashed/);
   });
 
   it("keeps a visible focus ring and no motion", () => {

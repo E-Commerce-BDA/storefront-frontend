@@ -34,23 +34,31 @@ const section = () => document.querySelector(".sf-strip") as HTMLElement;
 const cells = () => Array.from(document.querySelectorAll(".sf-strip__cell"));
 
 describe("BrandStripSection", () => {
-  it("paints the logo with the brand name as its alt and the cell as a real link", () => {
+  it("paints the name on one line with the logo as a decorative icon beside it", () => {
     render(<BrandStripSection model={strip()} />);
-    const img = screen.getByRole("img", { name: "Northwind" }) as HTMLImageElement;
-    expect(img.getAttribute("src")).toBe("/media/seed/brand-1.png");
-    expect(img.getAttribute("loading")).toBe("lazy");
-    expect(screen.getByRole("link", { name: /Northwind/ }).getAttribute("href")).toBe(
+    const first = cells()[0] as HTMLElement;
+    // The wordmark carries the name, and the link's accessible name is that text.
+    expect(first.querySelector(".sf-strip__wordmark")?.textContent).toBe("Northwind");
+    expect(screen.getByRole("link", { name: "Northwind" }).getAttribute("href")).toBe(
       "/products?brand=northwind",
     );
+    // The logo is an admin-customizable mark beside the name, not its replacement.
+    const img = first.querySelector(".sf-strip__logo") as HTMLImageElement;
+    expect(img.getAttribute("src")).toBe("/media/seed/brand-1.png");
+    expect(img.getAttribute("alt")).toBe("");
+    expect(img.getAttribute("aria-hidden")).toBe("true");
   });
 
-  it("falls back to a wordmark so a logoless brand is never an empty cell", () => {
+  it("shows the name alone for a logoless brand, so a cell is never empty", () => {
     render(<BrandStripSection model={strip()} />);
-    expect(screen.getByRole("link", { name: /Cove/ }).querySelector(".sf-strip__wordmark")?.textContent).toBe("Cove");
+    const second = cells()[1] as HTMLElement;
+    expect(second.querySelector(".sf-strip__wordmark")?.textContent).toBe("Cove");
+    expect(second.querySelector(".sf-strip__logo")).toBeNull();
+    // Only the brand that has artwork paints an icon.
     expect(document.querySelectorAll(".sf-strip__logo")).toHaveLength(1);
   });
 
-  it("shows the admin's label beside the logo, and only there", () => {
+  it("uses the admin's label as the displayed name override, with the logo beside it", () => {
     const model = strip({
       brands: [
         { id: "b1", name: "Northwind", logo: "/a.png", label: "Northwind Outdoor", href: "/products?brand=northwind" },
@@ -59,10 +67,13 @@ describe("BrandStripSection", () => {
     });
     render(<BrandStripSection model={model} />);
     const first = cells()[0] as HTMLElement;
-    expect(first.dataset.named).toBe("true");
-    expect(first.querySelector(".sf-strip__label")?.textContent).toBe("Northwind Outdoor");
-    expect((cells()[1] as HTMLElement).dataset.named).toBe("false");
-    expect(document.querySelectorAll(".sf-strip__label")).toHaveLength(1);
+    // The label replaces the name text (never a second string beside it)…
+    expect(first.querySelector(".sf-strip__wordmark")?.textContent).toBe("Northwind Outdoor");
+    expect(first.querySelectorAll(".sf-strip__wordmark")).toHaveLength(1);
+    // …and the logo is the icon next to it.
+    expect(first.querySelector(".sf-strip__logo")).not.toBeNull();
+    // A brand with no label falls back to its real name.
+    expect((cells()[1] as HTMLElement).querySelector(".sf-strip__wordmark")?.textContent).toBe("Cove");
   });
 
   it("keeps one copy of the track and no duration when the strip is static", () => {

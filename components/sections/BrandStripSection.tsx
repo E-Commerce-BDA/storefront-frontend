@@ -12,12 +12,12 @@ import { marqueeDurationSeconds } from "@/lib/sections/marquee";
  * can drift from the other without a test noticing.
  *
  * The two rules that came from the product side, not the CSS side:
- * - **A label is the admin's per-brand choice, not a global toggle.** The logo
- *   and the name sit side by side when `items[].label` was filled in; with no
- *   label the logo stands alone. (`data-named` is the state hook the stylesheet
- *   uses to space them — a state, so it lives in an attr, not a class.)
- * - **A brand with no logo is never an empty cell.** The name paints as a
- *   wordmark instead, which is the honest face of "this brand has no artwork".
+ * - **The brand name always reads on one line.** The wordmark is the cell's
+ *   anchor; `items[].label` is the admin's optional override of that name, so a
+ *   brand is never shown twice (the old label-beside-wordmark duplicated it).
+ * - **The logo is an admin-customizable mark beside the name, not a replacement
+ *   for it.** When `brand.logo` is set it paints as a small icon next to the
+ *   wordmark; with no artwork the name stands alone (never an empty cell).
  *
  * `prefers-reduced-motion` renders the strip static (CSS), the duplicated copy
  * is `aria-hidden` (a screen reader would read every brand twice), and pausing
@@ -31,29 +31,26 @@ export interface BrandStripSectionProps {
 function BrandCell({ brand, ariaHidden }: { brand: BrandCellModel; ariaHidden: boolean }) {
   const inner = (
     <>
+      <span className="sf-strip__wordmark">{brand.label ?? brand.name}</span>
       {brand.logo !== undefined ? (
-        <img className="sf-strip__logo" src={brand.logo} alt={brand.name} loading="lazy" />
-      ) : (
-        <span className="sf-strip__wordmark">{brand.name}</span>
-      )}
-      {brand.label !== undefined ? <span className="sf-strip__label">{brand.label}</span> : null}
+        // The admin-customizable brand mark sits beside the name as a decorative
+        // icon; the wordmark already names the brand for assistive tech.
+        <img className="sf-strip__logo" src={brand.logo} alt="" aria-hidden="true" loading="lazy" />
+      ) : null}
     </>
   );
 
-  // "Has a name beside the logo" is a state, so it is an attr — the stylesheet
-  // spaces the pair from `[data-named="true"]`, never from a modifier class.
   return brand.href !== undefined ? (
     <a
       className="sf-strip__cell"
       href={brand.href}
-      data-named={brand.label !== undefined}
       aria-hidden={ariaHidden || undefined}
       tabIndex={ariaHidden ? -1 : undefined}
     >
       {inner}
     </a>
   ) : (
-    <span className="sf-strip__cell" data-named={brand.label !== undefined} aria-hidden={ariaHidden || undefined}>
+    <span className="sf-strip__cell" aria-hidden={ariaHidden || undefined}>
       {inner}
     </span>
   );

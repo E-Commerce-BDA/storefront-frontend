@@ -39,12 +39,27 @@ describe("blog/legal style contract", () => {
     }
   });
 
-  it("measures the text, never the page", () => {
+  it("measures the article, but runs the list full-width — never the legal page", () => {
     expect(css).toMatch(/\.sf-prose\s*\{[^}]*max-width:\s*var\(--prose-measure/);
     expect(css).toMatch(/\.sf-post__title[^}]*max-width:\s*var\(--doc-title-measure/);
-    // The article/page wrappers carry no max-width of their own.
-    expect(css).not.toMatch(/\.sf-post\s*\{[^}]*max-width/);
+    // A legal page carries no column of its own: only the running line is capped.
     expect(css).not.toMatch(/\.sf-page\s*\{[^}]*max-width/);
+    // The blog article takes a centred column (the shopper asked for the post in
+    // the middle of the page) — through a var, never a raw number.
+    expect(css).toMatch(/\.sf-post\s*\{[^}]*max-width:\s*var\(--doc-measure/);
+    expect(css).toMatch(/\.sf-post\s*\{[^}]*margin-inline:\s*auto/);
+    // The /blog list is the opposite ask: the grid runs the full shell width, so
+    // it carries no max-width of its own.
+    expect(css).not.toMatch(/\.sf-blog__grid\s*\{[^}]*max-width/);
+  });
+
+  it("keeps the post cover a banner, not a page-swallowing hero", () => {
+    // A fixed box, not `height: auto`: these covers ship no width/height attrs,
+    // so an auto height is 0 until the file decodes and the article jumps.
+    expect(css).toMatch(/\.sf-post__cover-img\s*\{[^}]*height:\s*var\(--post-cover-height/);
+    expect(css).toMatch(/\.sf-post__cover-img\s*\{[^}]*object-fit:\s*cover/);
+    // In-content figures and legal-page images still flow at their natural ratio.
+    expect(css).toMatch(/\.sf-post__img[^}]*height:\s*auto/);
   });
 
   it("plain post/page paragraphs honour line breaks without an HTML sink", () => {
