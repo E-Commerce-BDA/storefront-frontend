@@ -95,7 +95,7 @@ export default function PurchasePanel({
   }
 
   return (
-    <div className="grid gap-8 md:grid-cols-2">
+    <div className="sf-pdp">
       <Gallery images={images} activeIndex={activeIndex} onIndexChange={setActiveIndex} />
 
       <div className="flex flex-col gap-5">

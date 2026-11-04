@@ -6,7 +6,7 @@ import SectionRenderer from "@/components/sections/SectionRenderer";
 import { catalogClient } from "@/lib/catalog/client";
 import { cmsBaseUrl, createCmsClient } from "@/lib/cms/client";
 import { fromCatalogList } from "@/lib/commerce/fromCatalog";
-import { toGalleryImages } from "@/lib/commerce/gallery";
+import { GALLERY_MAX_IMAGES, toGalleryImages } from "@/lib/commerce/gallery";
 import { buildProductJsonLd } from "@/lib/commerce/jsonLd";
 import { resolveSections } from "@/lib/sections/resolveSections";
 import type { BreadcrumbItem } from "@/lib/shell/pageHeader";
@@ -140,7 +140,7 @@ export default async function ProductPage({
       <PurchasePanel
         productId={product.id}
         name={product.name}
-        images={toGalleryImages(product.images, product.name)}
+        images={toGalleryImages(product.images, product.name).slice(0, GALLERY_MAX_IMAGES)}
         options={product.options}
         variants={product.variants}
         price={displayed}

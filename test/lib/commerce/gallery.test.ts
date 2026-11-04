@@ -6,7 +6,7 @@
  */
 import { describe, expect, it } from "vitest";
 import type { ProductImageDto } from "@/lib/catalog/schemas";
-import { clampIndex, stepIndex, toGalleryImages } from "@/lib/commerce/gallery";
+import { clampIndex, stepIndex, toGalleryImages, GALLERY_MAX_IMAGES } from "@/lib/commerce/gallery";
 
 function image(overrides: Partial<ProductImageDto> = {}): ProductImageDto {
   return { url: "a.jpg", alt: "A", ...overrides } as ProductImageDto;
@@ -85,5 +85,11 @@ describe("clampIndex", () => {
   it("answers 0 for an empty gallery or an unusable index", () => {
     expect(clampIndex(2, 0)).toBe(0);
     expect(clampIndex(Number.NaN, 3)).toBe(0);
+  });
+});
+
+describe("GALLERY_MAX_IMAGES", () => {
+  it("caps the PDP thumb rail at six frames", () => {
+    expect(GALLERY_MAX_IMAGES).toBe(6);
   });
 });

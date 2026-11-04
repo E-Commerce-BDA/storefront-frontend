@@ -2844,6 +2844,13 @@ body {
 .sf-qty[data-pending="true"] .sf-qty__input {
   color: var(--qty-pending-text, var(--text-muted));
 }
+/* PDP buy-box: the stepper is one compact control, not a full-width field.
+   The info column is a flex `column` whose default `align-items: stretch`
+   widens this inline-flex row to the whole column, so pin it to its content
+   width. Cart lines live in a different container and keep their own face. */
+.sf-pdp .sf-qty {
+  align-self: flex-start;
+}
 
 /* EmptyState — the one "nothing here" face (components/ui/EmptyState,
    commerce.md §1). Glyph wash, title and body resolve through --empty-* vars
@@ -2882,6 +2889,20 @@ body {
 }
 .sf-empty__action {
   margin-top: 24px;
+}
+
+/* PDP shell split (app/(shop)/_components/PurchasePanel): gallery column vs
+   info column. 3fr / 2fr == 60 / 40 on desktop, single column below. The split
+   is a var so an admin retheme needs no code. */
+.sf-pdp {
+  display: grid;
+  gap: var(--pdp-gap, 32px);
+  grid-template-columns: 1fr;
+}
+@media (min-width: 768px) {
+  .sf-pdp {
+    grid-template-columns: var(--pdp-gallery-col, 3fr) var(--pdp-info-col, 2fr);
+  }
 }
 
 /* Gallery — one frame plus a thumb rail (components/commerce/Gallery,
@@ -3932,20 +3953,36 @@ body {
   flex-wrap: wrap;
   gap: 16px;
 }
-.sf-footer__payments {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+/* The legal links (Privacy/Terms) now live up in the meta row beside the
+   address; push them to the right edge so they read as a separate cluster. */
+.sf-footer__meta .sf-footer__legal-nav {
   margin-left: auto;
 }
+.sf-footer__payments {
+  /* One horizontal row, never a wrapped column — the bottom bar's right edge is
+     wide enough for the marks, and a stacked rail looked broken. */
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--footer-pay-gap, 8px);
+}
 .sf-footer__pay {
-  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--footer-pay-icon-height, 22px);
+  padding: 2px 6px;
   border: 1px solid var(--footer-pay-border, rgba(255, 255, 255, 0.28));
   border-radius: 6px;
   font-size: var(--footer-pay-size, 11px);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--footer-pay-text, var(--color-accent-50));
+}
+.sf-footer__pay-img {
+  height: 100%;
+  width: auto;
+  display: block;
 }
 .sf-footer__legal {
   display: flex;

@@ -197,7 +197,7 @@ export default function QuickViewDialog({
             {product.options && product.options.length > 0 ? (
               <div className="grid gap-3 pt-2">
                 {product.options.map((opt) => (
-                  <div key={opt.name} className="grid gap-1.5">
+                  <div key={opt.id ?? opt.name} className="grid gap-1.5">
                     <span className="text-xs font-medium text-[var(--text-muted)]">
                       {opt.name}:{" "}
                       <strong className="text-[var(--color-ink)]">

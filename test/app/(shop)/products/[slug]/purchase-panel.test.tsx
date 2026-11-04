@@ -113,6 +113,19 @@ describe("PurchasePanel", () => {
     expect(add).toHaveBeenCalledWith("p1", { variantId: "v-blue", qty: 2 });
   });
 
+  it("renders the variant selector when the product carries options", () => {
+    const { container } = renderPanel();
+    expect(container.querySelector(".sf-variants")).not.toBeNull();
+    expect(container.querySelectorAll(".sf-variants__value").length).toBeGreaterThan(0);
+  });
+
+  it("paints the buy box on the sf-pdp shell with a compact stepper", () => {
+    const { container } = renderPanel();
+    // The 60/40 split root and the stepper that must not stretch to full width.
+    expect(container.querySelector(".sf-pdp")).not.toBeNull();
+    expect(container.querySelector(".sf-pdp .sf-qty")).not.toBeNull();
+  });
+
   it("refuses to add an out-of-stock product", () => {
     renderPanel({ variants: [], options: [], stock: 0 });
     expect(screen.queryByText("Out of stock")).not.toBeNull();

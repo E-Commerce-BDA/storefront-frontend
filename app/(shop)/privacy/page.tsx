@@ -13,7 +13,7 @@ export const revalidate = 300;
 const route = createCmsPageRoute({
   slug: "privacy",
   title: "Privacy policy",
-  description: "What foreafcbeta collects, why we collect it, and how to ask us to remove it.",
+  description: "What Next.7 collects, why we collect it, and how to ask us to remove it.",
 });
 
 export const generateMetadata = route.generateMetadata;

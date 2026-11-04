@@ -365,7 +365,7 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
     if (isSwatch) {
       return (
         <div
-          key={opt.name}
+          key={opt.id ?? opt.name}
           className="sf-productcard__swatches"
           role="radiogroup"
           aria-label={`Options for ${opt.name}`}
@@ -421,7 +421,7 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
 
     return (
       <div
-        key={opt.name}
+        key={opt.id ?? opt.name}
         className="sf-productcard__pills"
         role="radiogroup"
         aria-label={`Options for ${opt.name}`}

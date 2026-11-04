@@ -13,7 +13,7 @@ export const revalidate = 300;
 
 const route = createCmsPageRoute({
   slug: "about",
-  title: "About foreafcbeta",
+  title: "About Next.7",
   description: "Who we are, how we pick what to stock, and how to reach the team.",
 });
 

@@ -44,10 +44,10 @@ const CMS_FOOTER: FooterDocument = {
   ],
   contact: { email: "help@foreafcbeta.test", phone: "+91 90000 00000", address: "Surat, Gujarat" },
   logo: "/media/seed/footer/logo.svg",
-  wordmark: "foreafcbeta",
+  wordmark: "Next.7",
   tagline: "Everything for every day.",
-  copyright: "© 2026 foreafcbeta. All rights reserved.",
-  paymentIcons: ["visa", "mastercard", "upi"],
+  copyright: "© 2026 Next.7. All rights reserved.",
+  paymentIcons: ["visa", "mastercard", "gpay"],
 };
 
 let mockPath = "/";
@@ -68,10 +68,22 @@ describe("Footer — the CMS face", () => {
     expect(screen.getByRole("navigation", { name: "Shop" })).not.toBeNull();
     expect(screen.getByRole("heading", { name: "Company" })).not.toBeNull();
     expect(screen.getByText("Everything for every day.")).not.toBeNull();
-    expect(screen.getByText("© 2026 foreafcbeta. All rights reserved.")).not.toBeNull();
+    expect(screen.getByText("© 2026 Next.7. All rights reserved.")).not.toBeNull();
     // Column titles are the admin's words, not a heading hierarchy claim.
     expect(container.querySelectorAll(".sf-footer__col")).toHaveLength(2);
     expect(container.querySelectorAll(".sf-footer__pay")).toHaveLength(3);
+    // Payments are one horizontal row in the bottom bar, sharing it with the
+    // copyright (which anchors the left), and a known key is a real mark.
+    const payments = container.querySelector(".sf-footer__payments");
+    expect(payments?.closest(".sf-footer__legal")).not.toBeNull();
+    expect(payments?.parentElement?.querySelector(".sf-footer__copyright")).not.toBeNull();
+    // The legal links moved up into the meta row, on the address line.
+    expect(
+      container.querySelector(".sf-footer__legal-nav")?.closest(".sf-footer__meta"),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('.sf-footer__pay[data-icon="visa"] img')?.getAttribute("src"),
+    ).toBe("/media/pay/visa.svg");
     // No invented rows: the footer has six columns of data or zero extra ones.
     expect(container.querySelectorAll(".sf-footer__col-title")).toHaveLength(2);
   });
@@ -117,6 +129,13 @@ describe("Footer — the CMS face", () => {
     expect(rows[0].textContent).toBe("Instagram");
   });
 
+  it("falls back to the label for an unknown payment key", () => {
+    const { container } = render(<Footer footer={{ paymentIcons: ["amex"] }} />);
+    const chip = container.querySelector('.sf-footer__pay[data-icon="amex"]');
+    expect(chip?.querySelector("img")).toBeNull();
+    expect(chip?.textContent).toBe("amex");
+  });
+
   it("renders an empty document as a shell, not a crash", () => {
     const { container } = render(<Footer footer={{}} />);
 
@@ -125,7 +144,7 @@ describe("Footer — the CMS face", () => {
     expect(container.querySelector(".sf-footer__social")).toBeNull();
     expect(container.querySelector(".sf-footer__legal-nav")).toBeNull();
     // The wordmark is the only thing always worth showing, and it has a real name.
-    expect(container.querySelector(".sf-footer__wordmark")?.textContent).toBe("foreafcbeta");
+    expect(container.querySelector(".sf-footer__wordmark")?.textContent).toBe("Next.7");
   });
 
   it("omits an absent logo rather than a broken image", () => {

@@ -1,4 +1,5 @@
 import type { Footer } from "@ecom/contracts";
+import PaymentIcon from "@/components/shell/PaymentIcon";
 
 /**
  * Footer — the global link shell, from cms-svc — sf-062
@@ -25,8 +26,11 @@ import type { Footer } from "@ecom/contracts";
  * - `social[].platform` becomes `data-platform` and nothing else: an icon sprite
  *   is a stylesheet decision, and drawing a fake glyph for a network we have no
  *   artwork for is exactly the invented content this wave refuses.
- * - Payment keys are labels (`visa`, `upi`), display-only — the contracts
- *   comment says there is no payment-brand asset pipeline yet.
+ * - Payment keys are platform strings (`visa`, `gpay`) drawn from the CMS footer
+ *   document; `PaymentIcon` maps each to a committed brand mark and falls back
+ *   to the label for an unknown key. They sit in a single horizontal row on the
+ *   right of the bottom bar; the legal links (Privacy/Terms) live up in the meta
+ *   row beside the address, and the copyright anchors the bottom bar's left.
  */
 
 /** What the fallback face links to. Every one of these is a real route. */
@@ -37,7 +41,7 @@ export const FALLBACK_FOOTER_LINKS = [
   { label: "Terms", href: "/terms" },
 ] as const;
 
-const SITE_NAME = "foreafcbeta";
+const SITE_NAME = "Next.7";
 
 function isExternal(href: string): boolean {
   return /^https?:\/\//i.test(href);
@@ -141,18 +145,6 @@ export default function Footer({ footer, className = "" }: FooterProps) {
             </ul>
           ) : null}
 
-          {paymentIcons !== undefined && paymentIcons.length > 0 ? (
-            <ul className="sf-footer__payments" role="list" aria-label="Accepted payment methods">
-              {paymentIcons.map((key) => (
-                <li key={key} className="sf-footer__pay" data-icon={key}>
-                  {key}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-
-        <div className="sf-footer__legal">
           {legal !== undefined && legal.length > 0 ? (
             <nav aria-label="Legal" className="sf-footer__legal-nav">
               <ul role="list">
@@ -164,7 +156,19 @@ export default function Footer({ footer, className = "" }: FooterProps) {
               </ul>
             </nav>
           ) : null}
+        </div>
+
+        <div className="sf-footer__legal">
           {copyright !== undefined ? <p className="sf-footer__copyright">{copyright}</p> : null}
+          {paymentIcons !== undefined && paymentIcons.length > 0 ? (
+            <ul className="sf-footer__payments" role="list" aria-label="Accepted payment methods">
+              {paymentIcons.map((key) => (
+                <li key={key} className="sf-footer__pay" data-icon={key}>
+                  <PaymentIcon icon={key} className="sf-footer__pay-img" />
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       </div>
     </footer>

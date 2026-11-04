@@ -28,6 +28,13 @@ export interface GalleryImage {
 export const GALLERY_DEFAULT_RATIO: MediaRatio = "4:5";
 
 /**
+ * Upper bound on the PDP thumb rail. The seed keeps every product at 2-6 images,
+ * but the display caps at 6 regardless of what the catalog returns, so a product
+ * an admin over-photographs never floods the rail.
+ */
+export const GALLERY_MAX_IMAGES = 6;
+
+/**
  * Primary first → `sortOrder` ascending → upload order, empty urls dropped.
  *
  * The one home of that order: the PDP rail and the card's cover both read it, so
