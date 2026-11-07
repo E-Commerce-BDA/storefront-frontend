@@ -5,6 +5,8 @@ import EmptyState from "@/components/ui/EmptyState";
 import SectionRenderer from "@/components/sections/SectionRenderer";
 import { catalogClient } from "@/lib/catalog/client";
 import { cmsBaseUrl, createCmsClient } from "@/lib/cms/client";
+import { fetchThemeSettings } from "@/lib/cms/theme";
+import { resolveThemeSettings, toBadgeTones } from "@/lib/cms/themeSettings";
 import { fromCatalogList } from "@/lib/commerce/fromCatalog";
 import { GALLERY_MAX_IMAGES, toGalleryImages } from "@/lib/commerce/gallery";
 import { buildProductJsonLd } from "@/lib/commerce/jsonLd";
@@ -125,6 +127,9 @@ export default async function ProductPage({
     related && related.ok
       ? fromCatalogList(related.data.items.filter((row: { id: string; status: string }) => row.id !== product.id && row.status === "active")).slice(0, 8)
       : [];
+  const themeResult = await fetchThemeSettings();
+  const theme = resolveThemeSettings({ settings: themeResult.theme });
+  const cardTheme = theme.productCard;
 
   const jsonLd = buildProductJsonLd(product);
 
@@ -175,7 +180,16 @@ export default async function ProductPage({
 
       {resolvedSections.length > 0 ? (
         <div id="reviews" className="mt-12">
-          <SectionRenderer models={resolvedSections} />
+          <SectionRenderer
+            models={resolvedSections}
+            columns={{
+              desktop: cardTheme.colsDesktop,
+              tablet: cardTheme.colsTablet,
+              phone: cardTheme.colsPhone,
+            }}
+            themeFallback={cardTheme}
+            tones={toBadgeTones(theme)}
+          />
         </div>
       ) : null}
 
@@ -184,7 +198,17 @@ export default async function ProductPage({
       {relatedItems.length > 0 ? (
         <section className="mt-12">
           <h2 className="mb-4 font-display text-lg text-[var(--color-ink)]">You may also like</h2>
-          <ProductGridIsland items={relatedItems} label="Related products" />
+          <ProductGridIsland
+            items={relatedItems}
+            label="Related products"
+            columns={{
+              desktop: cardTheme.colsDesktop,
+              tablet: cardTheme.colsTablet,
+              phone: cardTheme.colsPhone,
+            }}
+            themeFallback={cardTheme}
+            tones={toBadgeTones(theme)}
+          />
         </section>
       ) : null}
 
