@@ -121,11 +121,11 @@ export interface IconProps {
    */
   color?: string;
   /** Pixel box; lucide scales stroke proportionally. Default 20 (40px IconButton). */
-  size?: number;
+  size?: number | string;
   /** Filled silhouette (active wishlist heart, rated star). Default outline. */
   filled?: boolean;
   /** Stroke width in px. Default 2 (design decision). */
-  strokeWidth?: number;
+  strokeWidth?: number | string;
   /** Accessible name for standalone meaning; omit inside labelled buttons. */
   title?: string;
   className?: string;
@@ -134,12 +134,12 @@ export interface IconProps {
 
 export default function Icon({
   name,
-  size = 20,
+  size,
   filled = false,
-  strokeWidth = 2,
+  strokeWidth,
   title,
   className,
-  color = "currentColor",
+  color,
   style,
 }: IconProps) {
   const Cmp = MAP[name];
@@ -151,13 +151,13 @@ export default function Icon({
   }
   return (
     <Cmp
-      size={size}
-      strokeWidth={strokeWidth}
+      size={size ?? "var(--theme-icon-size, 20)"}
+      strokeWidth={strokeWidth ?? "var(--theme-icon-stroke, 2)"}
       fill={filled ? "currentColor" : "none"}
       aria-hidden={title ? undefined : true}
       role={title ? "img" : undefined}
       className={className}
-      style={{ color, ...style }}
+      style={{ color: color ?? "var(--theme-icon-color, currentColor)", ...style }}
     >
       {title ? <title>{title}</title> : null}
     </Cmp>
