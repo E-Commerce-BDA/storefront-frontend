@@ -4,6 +4,10 @@ import "./globals.css";
 import { resolveNavSettings } from "@/lib/shell/resolveNav";
 import { fetchNavSettings } from "@/lib/cms/navigation";
 import { fetchFooter } from "@/lib/cms/footer";
+import { SITE_NAME } from "@/lib/site";
+import { fetchThemeSettings } from "@/lib/cms/theme";
+import { resolveThemeSettings } from "@/lib/cms/themeSettings";
+import { themeToCssVars } from "@/lib/cms/themeVars";
 import NavbarMount from "./_components/NavbarMount";
 import FooterMount from "./_components/FooterMount";
 import CartProvider from "./_components/CartProvider";
@@ -24,8 +28,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Storefront Base Components — Oceanic Blue",
-  description: "Dumb UI primitives preview for the e-commerce storefront.",
+  title: SITE_NAME,
+  description: "Everyday clothes built to last: linen, merino, denim.",
 };
 
 /**
@@ -53,11 +57,16 @@ export const metadata: Metadata = {
  * mount and holds no server data of its own, so the layout stays static.
  */
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [navResult, footerResult] = await Promise.all([fetchNavSettings(), fetchFooter()]);
+  const [navResult, footerResult, themeResult] = await Promise.all([
+    fetchNavSettings(),
+    fetchFooter(),
+    fetchThemeSettings(),
+  ]);
   const nav = resolveNavSettings({ settings: navResult.settings, global: null });
+  const theme = resolveThemeSettings({ settings: themeResult.theme });
   return (
     <html lang="en" className={`${fraunces.variable} ${outfit.variable}`}>
-      <body>
+      <body style={themeToCssVars(theme)}>
         <CartProvider>
           <WishlistProvider>
             <NavbarMount nav={nav} />
