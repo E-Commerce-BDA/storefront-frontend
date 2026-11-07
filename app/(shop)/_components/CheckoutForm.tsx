@@ -99,6 +99,9 @@ interface AddressForm {
 
 const EMPTY_ADDRESS: AddressForm = { line1: "", line2: "", city: "", state: "", postalCode: "", country: "US" };
 
+// Static v1 list, not CMS/settings-sourced. The order service accepts any
+// 2-letter country code; this short list is an honest v1 checkout boundary,
+// not storefront content.
 const COUNTRY_OPTIONS = [
   { value: "US", label: "United States" },
   { value: "CA", label: "Canada" },
