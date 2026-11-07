@@ -1,3 +1,4 @@
+import { SITE_NAME } from "@/lib/site";
 import { createCmsPageRoute } from "../_components/cmsPageRoute";
 
 /**
@@ -13,7 +14,7 @@ export const revalidate = 300;
 
 const route = createCmsPageRoute({
   slug: "about",
-  title: "About Next.7",
+  title: `About ${SITE_NAME}`,
   description: "Who we are, how we pick what to stock, and how to reach the team.",
 });
 
