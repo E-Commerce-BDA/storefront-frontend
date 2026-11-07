@@ -189,13 +189,18 @@ const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(fu
     colors: { hoverBg: v.waveBg, hoverText: v.waveText },
   });
 
-  const effRadius = borderRadius ?? theme?.borderRadius ?? 8;
+  const effRadius = borderRadius ?? theme?.borderRadius;
   const cssVars = {
-    "--btn-bg": bg ?? (theme?.bg || undefined) ?? v.bg,
-    "--btn-text": textColor ?? (theme?.textColor || undefined) ?? v.text,
-    "--btn-border": borderColor ?? (theme?.borderColor || undefined) ?? v.border,
+    "--btn-bg": bg ?? (theme?.bg || undefined) ?? "var(--theme-btn-bg, " + v.bg + ")",
+    "--btn-text": textColor ?? (theme?.textColor || undefined) ?? "var(--theme-btn-text, " + v.text + ")",
+    "--btn-border": borderColor ?? (theme?.borderColor || undefined) ?? "var(--theme-btn-border, " + v.border + ")",
     "--btn-bw": `${borderWidth}px`,
-    "--btn-radius": effRadius >= 999 ? "9999px" : `${effRadius}px`,
+    "--btn-radius":
+      effRadius !== undefined
+        ? effRadius >= 999
+          ? "9999px"
+          : `${effRadius}px`
+        : "var(--theme-btn-radius, 8px)",
     ...buttonAnimationCssVars(resolved),
     minHeight: s.minHeight,
     padding: s.padding,
