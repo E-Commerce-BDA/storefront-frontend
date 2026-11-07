@@ -16,7 +16,7 @@ export interface TextareaProps extends Omit<React.TextareaHTMLAttributes<HTMLTex
 }
 
 const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
-  { value, onChange, label, helper, error, radius = 10, borderColor, bg, textColor, focusBorderColor, rows = 4, id, disabled = false, required = false, className = "", style = {}, ...rest },
+  { value, onChange, label, helper, error, radius, borderColor, bg, textColor, focusBorderColor, rows = 4, id, disabled = false, required = false, className = "", style = {}, ...rest },
   ref,
 ) {
   const invalid = error != null && error !== "";
@@ -37,11 +37,11 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textare
         className="sf-textarea w-full px-3 py-2.5 text-sm text-[var(--color-ink)] outline-0 placeholder:text-[var(--text-muted)] focus:border-[var(--color-accent)] focus:shadow-[0_0_0_3px_var(--focus-ring)]"
         data-focus={focusBorderColor ? "custom" : "default"}
         style={{
-          border: `1px solid ${invalid ? "var(--color-error)" : (borderColor ?? "var(--border)")}`,
-          borderRadius: radius,
+          border: `1px solid ${invalid ? "var(--color-error)" : (borderColor ?? "var(--theme-textarea-border, var(--border))")}`,
+          borderRadius: radius ?? "var(--theme-textarea-radius, 10px)",
           // White-surface token reuse (Toast precedent) — identical render.
-          background: bg ?? "var(--color-navbar-bg, #ffffff)",
-          color: textColor,
+          background: bg ?? "var(--theme-textarea-bg, var(--color-navbar-bg, #ffffff))",
+          color: textColor ?? "var(--theme-textarea-text, var(--color-ink))",
           ...(focusBorderColor ? ({ "--ta-focus": focusBorderColor } as CSSProperties) : {}),
           opacity: disabled ? 0.6 : undefined,
         }}
