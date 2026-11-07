@@ -136,7 +136,7 @@ describe("Button theme object (sf-038 — trio-lowest precedence)", () => {
   it("retunes an uncustomized button from theme alone", () => {
     render(<Button theme={saleTheme}>Themed</Button>);
     const el = screen.getByRole("button", { name: "Themed" });
-    expect(el.style.getPropertyValue("--btn-bg")).toBe("#FF6B4A");
+    expect(el.style.getPropertyValue("--btn-bg")).toBe("var(--theme-btn-bg, #FF6B4A)");
   });
 
   it("flat variant and paint win over theme (sf-038)", () => {
@@ -146,7 +146,7 @@ describe("Button theme object (sf-038 — trio-lowest precedence)", () => {
       </Button>,
     );
     // Light face, not sale — flat variant beats house default.
-    expect(screen.getByRole("button", { name: "Flat variant" }).style.getPropertyValue("--btn-bg")).toBe("#FFFFFF");
+    expect(screen.getByRole("button", { name: "Flat variant" }).style.getPropertyValue("--btn-bg")).toBe("var(--theme-btn-bg, #FFFFFF)");
     unmount();
     render(
       <Button bg="#111111" theme={saleTheme}>
@@ -164,7 +164,7 @@ describe("Button theme object (sf-038 — trio-lowest precedence)", () => {
   it("renders identically without theme (sf-038 — no behavior change)", () => {
     render(<Button>Plain</Button>);
     const el = screen.getByRole("button", { name: "Plain" });
-    expect(el.style.getPropertyValue("--btn-bg")).toBe("var(--color-button-bg, #0077B6)");
-    expect(el.style.getPropertyValue("--btn-radius")).toBe("8px");
+    expect(el.style.getPropertyValue("--btn-bg")).toBe("var(--theme-btn-bg, var(--color-button-bg, #0077B6))");
+    expect(el.style.getPropertyValue("--btn-radius")).toBe("var(--theme-btn-radius, 8px)");
   });
 });
