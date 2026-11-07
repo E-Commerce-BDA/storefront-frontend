@@ -23,11 +23,11 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
     label,
     helper,
     error,
-    size = 20,
+    size,
     boxBg,
-    tickColor = "#FFFFFF",
+    tickColor,
     borderColor,
-    borderRadius = 6,
+    borderRadius,
     indeterminate = false,
     disabled = false,
     id,
@@ -39,6 +39,8 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
   ref,
 ) {
   const invalid = error != null && error !== "";
+  const boxSize = size ?? "var(--theme-checkbox-size, 20px)";
+  const boxRadius = borderRadius ?? "var(--theme-checkbox-radius, 6px)";
   const fieldId = id ?? (label ? `sf-cb-${label.replace(/\s+/g, "-").toLowerCase()}` : undefined);
 
   return (
@@ -47,11 +49,11 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
         className="relative inline-flex flex-none cursor-pointer items-center justify-center"
         data-checked={checked || indeterminate}
         style={{
-          width: size,
-          height: size,
-          borderRadius,
-          background: checked || indeterminate ? (boxBg ?? "var(--color-accent)") : "#FFFFFF",
-          border: `1px solid ${invalid ? "var(--color-error)" : (borderColor ?? "var(--border)")}`,
+          width: boxSize,
+          height: boxSize,
+          borderRadius: boxRadius,
+          background: checked || indeterminate ? (boxBg ?? "var(--theme-checkbox-bg, var(--color-accent))") : "#FFFFFF",
+          border: `1px solid ${invalid ? "var(--color-error)" : (borderColor ?? "var(--theme-checkbox-border, var(--border))")}`,
         }}
       >
         <input
@@ -68,10 +70,10 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
           {...rest}
         />
         {(checked || indeterminate) && (
-          <span style={{ color: tickColor }} className="inline-flex items-center justify-center">
+          <span style={{ color: tickColor ?? "var(--theme-checkbox-tick, #FFFFFF)" }} className="inline-flex items-center justify-center">
             <Icon
               name={indeterminate ? "minus" : "check"}
-              size={size * 0.6}
+              size={typeof size === "number" ? size * 0.6 : 12}
               strokeWidth={2.5}
             />
           </span>
