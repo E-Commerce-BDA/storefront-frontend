@@ -198,9 +198,11 @@ export function toCardVariants(
 /**
  * Listing columns, clamped to the ranges the theme contract allows
  * (`@ecom/contracts` `themeProductCardSchema`: desktop 3–5, tablet 2–3, phone
- * 1–2). The fallbacks are `resolveThemeSettings`'s own numbers (4 / 3 / 2) — a
- * grid that guessed a fourth column would disagree with the admin panel showing
- * the shopper that setting.
+ * 1–2). Callers pass `theme.productCard.colsDesktop/Tablet/Phone` when a
+ * global theme was resolved, so admin values win; the fallbacks are
+ * `resolveThemeSettings`'s own numbers (4 / 3 / 2) — a grid that guessed a
+ * fourth column would disagree with the admin panel showing the shopper that
+ * setting.
  */
 export const GRID_COLUMN_LIMITS = {
   desktop: { min: 3, max: 5, fallback: 4 },
