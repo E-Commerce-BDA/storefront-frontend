@@ -1,6 +1,8 @@
 import type { CSSProperties } from "react";
 import ProductGridIsland from "@/components/commerce/ProductGridIsland";
 import type { ProductCardData } from "@/lib/commerce/productCard";
+import type { GridColumns } from "@/lib/commerce/fromCatalog";
+import type { ResolvedThemeProductCard } from "@/lib/cms/themeSettings";
 import type { ProductCollectionViewModel } from "@/lib/sections/viewModels";
 
 /**
@@ -20,10 +22,19 @@ import type { ProductCollectionViewModel } from "@/lib/sections/viewModels";
  */
 export interface ProductCollectionSectionProps {
   model: ProductCollectionViewModel;
+  columns?: Partial<GridColumns>;
+  themeFallback?: ResolvedThemeProductCard;
+  tones?: React.ComponentProps<typeof ProductGridIsland>["tones"];
   className?: string;
 }
 
-export default function ProductCollectionSection({ model, className = "" }: ProductCollectionSectionProps) {
+export default function ProductCollectionSection({
+  model,
+  columns,
+  themeFallback,
+  tones,
+  className = "",
+}: ProductCollectionSectionProps) {
   const overrides = model.cardOverrides;
   const cards: ProductCardData[] =
     overrides !== undefined && Object.keys(overrides).length > 0
@@ -44,7 +55,7 @@ export default function ProductCollectionSection({ model, className = "" }: Prod
           <h2 className="sf-section__title">{model.title}</h2>
         </div>
       ) : null}
-      <ProductGridIsland items={cards} label={label} />
+      <ProductGridIsland items={cards} label={label} columns={columns} themeFallback={themeFallback} tones={tones} />
     </section>
   );
 }
