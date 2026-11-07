@@ -16,8 +16,8 @@ describe("authCssVars", () => {
     expect(vars["--auth-input-focus-ring-width"]).toBe("3px");
     expect(vars["--auth-input-focus-shadow"]).toBe("0 0 0 3px #0077b633");
     expect(vars["--auth-input-error-border"]).toBe("#d92d20");
-    expect(vars["--auth-panel-bg"]).toBe("linear-gradient(135deg, #023e8a 0%, #0077b6 60%, #48cae4 100%)");
-    expect(vars["--auth-panel-overlay-opacity"]).toBe("0");
+    expect(vars["--auth-panel-bg"]).toBe('url("/media/seed/about-banner.png")');
+    expect(vars["--auth-panel-overlay-opacity"]).toBe("0.55");
     expect(vars["--auth-font"]).toContain("Outfit");
     expect(vars["--auth-headline-size"]).toBe("30px");
     expect(vars["--auth-page-fade"]).toBe("200ms");
