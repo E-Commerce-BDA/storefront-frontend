@@ -1,3 +1,4 @@
+import BannerSection from "@/components/sections/BannerSection";
 import BlogTeaserSection from "@/components/sections/BlogTeaserSection";
 import BrandStripSection from "@/components/sections/BrandStripSection";
 import CategoryShowcaseSection from "@/components/sections/CategoryShowcaseSection";
@@ -6,6 +7,8 @@ import HeroSection from "@/components/sections/HeroSection";
 import ProductCollectionSection from "@/components/sections/ProductCollectionSection";
 import TestimonialSection from "@/components/sections/TestimonialSection";
 import { toHeroFields } from "@/components/sections/toHeroFields";
+import type { GridColumns } from "@/lib/commerce/fromCatalog";
+import type { ResolvedThemeProductCard } from "@/lib/cms/themeSettings";
 import type { HeroViewModel, SectionViewModel } from "@/lib/sections/viewModels";
 
 /**
@@ -16,9 +19,8 @@ import type { HeroViewModel, SectionViewModel } from "@/lib/sections/viewModels"
  * per type: a registry table would need a cast per row, and a cast in the one
  * file that dispatches every CMS feature is exactly where a wrong type hides.
  *
- * `banner` has no case: the resolver already refuses to build one
- * (`resolveSections`), so a model of that type cannot reach here — the default
- * branch is a compile-time statement, not a runtime fallback.
+ * The registry has one case per view-model type; the default branch is a
+ * compile-time statement, not a runtime fallback.
  */
 function HeroBlock({ model }: { model: HeroViewModel }) {
   if (model.slides.length > 1) {
@@ -31,15 +33,32 @@ function HeroBlock({ model }: { model: HeroViewModel }) {
   return <HeroSection {...toHeroFields(slide, { height: model.height, bgColor: model.bgColor })} />;
 }
 
-export default function SectionRenderer({ models }: { models: readonly SectionViewModel[] }) {
+export interface SectionRendererProps {
+  models: readonly SectionViewModel[];
+  columns?: Partial<GridColumns>;
+  themeFallback?: ResolvedThemeProductCard;
+  tones?: React.ComponentProps<typeof ProductCollectionSection>["tones"];
+}
+
+export default function SectionRenderer({ models, columns, themeFallback, tones }: SectionRendererProps) {
   return (
     <>
       {models.map((model) => {
         switch (model.type) {
           case "hero":
             return <HeroBlock key={model.key} model={model} />;
+          case "banner":
+            return <BannerSection key={model.key} model={model} />;
           case "product_collection":
-            return <ProductCollectionSection key={model.key} model={model} />;
+            return (
+              <ProductCollectionSection
+                key={model.key}
+                model={model}
+                columns={columns}
+                themeFallback={themeFallback}
+                tones={tones}
+              />
+            );
           case "category_showcase":
             return <CategoryShowcaseSection key={model.key} model={model} />;
           case "brand_strip":
