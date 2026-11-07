@@ -38,8 +38,18 @@ const heroOne: HeroViewModel = {
   slides: [{ id: "s1", headline: "One", ctas: [] }],
 };
 
+const bannerModel: SectionViewModel = {
+  key: "promo",
+  type: "banner",
+  title: "Sale",
+  media: { src: "/media/seed/promo.jpg", alt: "Promo" },
+  align: "left",
+  ctas: [],
+};
+
 const models: SectionViewModel[] = [
   heroOne,
+  bannerModel,
   { key: "collection", type: "product_collection", cards: [], layout: "grid" },
   {
     key: "categories",
@@ -75,6 +85,7 @@ describe("SectionRenderer", () => {
   it("renders every registered block, in the resolver's order", () => {
     const { container } = render(<SectionRenderer models={models} />);
     expect(container.querySelector(".sf-hero")).not.toBeNull();
+    expect(container.querySelector(".sf-banner")).not.toBeNull();
     expect(container.querySelector(".sf-collection")).not.toBeNull();
     expect(container.querySelector(".sf-showcase")).not.toBeNull();
     expect(container.querySelector(".sf-strip")).not.toBeNull();
@@ -105,7 +116,7 @@ describe("SectionRenderer", () => {
   });
 
   it("mounts the collection's grid island — one client boundary for quick-add", () => {
-    const { container } = render(<SectionRenderer models={[models[1]]} />);
+    const { container } = render(<SectionRenderer models={[models[2]]} />);
     expect(container.querySelector('[data-testid="grid-island"]')).not.toBeNull();
   });
 
