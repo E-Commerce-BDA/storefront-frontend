@@ -89,7 +89,7 @@ function ArrowGlyph({ url }: { url?: string }) {
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
-  { value, onChange, options, label, helper, error, placeholder = "Select…", radius = 10, borderColor, bg, textColor, focusBorderColor, variant = "native", arrowIconUrl, arrowPadding = 12,   open: controlledOpen, onOpenChange, listMotion = { enabled: true, durationMs: 180, easing: "ease-out", travel: "minimal" }, listTheme, id, disabled = false, required = false, className = "", style = {}, ...rest },
+  { value, onChange, options, label, helper, error, placeholder = "Select…", radius, borderColor, bg, textColor, focusBorderColor, variant = "native", arrowIconUrl, arrowPadding,   open: controlledOpen, onOpenChange, listMotion = { enabled: true, durationMs: 180, easing: "ease-out", travel: "minimal" }, listTheme, id, disabled = false, required = false, className = "", style = {}, ...rest },
   ref,
 ) {
   const invalid = error != null && error !== "";
@@ -151,11 +151,11 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
           data-focus={focusBorderColor ? "custom" : "default"}
           data-variant={variant}
           style={{
-            border: `1px solid ${invalid ? "var(--color-error)" : (borderColor ?? "var(--border)")}`,
-            borderRadius: radius,
-            background: bg ?? "var(--color-navbar-bg, #ffffff)",
-            color: textColor,
-            paddingRight: `calc(${arrowPadding}px + 24px)`,
+            border: `1px solid ${invalid ? "var(--color-error)" : (borderColor ?? "var(--theme-select-border, var(--border))")}`,
+            borderRadius: radius ?? "var(--theme-select-radius, 10px)",
+            background: bg ?? "var(--theme-select-bg, var(--color-navbar-bg, #ffffff))",
+            color: textColor ?? "var(--theme-select-text, var(--color-ink))",
+            paddingRight: `calc(${arrowPadding ?? 12}px + 24px)`,
             ...(focusBorderColor ? ({ "--se-focus": focusBorderColor } as CSSProperties) : {}),
             opacity: disabled ? 0.6 : undefined,
           }}
@@ -177,7 +177,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
         </select>
         {/* Arrow layer (decorative — the select is already labelled). */
         /* img onError falls back to the glyph (broken CMS URL never blanks). */}
-        <span className="sf-select__arrow" aria-hidden="true" style={{ right: arrowPadding }}>
+        <span className="sf-select__arrow" aria-hidden="true" style={{ right: arrowPadding ?? "var(--theme-select-arrow-padding, 12px)" }}>
           <ArrowGlyph url={arrowIconUrl} />
         </span>
       </div>
@@ -202,13 +202,13 @@ interface SelectListboxProps {
   disabled: boolean;
   invalid: boolean;
   fieldId: string | undefined;
-  radius: number;
+  radius?: number;
   borderColor: string | undefined;
   bg: string | undefined;
   textColor: string | undefined;
   focusBorderColor: string | undefined;
   arrowIconUrl: string | undefined;
-  arrowPadding: number;
+  arrowPadding?: number;
   controlledOpen: boolean | undefined;
   onOpenChange: ((open: boolean) => void) | undefined;
   listMotion: ResolvedOverlayMotion;
@@ -356,9 +356,9 @@ function SelectListbox({
         data-focus={focusBorderColor ? "custom" : "default"}
         data-open={open}
         style={{
-          border: `1px solid ${invalid ? "var(--color-error)" : (borderColor ?? "var(--border)")}`,
-          borderRadius: radius,
-          background: bg ?? "var(--color-navbar-bg, #ffffff)",
+          border: `1px solid ${invalid ? "var(--color-error)" : (borderColor ?? "var(--theme-select-border, var(--border))")}`,
+          borderRadius: radius ?? "var(--theme-select-radius, 10px)",
+          background: bg ?? "var(--theme-select-bg, var(--color-navbar-bg, #ffffff))",
           color: selected ? textColor : "var(--text-muted)",
           paddingRight: `calc(${arrowPadding}px + 24px)`,
           ...(focusBorderColor ? ({ "--se-focus": focusBorderColor } as CSSProperties) : {}),
@@ -367,7 +367,7 @@ function SelectListbox({
       >
         <span className="block truncate">{selected ? selected.label : placeholder}</span>
       </button>
-      <span className="sf-select__arrow" aria-hidden="true" style={{ right: arrowPadding }}>
+      <span className="sf-select__arrow" aria-hidden="true" style={{ right: arrowPadding ?? "var(--theme-select-arrow-padding, 12px)" }}>
         <ArrowGlyph url={arrowIconUrl} />
       </span>
       {open && (
