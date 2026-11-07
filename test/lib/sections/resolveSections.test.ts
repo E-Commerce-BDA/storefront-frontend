@@ -169,14 +169,37 @@ describe("resolveSections", () => {
     expect(models.map((m) => m.key)).toEqual(["hero-home"]);
   });
 
-  it("refuses a banner rather than painting a half-understood strip", async () => {
+  it("builds a valid banner model and skips an imageless banner", async () => {
     const banner = {
       key: "promo",
       pageKey: HOME_PAGE_KEY,
       type: "banner",
-      content: { image: "/media/seed/promo.jpg" },
-    } as unknown as Section;
-    expect(await resolveSections([banner], deps())).toEqual([]);
+      sortOrder: 0,
+      isActive: true,
+      content: {
+        title: "Sale",
+        subcopy: "While it lasts",
+        image: "/media/seed/promo.jpg",
+        imageAlt: "Promo",
+        align: "right",
+        ctas: [{ id: "cta-1", text: "Shop the sale", link: "/products" }],
+      },
+      settings: { blendMode: "multiply" },
+    } as Section;
+    const models = await resolveSections([banner], deps());
+    expect(models).toEqual([
+      expect.objectContaining({
+        key: "promo",
+        type: "banner",
+        title: "Sale",
+        subcopy: "While it lasts",
+        media: { src: "/media/seed/promo.jpg", alt: "Promo" },
+        align: "right",
+        imageBlendMode: "multiply",
+      }),
+    ]);
+    const imageless = { ...banner, content: { ...banner.content, image: "" } } as Section;
+    expect(await resolveSections([imageless], deps())).toEqual([]);
   });
 
   it("lets one dead service cost one section, and never the page", async () => {
