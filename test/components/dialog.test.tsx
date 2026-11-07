@@ -48,8 +48,8 @@ describe("Dialog", () => {
       </Dialog>,
     );
     const panel = container.querySelector(".relative") as HTMLElement;
-    expect(panel.style.background).toBe("");
-    expect(panel.style.maxWidth).toBe("");
+    expect(panel.style.background).toBe("var(--theme-dialog-panel-bg, var(--color-card, #ffffff))");
+    expect(panel.style.maxWidth).toBe("var(--theme-dialog-max-width, 448px)");
     unmount();
     const second = render(
       <Dialog
