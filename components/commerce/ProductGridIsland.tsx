@@ -43,6 +43,10 @@ export interface ProductGridIslandProps {
   items: ProductCardData[];
   /** Forwarded straight to the grid (product.md §15). */
   columns?: React.ComponentProps<typeof ProductGrid>["columns"];
+  /** Forwarded straight to the grid/cards (global theme productCard layer). */
+  themeFallback?: React.ComponentProps<typeof ProductGrid>["themeFallback"];
+  /** Forwarded straight to the grid/cards (global theme custom badge faces). */
+  tones?: React.ComponentProps<typeof ProductGrid>["tones"];
   /** Empty state the owner resolved in the RSC. */
   empty?: React.ReactNode;
   label?: string;
@@ -51,6 +55,8 @@ export interface ProductGridIslandProps {
 export default function ProductGridIsland({
   items,
   columns,
+  themeFallback,
+  tones,
   empty,
   label,
 }: ProductGridIslandProps) {
@@ -109,6 +115,8 @@ export default function ProductGridIsland({
       <ProductGrid
         items={items}
         columns={columns}
+        themeFallback={themeFallback}
+        tones={tones}
         empty={empty}
         label={label}
         pendingIds={toCellKeys(pendingIds)}
