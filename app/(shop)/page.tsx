@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import SectionRenderer from "@/components/sections/SectionRenderer";
 import { cmsBaseUrl, createCmsClient } from "@/lib/cms/client";
+import { fetchThemeSettings } from "@/lib/cms/theme";
+import { resolveThemeSettings, toBadgeTones } from "@/lib/cms/themeSettings";
 import { HOME_PAGE_KEY, resolveSections } from "@/lib/sections/resolveSections";
 
 /**
@@ -54,6 +56,9 @@ export default async function HomePage() {
   }
 
   const models = await resolveSections(list.sections);
+  const themeResult = await fetchThemeSettings();
+  const theme = resolveThemeSettings({ settings: themeResult.theme });
+  const cardTheme = theme.productCard;
 
   if (models.length === 0) {
     return (
@@ -72,5 +77,16 @@ export default async function HomePage() {
     );
   }
 
-  return <SectionRenderer models={models} />;
+  return (
+    <SectionRenderer
+      models={models}
+      columns={{
+        desktop: cardTheme.colsDesktop,
+        tablet: cardTheme.colsTablet,
+        phone: cardTheme.colsPhone,
+      }}
+      themeFallback={cardTheme}
+      tones={toBadgeTones(theme)}
+    />
+  );
 }
