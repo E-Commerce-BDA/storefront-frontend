@@ -1617,6 +1617,9 @@ body {
   object-fit: contain;
   background: var(--color-navbar-bg, #ffffff);
 }
+.sf-select:focus {
+  border-color: var(--se-focus, var(--theme-select-focus-border, var(--color-accent)));
+}
 .sf-select[data-focus="custom"]:focus {
   border-color: var(--se-focus, var(--color-accent));
 }
@@ -1644,6 +1647,11 @@ body {
   background: var(--color-navbar-bg, #ffffff);
   border: 1px solid var(--border);
   box-shadow: 0 8px 32px rgba(10, 37, 64, 0.16);
+  --se-selected-bg: var(--theme-select-selected-bg, var(--color-accent-50));
+  --se-selected-text: var(--theme-select-selected-text, var(--color-ink));
+  --se-hover-bg: var(--theme-select-hover-bg, var(--color-section-bg));
+  --se-hover-text: var(--theme-select-hover-text, var(--color-ink));
+  --se-opt-pad-y: var(--theme-select-option-padding-y, 8px);
   /* borderRadius rides inline (matches the trigger). */
 }
 .sf-select__list[data-motion="on"] {
@@ -3216,6 +3224,88 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* Banner: one full-width image band. The image is an absolute cover layer and
+   the content is positioned by `data-align`; the scrim is painted in CSS so
+   overlay copy stays readable without a CMS knob for it. */
+.sf-banner {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  min-height: var(--banner-min-height, 320px);
+  padding: 0;
+  background: var(--banner-bg, var(--color-section-bg));
+  color: var(--banner-text, var(--color-ink));
+}
+.sf-banner__media {
+  position: absolute;
+  inset: 0;
+}
+.sf-banner__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: var(--banner-blend, normal);
+}
+.sf-banner__scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    var(--banner-scrim-angle, 90deg),
+    var(--banner-scrim, color-mix(in srgb, var(--color-ink) 52%, transparent)),
+    transparent
+  );
+}
+.sf-banner__content {
+  position: relative;
+  display: grid;
+  gap: var(--banner-gap, 16px);
+  align-content: center;
+  min-height: var(--banner-min-height, 320px);
+  max-width: var(--banner-content-width, 640px);
+  padding: var(--banner-pad-y, 56px) 0;
+}
+.sf-banner[data-align="left"] .sf-banner__content {
+  margin-right: auto;
+  text-align: left;
+}
+.sf-banner[data-align="center"] .sf-banner__content {
+  margin-inline: auto;
+  justify-items: center;
+  text-align: center;
+}
+.sf-banner[data-align="right"] .sf-banner__content {
+  margin-left: auto;
+  justify-items: end;
+  text-align: right;
+}
+.sf-banner__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.1;
+  color: var(--banner-title, var(--color-ink));
+}
+.sf-banner__body {
+  margin: 0;
+  max-width: 52ch;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--banner-body, var(--text-muted));
+}
+.sf-banner__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--banner-cta-gap, 12px);
+  margin-top: var(--banner-cta-mt, 8px);
+}
+.sf-banner[data-align="center"] .sf-banner__ctas {
+  justify-content: center;
+}
+.sf-banner[data-align="right"] .sf-banner__ctas {
+  justify-content: flex-end;
 }
 
 /* ── CMS home sections — sf-060 (components/sections/*, sections.md §2) ─────
