@@ -117,9 +117,7 @@ async function buildViewModel(
     case "hero":
       return heroModel(section);
     case "banner":
-      // The banner sibling is sf-061 scope; refusing it loudly is better
-      // than painting a half-understood strip.
-      return null;
+      return bannerModel(section);
     case "featured_products":
       return featuredModel(section, deps);
     case "category_showcase":
@@ -192,6 +190,31 @@ function heroModel(section: Extract<Section, { type: "hero" }>): SectionViewMode
     slides,
     height: settings?.height === "viewport" ? "viewport" : "auto",
     ...(nonempty(settings?.bgColor) ? { bgColor: settings.bgColor } : {}),
+  };
+}
+
+function bannerModel(section: Extract<Section, { type: "banner" }>): SectionViewModel | null {
+  const { content, settings } = section;
+  // Fail closed like the rest of the resolver: an image band with no image is
+  // not a section, it is an empty strip. `image` is a CMS media ref/path; the
+  // storefront paints it exactly like the hero media (plain <img>, arbitrary
+  // admin hosts, so no next/image remote-pattern gate).
+  if (!nonempty(content.image)) return null;
+
+  const align =
+    content.align === "center" || content.align === "right" ? content.align : "left";
+  const bgColor = nonempty(content.bgColor) ? content.bgColor : settings?.bgColor;
+
+  return {
+    key: section.key,
+    type: "banner",
+    ...(nonempty(content.title) ? { title: content.title } : {}),
+    ...(nonempty(content.subcopy) ? { subcopy: content.subcopy } : {}),
+    media: { src: content.image, alt: content.imageAlt ?? "" },
+    align,
+    ctas: toCtaModels(content.ctas),
+    ...(nonempty(bgColor) ? { bgColor } : {}),
+    ...(settings?.blendMode !== undefined ? { imageBlendMode: settings.blendMode } : {}),
   };
 }
 
