@@ -11,7 +11,7 @@ export type BadgePosition = "left" | "right";
 export type HoverMode = "none" | "image" | "actions" | "zoom";
 export type QuickAction = "quick-view" | "wishlist" | "add-to-cart" | "share";
 export type CtaPosition = "left" | "center" | "right";
-export type CtaIconPosition = "center" | "bottom";
+export type CtaIconPosition = "center" | "bottom"; // storefront-only: not in the theme contract, so it never arrives via themeFallback.
 export type CtaVariant = "overlay" | "below" | "inline" | "footer" | "none";
 export type CtaStyle = "icon" | "label" | "icon-label";
 export type ImageBlendMode = "normal" | "multiply" | "darken" | "overlay" | "screen";
@@ -245,8 +245,10 @@ export const DEFAULT_PRODUCT_CARD_STYLES: ResolvedProductCardStyles = {
   priceSize: 15,
   textAlign: "left",
   eyebrow: "category",
-  imageNav: "hover",
-  imageIndicator: "dots",
+  // Carousel controls are hidden by default; admin/theme can opt back in
+  // ("hover"/"always"/"touch", "dots"/"bars"/"count").
+  imageNav: "none",
+  imageIndicator: "none",
   imageIndicatorPosition: "bottom",
   imageLoop: true,
   imageLimit: 5,
