@@ -8,6 +8,7 @@
  * fetching would put the same orchestration in eight places.
  */
 export { default as HeroSection, type HeroSectionProps } from "./HeroSection";
+export { default as BannerSection, type BannerSectionProps } from "./BannerSection";
 export { default as HeroCarousel, type HeroCarouselProps } from "./HeroCarousel";
 export { default as ProductCollectionSection } from "./ProductCollectionSection";
 export { default as CategoryShowcaseSection } from "./CategoryShowcaseSection";
@@ -29,6 +30,7 @@ export type {
 export type {
   SectionViewModel,
   HeroViewModel,
+  BannerViewModel,
   HeroSlideModel,
   ProductCollectionViewModel,
   CategoryShowcaseViewModel,
