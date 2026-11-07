@@ -29,7 +29,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     helper,
     error,
     size = "md",
-    radius = 10,
+    radius,
     bg,
     textColor,
     borderColor,
@@ -62,11 +62,11 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         data-disabled={disabled}
         data-invalid={invalid}
         style={{
-          border: `1px solid ${invalid ? "var(--color-error)" : (borderColor ?? "var(--border)")}`,
-          borderRadius: size === "sm" ? 9999 : radius,
+          border: `1px solid ${invalid ? "var(--color-error)" : (borderColor ?? "var(--theme-input-border, var(--border))")}`,
+          borderRadius: size === "sm" ? 9999 : (radius ?? "var(--theme-input-radius, 10px)"),
           minHeight: size === "sm" ? 36 : 40,
           padding: "0 12px",
-          background: bg ?? "#FFFFFF",
+          background: bg ?? "var(--theme-input-bg, #FFFFFF)",
           opacity: disabled ? 0.6 : undefined,
         }}
       >
@@ -78,7 +78,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         <input
           ref={ref}
           id={fieldId}
-          className="min-h-[inherit] w-full min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm text-[var(--color-ink)] outline-0 placeholder:text-[var(--auth-input-placeholder,var(--text-muted))]"
+          className="min-h-[inherit] w-full min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm outline-0 placeholder:text-[var(--auth-input-placeholder,var(--text-muted))]"
+          style={{ color: textColor ?? "var(--theme-input-text, var(--color-ink))" }}
           value={value}
           onChange={(e) => onChange?.(e.target.value, e)}
           placeholder={placeholder}
