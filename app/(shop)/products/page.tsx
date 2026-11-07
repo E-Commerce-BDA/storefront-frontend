@@ -3,6 +3,8 @@ import PageHeader from "@/components/shell/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import Button from "@/components/ui/Button";
 import { catalogClient } from "@/lib/catalog/client";
+import { fetchThemeSettings } from "@/lib/cms/theme";
+import { resolveThemeSettings, toBadgeTones } from "@/lib/cms/themeSettings";
 import { buildListingQuery, parseListingParams } from "@/lib/catalog/listing";
 import { fromCatalogList } from "@/lib/commerce/fromCatalog";
 import ProductGridIsland from "@/components/commerce/ProductGridIsland";
@@ -134,6 +136,9 @@ export default async function ProductsPage({
   }
 
   const items = fromCatalogList(page.data.items);
+  const themeResult = await fetchThemeSettings();
+  const theme = resolveThemeSettings({ settings: themeResult.theme });
+  const cardTheme = theme.productCard;
   const nextHref =
     page.data.nextCursor !== null
       ? `/products${buildListingQuery({
@@ -162,6 +167,13 @@ export default async function ProductsPage({
       />
       <ProductGridIsland
         items={items}
+        columns={{
+          desktop: cardTheme.colsDesktop,
+          tablet: cardTheme.colsTablet,
+          phone: cardTheme.colsPhone,
+        }}
+        themeFallback={cardTheme}
+        tones={toBadgeTones(theme)}
         empty={
           <EmptyState
             title="No products found"
