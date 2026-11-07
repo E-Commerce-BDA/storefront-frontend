@@ -157,20 +157,20 @@ export default function Tooltip({
 
   // Style resolution: flat props win over the styleOverrides object, absent
   // falls back to DEFAULT_TOOLTIP_STYLE; numerics clamp to TOOLTIP_LIMITS.
-  // (The CMS resolver will feed styleOverrides later — same shape, no
+  // (The CMS resolver feeds styleOverrides with the same shape — no
   // component change.)
   const o = styleOverrides ?? {};
   const D = DEFAULT_TOOLTIP_STYLE;
   const L = TOOLTIP_LIMITS;
   const animation = tipAnimation ?? o.animation ?? D.animation;
   const tipVars = {
-    "--tip-bg": tipBg ?? o.bg ?? D.bg,
-    "--tip-text": tipTextColor ?? o.textColor ?? D.textColor,
-    "--tip-border-color": tipBorderColor ?? o.borderColor ?? D.borderColor,
+    "--tip-bg": tipBg ?? o.bg ?? "var(--theme-tooltip-bg, " + D.bg + ")",
+    "--tip-text": tipTextColor ?? o.textColor ?? "var(--theme-tooltip-text, " + D.textColor + ")",
+    "--tip-border-color": tipBorderColor ?? o.borderColor ?? "var(--theme-tooltip-border, " + D.borderColor + ")",
     "--tip-border-width": `${clampInt(tipBorderWidth ?? o.borderWidth, L.borderWidth.min, L.borderWidth.max, D.borderWidth)}px`,
     "--tip-radius": `${clampInt(tipRadius ?? o.radius, L.radius.min, L.radius.max, D.radius)}px`,
     "--tip-font-size": `${clampInt(tipFontSize ?? o.fontSize, L.fontSize.min, L.fontSize.max, D.fontSize)}px`,
-    "--tip-font-weight": tipFontWeight ?? o.fontWeight ?? D.fontWeight,
+    "--tip-font-weight": tipFontWeight ?? o.fontWeight ?? "var(--theme-tooltip-font-weight, " + D.fontWeight + ")",
     "--tip-duration": `${clampInt(tipDurationMs ?? o.durationMs, L.durationMs.min, L.durationMs.max, D.durationMs)}ms`,
     "--tip-offset": `${clampInt(tipOffset ?? o.offset, L.offset.min, L.offset.max, D.offset)}px`,
   } as React.CSSProperties;
