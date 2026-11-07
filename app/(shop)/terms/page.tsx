@@ -1,3 +1,4 @@
+import { SITE_NAME } from "@/lib/site";
 import { createCmsPageRoute } from "../_components/cmsPageRoute";
 
 /**
@@ -13,7 +14,7 @@ export const revalidate = 300;
 const route = createCmsPageRoute({
   slug: "terms",
   title: "Terms of sale",
-  description: "The agreement between you and Next.7 when you buy something here.",
+  description: `The agreement between you and ${SITE_NAME} when you buy something here.`,
 });
 
 export const generateMetadata = route.generateMetadata;
