@@ -36,6 +36,10 @@ export interface ProductGridProps {
   wishlistedIds?: readonly string[] | Set<string>;
   /** Theme `productCard.cols*`; absent or out-of-range falls to the defaults. */
   columns?: Partial<GridColumns> | null;
+  /** Global theme card layer (flat/styleConfig/product still win). */
+  themeFallback?: React.ComponentProps<typeof ProductCard>["themeFallback"];
+  /** Resolved custom badge faces from the global theme. */
+  tones?: React.ComponentProps<typeof ProductCard>["tones"];
   /** Rendered in place of the grid when `items` is empty (an `EmptyState`). */
   empty?: ReactNode;
   label?: string;
@@ -69,6 +73,8 @@ export default function ProductGrid({
   onWishlist,
   wishlistedIds,
   columns,
+  themeFallback,
+  tones,
   empty,
   label = "Products",
   className = "",
@@ -116,6 +122,8 @@ export default function ProductGrid({
           >
             <ProductCard
               product={product}
+              themeFallback={themeFallback}
+              tones={tones}
               onOpen={onOpen}
               onQuickAdd={onQuickAdd}
               onQuickView={onQuickView}
