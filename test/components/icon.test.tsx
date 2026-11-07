@@ -25,8 +25,8 @@ describe("Icon contract", () => {
 
   it("sizes the svg box from the size prop (default 20)", () => {
     const { unmount } = render(<Icon name="x" />);
-    expect(document.querySelector("svg")?.getAttribute("width")).toBe("20");
-    expect(document.querySelector("svg")?.getAttribute("height")).toBe("20");
+    expect(document.querySelector("svg")?.getAttribute("width")).toBe("var(--theme-icon-size, 20)");
+    expect(document.querySelector("svg")?.getAttribute("height")).toBe("var(--theme-icon-size, 20)");
     unmount();
 
     render(<Icon name="x" size={16} />);
@@ -36,7 +36,7 @@ describe("Icon contract", () => {
   it("uses a 2px stroke by default and fills only when asked", () => {
     const { unmount } = render(<Icon name="heart" />);
     const svg = document.querySelector("svg");
-    expect(svg?.getAttribute("stroke-width")).toBe("2");
+    expect(svg?.getAttribute("stroke-width")).toBe("var(--theme-icon-stroke, 2)");
     expect(svg?.getAttribute("fill")).toBe("none");
     unmount();
 
@@ -55,7 +55,7 @@ describe("Icon contract", () => {
   it("passes stroke ink through CSS color (currentColor default, caller wins)", () => {
     const { unmount } = render(<Icon name="x" />);
     // jsdom lowercases the keyword; browsers preserve author case.
-    expect(document.querySelector("svg")?.getAttribute("style")).toContain("currentcolor");
+    expect(document.querySelector("svg")?.getAttribute("style")).toContain("var(--theme-icon-color, currentcolor)");
     unmount();
     render(<Icon name="x" color="#123456" style={{ color: "#654321" }} />);
     expect(document.querySelector("svg")?.getAttribute("style")).toContain("rgb(101, 67, 33)");
