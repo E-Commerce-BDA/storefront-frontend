@@ -21,11 +21,11 @@ const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(function Toggle(
     label,
     labelPosition = "right",
     helper,
-    width = 44,
-    height = 24,
+    width,
+    height,
     onColor,
     offColor,
-    knobColor = "#FFFFFF",
+    knobColor,
     disabled = false,
     id,
     name,
@@ -36,7 +36,11 @@ const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(function Toggle(
   ref,
 ) {
   const fieldId = id ?? (label ? `sf-toggle-${label.replace(/\s+/g, "-").toLowerCase()}` : undefined);
-  const knob = height - 6;
+  const trackWidth = width ?? "var(--theme-toggle-width, 44px)";
+  const trackHeight = height ?? "var(--theme-toggle-height, 24px)";
+  // Keep the knob math numeric for the checked travel distance; a theme
+  // width/height still paints through the vars above.
+  const knob = (height ?? 24) - 6;
 
   const track = (
     <button
@@ -52,10 +56,10 @@ const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(function Toggle(
       data-disabled={disabled}
       className="relative cursor-pointer border-0 p-0 focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-60"
       style={{
-        width,
-        height,
+        width: trackWidth,
+        height: trackHeight,
         borderRadius: 9999,
-        background: checked ? (onColor ?? "var(--color-accent)") : (offColor ?? "var(--border)"),
+        background: checked ? (onColor ?? "var(--theme-toggle-on, var(--color-accent))") : (offColor ?? "var(--theme-toggle-off, var(--border))"),
         transition: "background 0.18s ease",
       }}
       {...rest}
@@ -65,10 +69,10 @@ const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(function Toggle(
         className="absolute rounded-full"
         style={{
           top: 3,
-          left: checked ? width - knob - 3 : 3,
+          left: checked ? (typeof width === "number" ? width - knob - 3 : `calc(${trackWidth} - ${knob + 3}px)`) : 3,
           width: knob,
           height: knob,
-          background: knobColor,
+          background: knobColor ?? "var(--theme-toggle-knob, #FFFFFF)",
           transition: "left 0.18s ease",
         }}
       />
