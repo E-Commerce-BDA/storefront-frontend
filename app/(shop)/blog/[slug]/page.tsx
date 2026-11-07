@@ -4,6 +4,7 @@ import Breadcrumbs from "@/components/shell/Breadcrumbs";
 import PostBlocks from "@/components/blog/PostBlocks";
 import { blogStaticParams, loadBlog } from "@/lib/cms/loadDocuments";
 import { formatFullDate, readingMinutes } from "@/lib/blog/present";
+import { SITE_NAME } from "@/lib/site";
 import type { Blog } from "@ecom/contracts";
 
 /**
@@ -64,7 +65,7 @@ function buildBlogJsonLd(blog: Blog, url: string): Record<string, unknown> {
     ...(blog.author !== undefined ? { author: { "@type": "Person", name: blog.author } } : {}),
     ...(typeof blog.publishedAt === "string" ? { datePublished: blog.publishedAt } : {}),
     ...(typeof blog.updatedAt === "string" ? { dateModified: blog.updatedAt } : {}),
-    publisher: { "@type": "Organization", name: "Next.7", url: "/" },
+    publisher: { "@type": "Organization", name: SITE_NAME, url: "/" },
   };
 }
 
