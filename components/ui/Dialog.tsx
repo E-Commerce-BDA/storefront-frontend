@@ -54,13 +54,13 @@ const Dialog = forwardRef<HTMLDivElement, DialogProps>(function Dialog(
       aria-label={title}
     >
       <div
-        className="absolute inset-0 bg-[rgba(10,37,64,0.5)]"
-        // Custom wash replaces the class (style wins); absent = class
-        // holds, so the default render never depends on color-mix support.
+        className="absolute inset-0"
+        // Custom wash replaces the class (style wins); absent = theme var with
+        // the same rgba fallback the class held before.
         style={
           overlayColor !== undefined || overlayAlpha !== undefined
             ? { background: `color-mix(in srgb, ${overlayColor ?? "#0a2540"} ${overlayAlpha ?? 50}%, transparent)` }
-            : undefined
+            : { background: "var(--theme-dialog-overlay, rgba(10,37,64,0.5))" }
         }
         onClick={() => onClose?.()}
         aria-hidden
@@ -69,21 +69,21 @@ const Dialog = forwardRef<HTMLDivElement, DialogProps>(function Dialog(
         ref={ref}
         className={`relative w-full max-w-md border border-[var(--border)] bg-white p-5 ${className}`}
         style={{
-          borderRadius: radius ?? "var(--radius-card)",
-          ...(maxWidth !== undefined ? { maxWidth } : {}),
-          ...(panelBg ? { background: panelBg } : {}),
-          ...(borderColor ? { borderColor } : {}),
-          ...(bodySize !== undefined ? { fontSize: bodySize } : {}),
-          ...(bodyWeight !== undefined ? { fontWeight: bodyWeight } : {}),
-          ...(bodyColor ? { color: bodyColor } : {}),
+          borderRadius: radius ?? "var(--theme-dialog-radius, var(--radius-card))",
+          ...(maxWidth !== undefined ? { maxWidth } : { maxWidth: "var(--theme-dialog-max-width, 448px)" }),
+          ...(panelBg ? { background: panelBg } : { background: "var(--theme-dialog-panel-bg, var(--color-card, #ffffff))" }),
+          ...(borderColor ? { borderColor } : { borderColor: "var(--theme-dialog-border, var(--border))" }),
+          ...(bodySize !== undefined ? { fontSize: bodySize } : { fontSize: "var(--theme-dialog-body-size, 14px)" }),
+          ...(bodyWeight !== undefined ? { fontWeight: bodyWeight } : { fontWeight: "var(--theme-dialog-body-weight, 400)" }),
+          ...(bodyColor ? { color: bodyColor } : { color: "var(--theme-dialog-body-color, var(--color-ink))" }),
         }}
       >
         {title && (
           <h2
             className="mb-3 text-lg font-semibold text-[var(--color-ink)]"
             style={{
-              ...(titleColor ? { color: titleColor } : {}),
-              ...(titleSize !== undefined ? { fontSize: titleSize } : {}),
+              ...(titleColor ? { color: titleColor } : { color: "var(--theme-dialog-title-color, var(--color-ink))" }),
+              ...(titleSize !== undefined ? { fontSize: titleSize } : { fontSize: "var(--theme-dialog-title-size, 18px)" }),
             }}
           >
             {title}
