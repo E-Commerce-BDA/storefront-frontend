@@ -1,6 +1,7 @@
 import type { Footer } from "@ecom/contracts";
 import PaymentIcon from "@/components/shell/PaymentIcon";
 import SocialIcon from "@/components/shell/SocialIcon";
+import { SITE_NAME } from "@/lib/site";
 
 /**
  * Footer — the global link shell, from cms-svc — sf-062
@@ -43,8 +44,6 @@ export const FALLBACK_FOOTER_LINKS = [
   { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
 ] as const;
-
-const SITE_NAME = "Next.7";
 
 function isExternal(href: string): boolean {
   return /^https?:\/\//i.test(href);
