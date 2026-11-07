@@ -537,8 +537,9 @@ export const DEFAULT_THEME: ResolvedThemeSettings = {
     priceSize: 15,
     textAlign: "left",
     eyebrow: "category",
-    imageNav: "hover",
-    imageIndicator: "dots",
+    // Image carousel arrows/indicators ship hidden; admins can re-enable them.
+    imageNav: "none",
+    imageIndicator: "none",
     imageIndicatorPosition: "bottom",
     imageLoop: true,
     imageLimit: 5,
@@ -561,6 +562,30 @@ const cleanColor = (v: unknown, fallback: string): string =>
 
 const VARIANTS: ButtonVariant[] = ["primary", "light", "ghost-ink", "sale", "success", "error"];
 const SIZES: ButtonSize[] = ["sm", "md", "lg"];
+
+export type ThemeBadgeTones = Record<
+  string,
+  { bg: string; text: string; border?: string; borderStyle?: BadgeBorderStyle }
+>;
+
+/**
+ * Resolved custom badge list → Badge `tones` lookup.
+ *
+ * Server owners pass this map to ProductGrid/ProductCard so admin-authored
+ * badge faces win without Badge fetching or knowing about the theme.
+ */
+export function toBadgeTones(theme: ResolvedThemeSettings): ThemeBadgeTones {
+  const tones: ThemeBadgeTones = {};
+  for (const badge of theme.badges.custom) {
+    tones[badge.id] = {
+      bg: badge.bg,
+      text: badge.textColor,
+      border: badge.borderColor,
+      borderStyle: badge.borderStyle,
+    };
+  }
+  return tones;
+}
 
 export interface ResolveThemeInput {
   /** CMS admin values. Null/undefined = CMS unreadable (builtins render). */
