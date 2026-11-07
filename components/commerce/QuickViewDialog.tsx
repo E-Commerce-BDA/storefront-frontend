@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Badge, Button, Dialog, Icon, QuantityStepper } from "@/components/ui";
 import WishlistButton from "@/components/commerce/WishlistButton";
@@ -94,13 +93,10 @@ export default function QuickViewDialog({
         <div className="flex flex-col gap-3">
           <div className="relative aspect-square w-full overflow-hidden rounded-[var(--radius-md,10px)] bg-[var(--surface-muted)]">
             {activeImageUrl ? (
-              <Image
+              <img
                 src={activeImageUrl}
                 alt={productName}
-                fill
-                sizes="(max-width: 768px) 100vw, 360px"
-                className="object-cover"
-                priority
+                className="absolute inset-0 h-full w-full object-cover"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-[var(--text-muted)]">
@@ -128,12 +124,11 @@ export default function QuickViewDialog({
                   }`}
                   aria-label={`View image ${idx + 1}`}
                 >
-                  <Image
+                  <img
                     src={img.url}
                     alt={img.alt ?? `Thumbnail ${idx + 1}`}
-                    fill
-                    sizes="56px"
-                    className="object-cover"
+                    className="h-full w-full object-cover"
+                    loading="lazy"
                   />
                 </button>
               ))}
