@@ -62,6 +62,18 @@ export interface HeroViewModel {
   bgColor?: string;
 }
 
+export interface BannerViewModel {
+  key: string;
+  type: "banner";
+  title?: string;
+  subcopy?: string;
+  media: { src: string; alt: string };
+  align: "left" | "center" | "right";
+  ctas: SectionCtaModel[];
+  bgColor?: string;
+  imageBlendMode?: "multiply" | "normal";
+}
+
 export interface ProductCollectionViewModel {
   key: string;
   type: "product_collection";
@@ -161,6 +173,7 @@ export interface BlogTeaserViewModel {
 
 export type SectionViewModel =
   | HeroViewModel
+  | BannerViewModel
   | ProductCollectionViewModel
   | CategoryShowcaseViewModel
   | BrandStripViewModel
