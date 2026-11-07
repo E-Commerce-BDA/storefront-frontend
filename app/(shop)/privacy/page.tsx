@@ -1,3 +1,4 @@
+import { SITE_NAME } from "@/lib/site";
 import { createCmsPageRoute } from "../_components/cmsPageRoute";
 
 /**
@@ -13,7 +14,7 @@ export const revalidate = 300;
 const route = createCmsPageRoute({
   slug: "privacy",
   title: "Privacy policy",
-  description: "What Next.7 collects, why we collect it, and how to ask us to remove it.",
+  description: `What ${SITE_NAME} collects, why we collect it, and how to ask us to remove it.`,
 });
 
 export const generateMetadata = route.generateMetadata;
