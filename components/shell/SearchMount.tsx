@@ -88,6 +88,8 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
         ? search.editorial.editorialAnimation
         : search.palette.paletteAnimation;
 
+  // Static v1 list, not CMS/settings-sourced — departments exist only because
+  // the palette expects a filter vocabulary; sf-066 tracks the real endpoint.
   const departments = useMemo(() => ["All", "Products"], []);
 
   // Two-phase close: closing flag plays the exit, unmount follows after
@@ -134,6 +136,8 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
   const LazyOverlay = lazyFor(variant);
   if (!LazyOverlay) return null;
 
+  // Trending/curated are deliberately not passed here — sf-066 tracks the
+  // search-svc trending endpoint, and the overlays fail closed without them.
   const shared = {
     query: live.query,
     results: live.results,
