@@ -84,8 +84,8 @@ describe("Tooltip contract", () => {
     );
     const plain = screen.getByRole("tooltip", { name: "Hi" });
     expect(plain.getAttribute("data-tip-anim")).toBe("slide");
-    expect(plain.style.getPropertyValue("--tip-bg")).toBe("#0a2540");
-    expect(plain.style.getPropertyValue("--tip-text")).toBe("#ffffff");
+    expect(plain.style.getPropertyValue("--tip-bg")).toBe("var(--theme-tooltip-bg, #0a2540)");
+    expect(plain.style.getPropertyValue("--tip-text")).toBe("var(--theme-tooltip-text, #ffffff)");
     expect(plain.style.getPropertyValue("--tip-radius")).toBe("8px");
     expect(plain.style.getPropertyValue("--tip-duration")).toBe("160ms");
     expect(plain.style.getPropertyValue("--tip-offset")).toBe("8px");
