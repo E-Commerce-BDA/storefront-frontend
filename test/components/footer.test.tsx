@@ -238,11 +238,14 @@ describe("root layout wiring (plan §7)", () => {
   });
 
   it("never leaves the layout able to reject on a CMS outage", () => {
-    // fetchNavSettings and fetchFooter are both total: `fetchFooter` catches its
-    // source and its cache, so no `catch` belongs here and a throw would blank
-    // every route. Asserted as the absence of an error path instead of a mock.
+    // fetchNavSettings, fetchFooter and fetchThemeSettings are all total:
+    // `fetchFooter`/`fetchThemeSettings` catch their source and their cache, so
+    // no `catch` belongs here and a throw would blank every route. Asserted as
+    // the absence of an error path instead of a mock.
     const footerModule = readFileSync(join(here, "..", "..", "lib", "cms", "footer.ts"), "utf8");
+    const themeModule = readFileSync(join(here, "..", "..", "lib", "cms", "theme.ts"), "utf8");
     expect(footerModule).toMatch(/return \{ footer: null, stale: false, fallback: true \};/);
+    expect(themeModule).toMatch(/return \{ theme: null, stale: false, fallback: true \};/);
     expect(layoutSource).not.toMatch(/catch/);
   });
 });
