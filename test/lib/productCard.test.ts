@@ -210,8 +210,8 @@ describe("resolveProductCardStyles", () => {
       selectionMode: "nope" as never,
     });
     expect(fallbacks.eyebrow).toBe("category");
-    expect(fallbacks.imageNav).toBe("hover");
-    expect(fallbacks.imageIndicator).toBe("dots");
+    expect(fallbacks.imageNav).toBe("none");
+    expect(fallbacks.imageIndicator).toBe("none");
     expect(fallbacks.imageLimit).toBe(10); // clamped to max 10
     expect(fallbacks.selectionMode).toBe("preview");
   });
