@@ -4,6 +4,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import BlogCard from "@/components/sections/BlogCard";
 import { blogToCardModels } from "@/lib/blog/present";
 import { loadPublishedBlogs } from "@/lib/cms/loadDocuments";
+import { SITE_NAME } from "@/lib/site";
 
 /**
  * `/blog` — the published journal list — sf-063
@@ -26,9 +27,8 @@ import { loadPublishedBlogs } from "@/lib/cms/loadDocuments";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Journal — Next.7",
-  description:
-    "Field notes, buying guides and stories from the Next.7 team. Published by the store, straight from the CMS.",
+  title: `Journal — ${SITE_NAME}`,
+  description: `Field notes, buying guides and stories from the ${SITE_NAME} team. Published by the store, straight from the CMS.`,
   alternates: { canonical: "/blog" },
 };
 
