@@ -1,6 +1,7 @@
 import { forwardRef, useRef } from "react";
 import { Badge, Button, Icon } from "@/components/ui";
 import { tagTone } from "@/lib/search/tagTone";
+import type { ResolvedThemeProductCard } from "@/lib/cms/themeSettings";
 import {
   type BadgePosition,
   type CtaIconPosition,
@@ -43,6 +44,7 @@ export interface ProductCardProps extends ProductCardReserved, ProductCardStyleC
   /** Custom badge faces (sf-032 tones map, same lookup order). */
   tones?: Record<string, { bg: string; text: string; border?: string; borderStyle?: "solid" | "dashed" | "dotted" }>;
   styleConfig?: ProductCardStyleConfig;
+  themeFallback?: ResolvedThemeProductCard;
   selectedOptions?: Record<string, string>;
   previewedOptions?: Record<string, string> | null;
   onSelectOption?: (optionName: string, value: string) => void;
@@ -72,6 +74,7 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
     product: p,
     tones,
     styleConfig,
+    themeFallback,
     selectedOptions,
     previewedOptions,
     onSelectOption,
@@ -142,55 +145,62 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
 
   // Sparse product card settings override global/theme defaults
   const productOverrides = p.cardSettings ?? {};
+  // `colsDesktop/Tablet/Phone` are grid concerns, not card style; they are
+  // consumed by ProductGrid columns, so they never reach the card resolver.
+  const { colsDesktop: _colsDesktop, colsTablet: _colsTablet, colsPhone: _colsPhone, ...cardTheme } =
+    themeFallback ?? {};
 
   // Flat props take precedence over styleConfig object and product card settings
-  const styles = resolveProductCardStyles({
-    ...productOverrides,
-    ...styleConfig,
-    ...(cardType !== undefined ? { cardType } : {}),
-    ...(mediaRatio !== undefined ? { mediaRatio } : {}),
-    ...(borderRadius !== undefined ? { borderRadius } : {}),
-    ...(imageBorderRadius !== undefined ? { imageBorderRadius } : {}),
-    ...(cardPad !== undefined ? { cardPad } : {}),
-    ...(cardBg !== undefined ? { cardBg } : {}),
-    ...(borderColor !== undefined ? { borderColor } : {}),
-    ...(hoverCardBg !== undefined ? { hoverCardBg } : {}),
-    ...(hoverBorderColor !== undefined ? { hoverBorderColor } : {}),
-    ...(mediaBg !== undefined ? { mediaBg } : {}),
-    ...(textColor !== undefined ? { textColor } : {}),
-    ...(mutedTextColor !== undefined ? { mutedTextColor } : {}),
-    ...(priceColor !== undefined ? { priceColor } : {}),
-    ...(comparePriceColor !== undefined ? { comparePriceColor } : {}),
-    ...(ctaBg !== undefined ? { ctaBg } : {}),
-    ...(ctaTextColor !== undefined ? { ctaTextColor } : {}),
-    ...(ctaBorderColor !== undefined ? { ctaBorderColor } : {}),
-    ...(imageBlendMode !== undefined ? { imageBlendMode } : {}),
-    ...(imageFit !== undefined ? { imageFit } : {}),
-    ...(badgePosition !== undefined ? { badgePosition } : {}),
-    ...(showBadge !== undefined ? { showBadge } : {}),
-    ...(showDept !== undefined ? { showDept } : {}),
-    ...(showRatings !== undefined ? { showRatings } : {}),
-    ...(showSwatches !== undefined ? { showSwatches } : {}),
-    ...(showPills !== undefined ? { showPills } : {}),
-    ...(hoverMode !== undefined ? { hoverMode } : {}),
-    ...(ctaVariant !== undefined ? { ctaVariant } : {}),
-    ...(ctaStyle !== undefined ? { ctaStyle } : {}),
-    ...(ctaSet !== undefined ? { ctaSet } : {}),
-    ...(ctaPosition !== undefined ? { ctaPosition } : {}),
-    ...(ctaIconPosition !== undefined ? { ctaIconPosition } : {}),
-    ...(showActionsOnTouch !== undefined ? { showActionsOnTouch } : {}),
-    ...(nameSize !== undefined ? { nameSize } : {}),
-    ...(priceSize !== undefined ? { priceSize } : {}),
-    ...(textAlign !== undefined ? { textAlign } : {}),
-    ...(eyebrow !== undefined ? { eyebrow } : {}),
-    ...(imageNav !== undefined ? { imageNav } : {}),
-    ...(imageIndicator !== undefined ? { imageIndicator } : {}),
-    ...(imageIndicatorPosition !== undefined ? { imageIndicatorPosition } : {}),
-    ...(imageLoop !== undefined ? { imageLoop } : {}),
-    ...(imageLimit !== undefined ? { imageLimit } : {}),
-    ...(selectionMode !== undefined ? { selectionMode } : {}),
-    ...(selectionEffects !== undefined ? { selectionEffects } : {}),
-  });
+  const styles = resolveProductCardStyles(
+    {
+      ...productOverrides,
+      ...styleConfig,
+      ...(cardType !== undefined ? { cardType } : {}),
+      ...(mediaRatio !== undefined ? { mediaRatio } : {}),
+      ...(borderRadius !== undefined ? { borderRadius } : {}),
+      ...(imageBorderRadius !== undefined ? { imageBorderRadius } : {}),
+      ...(cardPad !== undefined ? { cardPad } : {}),
+      ...(cardBg !== undefined ? { cardBg } : {}),
+      ...(borderColor !== undefined ? { borderColor } : {}),
+      ...(hoverCardBg !== undefined ? { hoverCardBg } : {}),
+      ...(hoverBorderColor !== undefined ? { hoverBorderColor } : {}),
+      ...(mediaBg !== undefined ? { mediaBg } : {}),
+      ...(textColor !== undefined ? { textColor } : {}),
+      ...(mutedTextColor !== undefined ? { mutedTextColor } : {}),
+      ...(priceColor !== undefined ? { priceColor } : {}),
+      ...(comparePriceColor !== undefined ? { comparePriceColor } : {}),
+      ...(ctaBg !== undefined ? { ctaBg } : {}),
+      ...(ctaTextColor !== undefined ? { ctaTextColor } : {}),
+      ...(ctaBorderColor !== undefined ? { ctaBorderColor } : {}),
+      ...(imageBlendMode !== undefined ? { imageBlendMode } : {}),
+      ...(imageFit !== undefined ? { imageFit } : {}),
+      ...(badgePosition !== undefined ? { badgePosition } : {}),
+      ...(showBadge !== undefined ? { showBadge } : {}),
+      ...(showDept !== undefined ? { showDept } : {}),
+      ...(showRatings !== undefined ? { showRatings } : {}),
+      ...(showSwatches !== undefined ? { showSwatches } : {}),
+      ...(showPills !== undefined ? { showPills } : {}),
+      ...(hoverMode !== undefined ? { hoverMode } : {}),
+      ...(ctaVariant !== undefined ? { ctaVariant } : {}),
+      ...(ctaStyle !== undefined ? { ctaStyle } : {}),
+      ...(ctaSet !== undefined ? { ctaSet } : {}),
+      ...(ctaPosition !== undefined ? { ctaPosition } : {}),
+      ...(ctaIconPosition !== undefined ? { ctaIconPosition } : {}),
+      ...(showActionsOnTouch !== undefined ? { showActionsOnTouch } : {}),
+      ...(nameSize !== undefined ? { nameSize } : {}),
+      ...(priceSize !== undefined ? { priceSize } : {}),
+      ...(textAlign !== undefined ? { textAlign } : {}),
+      ...(eyebrow !== undefined ? { eyebrow } : {}),
+      ...(imageNav !== undefined ? { imageNav } : {}),
+      ...(imageIndicator !== undefined ? { imageIndicator } : {}),
+      ...(imageIndicatorPosition !== undefined ? { imageIndicatorPosition } : {}),
+      ...(imageLoop !== undefined ? { imageLoop } : {}),
+      ...(imageLimit !== undefined ? { imageLimit } : {}),
+      ...(selectionMode !== undefined ? { selectionMode } : {}),
+      ...(selectionEffects !== undefined ? { selectionEffects } : {}),
+    },
+    cardTheme,
+  );
 
   // Multi-image list bounded by imageLimit
   const rawImages = p.images && p.images.length > 0 ? p.images : p.image ? [{ url: p.image }] : [];
