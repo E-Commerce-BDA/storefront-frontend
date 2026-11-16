@@ -97,7 +97,15 @@ export function useCart(): CartContextValue {
   return value;
 }
 
-export default function CartProvider({ children }: { children: React.ReactNode }) {
+export interface CartProviderProps {
+  children: React.ReactNode;
+  drawerActions?: {
+    showViewCart?: boolean;
+    showCheckout?: boolean;
+  };
+}
+
+export default function CartProvider({ children, drawerActions }: CartProviderProps) {
   const router = useRouter();
   const [state, setState] = useState<CartState>(emptyCart);
   const [status, setStatus] = useState<CartStatus>("idle");
@@ -253,6 +261,8 @@ export default function CartProvider({ children }: { children: React.ReactNode }
           value.closeDrawer();
           router.push("/checkout");
         }}
+        showViewCart={drawerActions?.showViewCart ?? true}
+        showCheckout={drawerActions?.showCheckout ?? true}
       />
       <Toast
         open={notice !== null}
