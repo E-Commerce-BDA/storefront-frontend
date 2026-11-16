@@ -226,7 +226,11 @@ export default function SearchEditorial({
               ))}
             </div>
           </div>
-          {status === "loading" && typing ? (
+          {status === "error" && typing ? (
+            <p className="sf-editorial__empty sf-editorial__error" role="alert">
+              Search is unavailable right now. Please try again.
+            </p>
+          ) : status === "loading" && typing ? (
             <p className="sf-editorial__empty" role="status">
               Searching…
             </p>
