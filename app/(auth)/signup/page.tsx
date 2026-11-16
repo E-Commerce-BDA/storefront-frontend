@@ -31,6 +31,7 @@ export default async function SignupPage({
       sub={style.content.sub}
       bulletsHtml={style.content.bullets}
       quoteHtml={style.content.quote}
+      microcopy={style.content.microcopy}
     />
   );
   const form = (
