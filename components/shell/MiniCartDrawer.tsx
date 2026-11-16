@@ -32,6 +32,8 @@ export interface MiniCartDrawerProps {
   onRemove: (itemId: string) => void;
   onViewCart?: () => void;
   onCheckout: () => void;
+  showViewCart?: boolean;
+  showCheckout?: boolean;
   className?: string;
 }
 
@@ -45,6 +47,8 @@ export default function MiniCartDrawer({
   onRemove,
   onViewCart,
   onCheckout,
+  showViewCart = true,
+  showCheckout = true,
   className = "",
 }: MiniCartDrawerProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -138,14 +142,20 @@ export default function MiniCartDrawer({
             <p className="sf-minicart__subtotal">
               Subtotal <span>${totals.subtotal}</span>
             </p>
-            {onViewCart ? (
-              <Button variant="light" fullWidth onClick={onViewCart}>
-                View cart
-              </Button>
+            {(showViewCart && onViewCart) || showCheckout ? (
+              <div className="sf-minicart__actions">
+                {showViewCart && onViewCart ? (
+                  <Button variant="light" fullWidth onClick={onViewCart}>
+                    View cart
+                  </Button>
+                ) : null}
+                {showCheckout ? (
+                  <Button fullWidth onClick={onCheckout}>
+                    Checkout
+                  </Button>
+                ) : null}
+              </div>
             ) : null}
-            <Button fullWidth onClick={onCheckout}>
-              Checkout
-            </Button>
           </footer>
         ) : null}
       </div>
