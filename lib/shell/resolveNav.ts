@@ -247,6 +247,16 @@ export function resolveNavSettings(input: ResolveNavInput, now: number = Date.no
   };
   const account = mergeGroup(D.account, global?.account, shared?.account);
   const cart = mergeGroup(D.cart, global?.cart, shared?.cart);
+  const drawerActions = {
+    showViewCart:
+      shared?.cart?.drawerActions?.showViewCart ??
+      global?.cart?.drawerActions?.showViewCart ??
+      D.cart.drawerActions.showViewCart,
+    showCheckout:
+      shared?.cart?.drawerActions?.showCheckout ??
+      global?.cart?.drawerActions?.showCheckout ??
+      D.cart.drawerActions.showCheckout,
+  };
   const mobile = mergeGroup(D.mobile, global?.mobile, shared?.mobile);
 
   const links = resolveLinks(shared?.links?.items ?? global?.links?.items, shared?.links?.maxItems ?? global?.links?.maxItems, now);
@@ -267,7 +277,11 @@ export function resolveNavSettings(input: ResolveNavInput, now: number = Date.no
     links,
     search,
     account,
-    cart: { ...cart, badgeCap: clampInt(cart.badgeCap, L.badgeCap.min, L.badgeCap.max, D.cart.badgeCap) },
+    cart: {
+      ...cart,
+      badgeCap: clampInt(cart.badgeCap, L.badgeCap.min, L.badgeCap.max, D.cart.badgeCap),
+      drawerActions,
+    },
     announcement: {
       items: announceItems,
       showArrows: shared?.announcement?.showArrows ?? global?.announcement?.showArrows ?? D.announcement.showArrows,
