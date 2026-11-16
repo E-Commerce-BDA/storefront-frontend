@@ -58,4 +58,18 @@ describe("GET /api/search/suggest", () => {
     expect(body.products[0].slug).toBe("linen-shirt");
     expect(fetchFn).toHaveBeenCalled();
   });
+
+  it("returns 503 error when search-svc is unavailable", async () => {
+    vi.stubEnv("SEARCH_SVC_URL", "http://search.test");
+    stubFetch(503, {
+      error: { code: "SERVICE_UNAVAILABLE", message: "search down" },
+    });
+
+    const req = new NextRequest("http://localhost/api/search/suggest?q=linen");
+    const res = await suggestGET(req);
+
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.error).toBeDefined();
+  });
 });
