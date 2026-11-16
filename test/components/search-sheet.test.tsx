@@ -67,6 +67,12 @@ describe("SearchSheet", () => {
     second.unmount();
   });
 
+  it("renders error alert when search status is error", () => {
+    render(<SearchSheet query="linen" results={[]} status="error" {...BASE} />);
+    const alert = screen.getByRole("alert");
+    expect(alert.textContent).toContain("Search is unavailable right now. Please try again.");
+  });
+
   it("traps Tab inside (locked feel-test verdict), Esc closes", () => {
     const onClose = vi.fn();
     render(<SearchSheet query="linen" results={ROWS} {...BASE} onClose={onClose} />);
