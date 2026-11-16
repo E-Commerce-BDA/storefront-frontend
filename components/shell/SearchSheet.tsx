@@ -178,7 +178,11 @@ export default function SearchSheet({
           </span>
           <span className="sf-searchsheet__hint">Use Arrow keys to cycle products</span>
         </div>
-        {status === "loading" ? (
+        {status === "error" ? (
+          <p className="sf-searchsheet__empty sf-searchsheet__error" role="alert">
+            Search is unavailable right now. Please try again.
+          </p>
+        ) : status === "loading" ? (
           <p className="sf-searchsheet__empty" role="status">
             Searching…
           </p>
