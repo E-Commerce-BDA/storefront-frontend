@@ -1,5 +1,5 @@
 import type { NextRequest, NextResponse } from "next/server";
-import { jsonNoStore } from "@/lib/bff/handler";
+import { jsonNoStore, toResponse } from "@/lib/bff/handler";
 import { searchClient } from "@/lib/search/client";
 import type { SearchSuggestResponse } from "@ecom/contracts";
 
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const result = await searchClient().suggest(q, limit);
   if (!result.ok) {
-    return jsonNoStore(emptyResponse);
+    return toResponse(result);
   }
 
   return jsonNoStore(result.data);
