@@ -18,7 +18,9 @@ export function createHttpSearchSource(): SearchSource {
         },
       );
 
-      if (!result.ok) return [];
+      if (!result.ok) {
+        throw new Error(result.error?.message || result.error?.code || "Search service unavailable");
+      }
 
       const { products } = result.data;
       return products.map((p) => ({
