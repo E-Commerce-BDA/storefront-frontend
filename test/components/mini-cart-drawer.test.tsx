@@ -63,6 +63,7 @@ describe("MiniCartDrawer", () => {
     expect(screen.getByText("Mug")).not.toBeNull();
     expect(container.querySelector(".sf-minicart__subtotal span")?.textContent).toBe("$10");
     expect(screen.getByRole("button", { name: "Checkout" })).not.toBeNull();
+    expect(container.querySelector(".sf-minicart__actions")).not.toBeNull();
   });
 
   it("shows the item count in the heading", () => {
@@ -85,6 +86,20 @@ describe("MiniCartDrawer", () => {
     openDrawer({ onViewCart });
     fireEvent.click(screen.getByRole("button", { name: "View cart" }));
     expect(onViewCart).toHaveBeenCalledTimes(1);
+  });
+
+  it("suppresses View cart when showViewCart is false", () => {
+    const onViewCart = vi.fn();
+    openDrawer({ onViewCart, showViewCart: false });
+    expect(screen.queryByRole("button", { name: "View cart" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Checkout" })).not.toBeNull();
+  });
+
+  it("suppresses Checkout when showCheckout is false", () => {
+    const onViewCart = vi.fn();
+    openDrawer({ onViewCart, showCheckout: false });
+    expect(screen.getByRole("button", { name: "View cart" })).not.toBeNull();
+    expect(screen.queryByRole("button", { name: "Checkout" })).toBeNull();
   });
 
   it("closes on Escape and on overlay click, never on panel click", () => {
