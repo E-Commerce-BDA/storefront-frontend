@@ -13,6 +13,7 @@ export interface AuthPanelProps {
   sub: string;
   bulletsHtml: string;
   quoteHtml: string;
+  microcopy?: string;
   className?: string;
 }
 
@@ -22,19 +23,31 @@ export default function AuthPanel({
   sub,
   bulletsHtml,
   quoteHtml,
+  microcopy = "",
   className = "",
 }: AuthPanelProps) {
   return (
     <div className={`sf-auth__panel ${className}`} data-admin-slot="panel">
       <div className="sf-auth__overlay" aria-hidden="true" />
-      {logoUrl !== "" && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={logoUrl} alt="" aria-hidden="true" className="sf-auth__logo" />
+      <div className="sf-auth__panel-head">
+        {logoUrl !== "" && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logoUrl} alt="" aria-hidden="true" className="sf-auth__logo" />
+        )}
+        {headline !== "" && <div className="sf-auth__headline" dangerouslySetInnerHTML={{ __html: headline }} />}
+        {sub !== "" && <div className="sf-auth__sub" dangerouslySetInnerHTML={{ __html: sub }} />}
+      </div>
+      {bulletsHtml !== "" && (
+        <div className="sf-auth__panel-body">
+          <div className="sf-auth__bullets" dangerouslySetInnerHTML={{ __html: bulletsHtml }} />
+        </div>
       )}
-      {headline !== "" && <div className="sf-auth__headline" dangerouslySetInnerHTML={{ __html: headline }} />}
-      {sub !== "" && <div className="sf-auth__sub" dangerouslySetInnerHTML={{ __html: sub }} />}
-      {bulletsHtml !== "" && <div className="sf-auth__bullets" dangerouslySetInnerHTML={{ __html: bulletsHtml }} />}
-      {quoteHtml !== "" && <div className="sf-auth__quote" dangerouslySetInnerHTML={{ __html: quoteHtml }} />}
+      {(quoteHtml !== "" || microcopy !== "") && (
+        <footer className="sf-auth__panel-footer">
+          {quoteHtml !== "" && <div className="sf-auth__quote" dangerouslySetInnerHTML={{ __html: quoteHtml }} />}
+          {microcopy !== "" && <p className="sf-auth__microcopy">{microcopy}</p>}
+        </footer>
+      )}
     </div>
   );
 }
