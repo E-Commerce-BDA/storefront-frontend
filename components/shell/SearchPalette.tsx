@@ -310,7 +310,11 @@ export default function SearchPalette({
           <p className="sf-searchpalette__products-title">Matching Products ({pool.length})</p>
           <p className="sf-searchpalette__hint">Use ↑ ↓ then Enter</p>
         </div>
-        {status === "loading" && typing ? (
+        {status === "error" && typing ? (
+          <p className="sf-searchpalette__empty sf-searchpalette__error" role="alert">
+            Search is unavailable right now. Please try again.
+          </p>
+        ) : status === "loading" && typing ? (
           <p className="sf-searchpalette__empty" role="status">
             Searching…
           </p>
