@@ -59,6 +59,22 @@ describe("AuthPanel", () => {
     expect(container.querySelector(".sf-auth__bullets")).toBeNull();
     expect(container.querySelector(".sf-auth__quote")?.innerHTML).toBe("<p>Q</p>");
   });
+
+  it("renders microcopy and semantic regions when provided", () => {
+    const { container } = render(
+      <AuthPanel
+        headline="<h3>Welcome</h3>"
+        sub="<p>To shop</p>"
+        bulletsHtml="<li>Perks</li>"
+        quoteHtml="<p>Quote</p>"
+        microcopy="Terms apply"
+      />,
+    );
+    expect(container.querySelector(".sf-auth__panel-head")).not.toBeNull();
+    expect(container.querySelector(".sf-auth__panel-body")).not.toBeNull();
+    expect(container.querySelector(".sf-auth__panel-footer")).not.toBeNull();
+    expect(container.querySelector(".sf-auth__microcopy")?.textContent).toBe("Terms apply");
+  });
 });
 
 describe("AuthForm", () => {
