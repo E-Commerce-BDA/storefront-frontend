@@ -67,7 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={`${fraunces.variable} ${outfit.variable}`}>
       <body style={themeToCssVars(theme)}>
-        <CartProvider>
+        <CartProvider drawerActions={nav.cart.drawerActions}>
           <WishlistProvider>
             <NavbarMount nav={nav} />
             {children}
