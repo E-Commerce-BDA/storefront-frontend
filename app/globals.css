@@ -908,6 +908,12 @@ body {
   font-style: italic;
   opacity: 0.9;
 }
+.sf-auth__microcopy {
+  font-size: 11px;
+  color: var(--auth-sub-color, rgba(255, 255, 255, 0.75));
+  margin-top: 10px;
+  opacity: 0.85;
+}
 .sf-auth__form-title {
   font-size: var(--auth-form-title-size, 14px);
   font-weight: var(--auth-form-title-weight, 600);
@@ -1146,6 +1152,11 @@ body {
   margin: 18px auto 0;
   font-size: 14px;
   color: var(--text-muted);
+}
+.sf-searchsheet__error,
+.sf-editorial__error,
+.sf-searchpalette__error {
+  color: var(--color-error, #d92d20);
 }
 .sf-searchsheet__cards {
   display: grid;
@@ -3338,6 +3349,137 @@ body {
   color: var(--section-title, var(--color-ink));
 }
 
+/* ── PDP sections (components/sections/Pdp*Section.tsx) ─────────────────
+ * Same shell as the home sections; per-block paint only. Layout knobs reach
+ * CSS as data attrs and numbers as vars; all color resolves through tokens. */
+.sf-pdp-description__body,
+.sf-pdp-description__text {
+  color: var(--pdp-text, var(--color-ink));
+}
+.sf-pdp-description__text {
+  margin: 0;
+  font-size: var(--pdp-text-size, 15px);
+  line-height: 1.65;
+  white-space: pre-line;
+}
+.sf-pdp-description[data-layout="wide"] .sf-prose {
+  max-width: 100%;
+}
+.sf-pdp-details__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--pdp-details-gap, 4px 32px);
+  margin: 0;
+}
+@media (min-width: 640px) {
+  .sf-pdp-details__grid {
+    grid-template-columns: repeat(var(--details-cols, 2), minmax(0, 1fr));
+  }
+}
+.sf-pdp-details__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--pdp-details-row-gap, 16px);
+  border-bottom: 1px solid var(--pdp-details-border, var(--border));
+  padding-block: var(--pdp-details-pad-y, 6px);
+}
+.sf-pdp-details__term {
+  color: var(--pdp-details-term, var(--text-muted));
+  font-size: var(--pdp-text-size, 14px);
+}
+.sf-pdp-details__value {
+  margin: 0;
+  text-align: right;
+  font-size: var(--pdp-text-size, 14px);
+  color: var(--pdp-details-value, var(--color-ink));
+}
+.sf-pdp-trust__list {
+  display: grid;
+  gap: var(--pdp-trust-gap, 16px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sf-pdp-trust[data-layout="grid"] .sf-pdp-trust__list {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+.sf-pdp-trust__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--pdp-trust-item-gap, 12px);
+}
+.sf-pdp-trust__icon {
+  flex: none;
+  color: var(--pdp-trust-icon, var(--color-accent));
+}
+.sf-pdp-trust__copy {
+  display: grid;
+  gap: var(--pdp-trust-copy-gap, 2px);
+}
+.sf-pdp-trust__title {
+  font-weight: 600;
+  font-size: var(--pdp-text-size, 14px);
+  color: var(--pdp-trust-title, var(--color-ink));
+}
+.sf-pdp-trust__desc {
+  font-size: var(--pdp-text-size, 14px);
+  color: var(--pdp-trust-desc, var(--text-muted));
+}
+.sf-pdp-story {
+  grid-template-columns: minmax(0, 1fr);
+}
+.sf-pdp-story__body {
+  display: grid;
+  gap: var(--pdp-story-gap, 16px);
+  align-content: start;
+}
+.sf-pdp-story__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pdp-story-cta-gap, 12px);
+}
+.sf-pdp-story__media {
+  margin: 0;
+}
+.sf-pdp-story__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  aspect-ratio: var(--story-ratio, 4 / 3);
+  mix-blend-mode: var(--story-blend, normal);
+  border-radius: var(--pdp-story-radius, 12px);
+  background: var(--pdp-story-media-bg, var(--color-image-bg));
+}
+@media (min-width: 768px) {
+  .sf-pdp-story[data-layout="image-left"],
+  .sf-pdp-story[data-layout="image-right"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+  }
+  .sf-pdp-story[data-layout="image-left"] .sf-pdp-story__media {
+    grid-row: 1;
+    grid-column: 1;
+  }
+  .sf-pdp-story[data-layout="image-left"] .sf-pdp-story__body {
+    grid-row: 1;
+    grid-column: 2;
+  }
+  .sf-pdp-story[data-layout="image-right"] .sf-pdp-story__body {
+    grid-row: 1;
+    grid-column: 1;
+  }
+  .sf-pdp-story[data-layout="image-right"] .sf-pdp-story__media {
+    grid-row: 1;
+    grid-column: 2;
+  }
+}
+.sf-faq-wrap .sf-faq[data-layout="list"] .sf-faq__q {
+  cursor: default;
+}
+.sf-faq-wrap .sf-faq[data-layout="list"] .sf-faq__q::after {
+  content: none;
+}
+
 /* Hero: `height: viewport` is a CMS knob, capped so a short slide never leaves
    a wall of background colour. */
 .sf-hero[data-height="viewport"] {
@@ -3969,6 +4111,11 @@ body {
 }
 .sf-minicart__subtotal span {
   font-weight: 700;
+}
+.sf-minicart__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 /* (shop) route container — the full-bleed page shell every commerce page sits in
