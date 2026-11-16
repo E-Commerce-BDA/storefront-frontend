@@ -328,11 +328,22 @@ export interface NavAccountField {
   items?: AccountItem[];
 }
 
+export interface NavCartDrawerActions {
+  showViewCart?: boolean;
+  showCheckout?: boolean;
+}
+
+export interface ResolvedNavCartDrawerActions {
+  showViewCart: boolean;
+  showCheckout: boolean;
+}
+
 export interface NavCartField {
   enabled?: boolean;
   destination?: CartDestination;
   dedicatedPage?: boolean;
   badgeCap?: number;
+  drawerActions?: NavCartDrawerActions;
 }
 
 export interface NavAnnouncementField {
@@ -414,7 +425,13 @@ export interface ResolvedNavSettings {
     palette: ResolvedPaletteSettings;
   };
   account: { enabled: boolean; items: AccountItem[] };
-  cart: { enabled: boolean; destination: CartDestination; dedicatedPage: boolean; badgeCap: number };
+  cart: {
+    enabled: boolean;
+    destination: CartDestination;
+    dedicatedPage: boolean;
+    badgeCap: number;
+    drawerActions: ResolvedNavCartDrawerActions;
+  };
   announcement: {
     items: { text: string; cta: { label: string; href: string } | null; countdownTo: string }[];
     showArrows: boolean;
@@ -544,7 +561,16 @@ export const DEFAULT_NAV_SETTINGS: ResolvedNavSettings = {
     },
   },
   account: { enabled: true, items: ["orders", "addresses", "wishlist", "signout"] },
-  cart: { enabled: true, destination: "drawer", dedicatedPage: false, badgeCap: 9 },
+  cart: {
+    enabled: true,
+    destination: "drawer",
+    dedicatedPage: false,
+    badgeCap: 9,
+    drawerActions: {
+      showViewCart: true,
+      showCheckout: true,
+    },
+  },
   announcement: {
     items: [],
     showArrows: true,
