@@ -18,10 +18,8 @@ import VariantSelector from "@/components/commerce/VariantSelector";
 import WishlistButton from "@/components/commerce/WishlistButton";
 import QuantityStepper from "@/components/ui/QuantityStepper";
 import Button from "@/components/ui/Button";
-import { Icon } from "@/components/ui";
 import { useCart } from "@/app/_components/CartProvider";
 import { clampQty, QTY_LIMITS } from "@/lib/commerce/quantity";
-import { PRODUCT_TRUST_ITEMS } from "@/lib/commerce/productTrust";
 import {
   defaultSelection,
   resolveVariant,
@@ -30,6 +28,9 @@ import {
 } from "@/lib/commerce/variants";
 import type { GalleryImage } from "@/lib/commerce/gallery";
 import type { ProductOptionDto, ProductVariantDto } from "@/lib/catalog/schemas";
+
+// Trust now renders as a `pdp_trust` CMS section below the buy box; the
+// static list survives only as the outage fallback in `lib/sections/pdp.ts`.
 
 export interface PurchasePanelProps {
   productId: string;
@@ -154,18 +155,6 @@ export default function PurchasePanel({
         <Button onClick={() => void addToCart()} disabled={outOfStock}>
           {outOfStock ? "Unavailable" : "Add to cart"}
         </Button>
-
-        <div className="mt-4 grid gap-3 border-t border-[var(--border)] pt-4">
-          {PRODUCT_TRUST_ITEMS.map((item) => (
-            <div key={item.title} className="flex items-center gap-3 text-xs text-[var(--text-muted)]">
-              <Icon name={item.icon as any} size={16} className="text-[var(--color-navy)]" />
-              <span>
-                <strong className="font-semibold text-[var(--color-ink)]">{item.title}:</strong>{" "}
-                {item.description}
-              </span>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );

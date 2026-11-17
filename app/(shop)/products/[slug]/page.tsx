@@ -7,14 +7,14 @@ import { catalogClient } from "@/lib/catalog/client";
 import { cmsBaseUrl, createCmsClient } from "@/lib/cms/client";
 import { fetchThemeSettings } from "@/lib/cms/theme";
 import { resolveThemeSettings, toBadgeTones } from "@/lib/cms/themeSettings";
-import { fromCatalogList } from "@/lib/commerce/fromCatalog";
 import { GALLERY_MAX_IMAGES, toGalleryImages } from "@/lib/commerce/gallery";
 import { buildProductJsonLd } from "@/lib/commerce/jsonLd";
+import { buildPdpFallbackSections, pdpPageKey, summarizePdpReviews } from "@/lib/sections/pdp";
 import { resolveSections } from "@/lib/sections/resolveSections";
 import type { BreadcrumbItem } from "@/lib/shell/pageHeader";
+import type { SectionViewModel } from "@/lib/sections/viewModels";
 import PurchasePanel from "../../_components/PurchasePanel";
 import RecentlyViewed from "../../_components/RecentlyViewed";
-import ProductGridIsland from "@/components/commerce/ProductGridIsland";
 
 /**
  * `/products/[slug]` — the PDP (plan §8: static ISR 60; A3.*).
@@ -98,45 +98,45 @@ export default async function ProductPage({
     { label: product.name },
   ];
 
-  // Concurrently fetch CMS sections for this PDP and related category items
-  const [cmsSectionsResponse, related] = await Promise.all([
-    createCmsClient({ baseUrl: cmsBaseUrl() }).getSections(`pdp-${product.slug}`),
-    product.category
-      ? catalogClient().listProducts({ categoryId: product.category.id, limit: 12 })
+  // Per-product CMS sections, keyed by product id (never slug). The
+  // `pdp-default` blueprint is materialized into this page by the admin
+  // clone endpoint; it is never read here.
+  const pageKey = pdpPageKey(product.id);
+  const [cmsSectionsResponse, themeResult] = await Promise.all([
+    pageKey
+      ? createCmsClient({ baseUrl: cmsBaseUrl() }).getSections(pageKey)
       : Promise.resolve(null),
+    fetchThemeSettings(),
   ]);
 
-  const resolvedSections = cmsSectionsResponse?.sections
-    ? await resolveSections(cmsSectionsResponse.sections)
-    : [];
+  let resolvedSections: SectionViewModel[];
+  if (!pageKey) {
+    // A product id that cannot form a valid page key has no sections; this
+    // is not an outage, so the fallback must not be built.
+    console.warn(`[pdp] product "${product.id}" cannot form a pdp page key`);
+    resolvedSections = [];
+  } else if (cmsSectionsResponse === null) {
+    // CMS outage only. An empty successful response renders no sections.
+    console.warn(`[pdp] cms unavailable for "${pageKey}"; using fallback sections`);
+    resolvedSections = await resolveSections(
+      buildPdpFallbackSections(product),
+      undefined,
+      { product },
+    );
+  } else {
+    resolvedSections = await resolveSections(cmsSectionsResponse.sections, undefined, {
+      product,
+    });
+    if (resolvedSections.length === 0) {
+      console.warn(`[pdp] no sections rendered for "${pageKey}" (${cmsSectionsResponse.sections.length} in cms)`);
+    }
+  }
 
-  // Compute rating and ratingCount from active testimonial items
-  const testimonialItems = resolvedSections
-    .filter((s): s is Extract<typeof s, { type: "testimonial" }> => s.type === "testimonial")
-    .flatMap((s) => s.items);
-
-  const ratings = testimonialItems
-    .map((i) => i.rating)
-    .filter((r): r is number => typeof r === "number" && r > 0);
-
-  const rating =
-    ratings.length > 0 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : null;
-  const ratingCount = ratings.length > 0 ? ratings.length : null;
-
-  const relatedItems =
-    related && related.ok
-      ? fromCatalogList(related.data.items.filter((row: { id: string; status: string }) => row.id !== product.id && row.status === "active")).slice(0, 8)
-      : [];
-  const themeResult = await fetchThemeSettings();
+  const reviewSummary = summarizePdpReviews(resolvedSections);
   const theme = resolveThemeSettings({ settings: themeResult.theme });
   const cardTheme = theme.productCard;
 
   const jsonLd = buildProductJsonLd(product);
-
-  const attributes = Object.entries(product.attributes ?? {}).filter(
-    ([, value]) =>
-      typeof value === "string" || typeof value === "number" || typeof value === "boolean",
-  );
 
   return (
     <>
@@ -151,66 +151,24 @@ export default async function ProductPage({
         price={displayed}
         compareAt={product.compareAtPrice}
         stock={product.stock}
-        rating={rating}
-        ratingCount={ratingCount}
+        rating={reviewSummary.rating}
+        ratingCount={reviewSummary.count}
       />
 
-      {product.description ? (
-        <section className="mt-10">
-          <h2 className="mb-2 font-display text-lg text-[var(--color-ink)]">Description</h2>
-          <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--text-muted)]">
-            {product.description}
-          </p>
-        </section>
-      ) : null}
-
-      {attributes.length > 0 ? (
-        <section className="mt-8">
-          <h2 className="mb-2 font-display text-lg text-[var(--color-ink)]">Details</h2>
-          <dl className="grid grid-cols-1 gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
-            {attributes.map(([key, value]) => (
-              <div key={key} className="flex justify-between gap-4 border-b border-[var(--border)] py-1">
-                <dt className="text-[var(--text-muted)]">{key}</dt>
-                <dd className="text-[var(--color-ink)]">{String(value)}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-      ) : null}
-
       {resolvedSections.length > 0 ? (
-        <div id="reviews" className="mt-12">
-          <SectionRenderer
-            models={resolvedSections}
-            columns={{
-              desktop: cardTheme.colsDesktop,
-              tablet: cardTheme.colsTablet,
-              phone: cardTheme.colsPhone,
-            }}
-            themeFallback={cardTheme}
-            tones={toBadgeTones(theme)}
-          />
-        </div>
+        <SectionRenderer
+          models={resolvedSections}
+          columns={{
+            desktop: cardTheme.colsDesktop,
+            tablet: cardTheme.colsTablet,
+            phone: cardTheme.colsPhone,
+          }}
+          themeFallback={cardTheme}
+          tones={toBadgeTones(theme)}
+        />
       ) : null}
 
       <RecentlyViewed excludeSlug={product.slug} />
-
-      {relatedItems.length > 0 ? (
-        <section className="mt-12">
-          <h2 className="mb-4 font-display text-lg text-[var(--color-ink)]">You may also like</h2>
-          <ProductGridIsland
-            items={relatedItems}
-            label="Related products"
-            columns={{
-              desktop: cardTheme.colsDesktop,
-              tablet: cardTheme.colsTablet,
-              phone: cardTheme.colsPhone,
-            }}
-            themeFallback={cardTheme}
-            tones={toBadgeTones(theme)}
-          />
-        </section>
-      ) : null}
 
       <script
         type="application/ld+json"

@@ -126,6 +126,12 @@ describe("PurchasePanel", () => {
     expect(container.querySelector(".sf-pdp .sf-qty")).not.toBeNull();
   });
 
+  it("does not hardcode trust badges — they render as a pdp_trust section", () => {
+    const { container } = renderPanel();
+    expect(container.textContent).not.toContain("Free shipping");
+    expect(container.textContent).not.toContain("Secure checkout");
+  });
+
   it("refuses to add an out-of-stock product", () => {
     renderPanel({ variants: [], options: [], stock: 0 });
     expect(screen.queryByText("Out of stock")).not.toBeNull();

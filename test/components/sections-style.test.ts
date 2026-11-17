@@ -43,6 +43,11 @@ const SHELL = [
   ".sf-pill",
   ".sf-blog",
   ".sf-degraded",
+  ".sf-pdp-description",
+  ".sf-pdp-details",
+  ".sf-pdp-trust",
+  ".sf-pdp-story",
+  ".sf-faq-wrap",
 ];
 
 const sectionCss = rulesFor(...SHELL);

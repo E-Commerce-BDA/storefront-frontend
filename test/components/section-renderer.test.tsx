@@ -79,6 +79,26 @@ const models: SectionViewModel[] = [
     type: "blog_teaser",
     posts: [{ slug: "field-notes", title: "Field notes", href: "/blog/field-notes" }],
   },
+  { key: "pdp-desc", type: "pdp_description", text: "Catalog copy", layout: "prose" },
+  { key: "pdp-det", type: "pdp_details", rows: [{ label: "Fit", value: "Relaxed" }], columns: 2 },
+  {
+    key: "pdp-rev",
+    type: "pdp_reviews",
+    anchorId: "reviews",
+    layout: "grid",
+    speed: 60,
+    pauseOnHover: true,
+    items: [{ id: "r1", quote: "Great", name: "Sam" }],
+  },
+  {
+    key: "pdp-trust",
+    type: "pdp_trust",
+    items: [{ id: "ship", icon: "truck", title: "Shipping", description: "Fast" }],
+    layout: "grid",
+    showIcons: true,
+  },
+  { key: "pdp-story", type: "pdp_story", html: "<p>Story</p>", ctas: [], layout: "text" },
+  { key: "pdp-faq", type: "pdp_faq", items: [{ question: "When?", answer: "Today." }], layout: "accordion" },
 ];
 
 describe("SectionRenderer", () => {
@@ -91,6 +111,12 @@ describe("SectionRenderer", () => {
     expect(container.querySelector(".sf-strip")).not.toBeNull();
     expect(container.querySelector(".sf-testimonials")).not.toBeNull();
     expect(container.querySelector(".sf-blog-teaser")).not.toBeNull();
+    expect(container.querySelector(".sf-pdp-description")).not.toBeNull();
+    expect(container.querySelector(".sf-pdp-details")).not.toBeNull();
+    expect(container.querySelector(".sf-pdp-trust")).not.toBeNull();
+    expect(container.querySelector(".sf-pdp-story")).not.toBeNull();
+    expect(container.querySelector(".sf-faq-wrap")).not.toBeNull();
+    expect(container.querySelector("#reviews")).not.toBeNull();
     // The renderer maps the model list straight through — no sorting, no
     // re-ordering, because the CMS `sortOrder` is the page's order.
     expect((container.firstElementChild as HTMLElement).className).toContain("sf-hero");

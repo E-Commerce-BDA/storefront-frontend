@@ -4,6 +4,11 @@ import BrandStripSection from "@/components/sections/BrandStripSection";
 import CategoryShowcaseSection from "@/components/sections/CategoryShowcaseSection";
 import HeroCarousel from "@/components/sections/HeroCarousel";
 import HeroSection from "@/components/sections/HeroSection";
+import PdpDescriptionSection from "@/components/sections/PdpDescriptionSection";
+import PdpDetailsSection from "@/components/sections/PdpDetailsSection";
+import PdpFaqSection from "@/components/sections/PdpFaqSection";
+import PdpStorySection from "@/components/sections/PdpStorySection";
+import PdpTrustSection from "@/components/sections/PdpTrustSection";
 import ProductCollectionSection from "@/components/sections/ProductCollectionSection";
 import TestimonialSection from "@/components/sections/TestimonialSection";
 import { toHeroFields } from "@/components/sections/toHeroFields";
@@ -65,6 +70,20 @@ export default function SectionRenderer({ models, columns, themeFallback, tones 
             return <BrandStripSection key={model.key} model={model} />;
           case "testimonial":
             return <TestimonialSection key={model.key} model={model} />;
+          case "pdp_reviews":
+            return (
+              <TestimonialSection key={model.key} model={model} id={model.anchorId} />
+            );
+          case "pdp_description":
+            return <PdpDescriptionSection key={model.key} model={model} />;
+          case "pdp_details":
+            return <PdpDetailsSection key={model.key} model={model} />;
+          case "pdp_trust":
+            return <PdpTrustSection key={model.key} model={model} />;
+          case "pdp_story":
+            return <PdpStorySection key={model.key} model={model} />;
+          case "pdp_faq":
+            return <PdpFaqSection key={model.key} model={model} />;
           case "blog_teaser":
             return <BlogTeaserSection key={model.key} model={model} />;
           default:

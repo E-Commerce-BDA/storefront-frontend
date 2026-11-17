@@ -14,6 +14,11 @@ export { default as ProductCollectionSection } from "./ProductCollectionSection"
 export { default as CategoryShowcaseSection } from "./CategoryShowcaseSection";
 export { default as BrandStripSection } from "./BrandStripSection";
 export { default as TestimonialSection } from "./TestimonialSection";
+export { default as PdpDescriptionSection, type PdpDescriptionSectionProps } from "./PdpDescriptionSection";
+export { default as PdpDetailsSection, type PdpDetailsSectionProps } from "./PdpDetailsSection";
+export { default as PdpTrustSection, type PdpTrustSectionProps } from "./PdpTrustSection";
+export { default as PdpStorySection, type PdpStorySectionProps } from "./PdpStorySection";
+export { default as PdpFaqSection, type PdpFaqSectionProps } from "./PdpFaqSection";
 export { default as BlogTeaserSection } from "./BlogTeaserSection";
 export { default as BlogCard, type BlogCardProps } from "./BlogCard";
 export { default as SectionRenderer } from "./SectionRenderer";
@@ -39,6 +44,15 @@ export type {
   BrandCellModel,
   TestimonialViewModel,
   TestimonialModel,
+  ReviewCollectionBase,
+  PdpDescriptionViewModel,
+  PdpDetailsViewModel,
+  PdpDetailRow,
+  PdpReviewsViewModel,
+  PdpTrustViewModel,
+  PdpStoryViewModel,
+  PdpFaqViewModel,
+  PdpFaqItem,
   BlogTeaserViewModel,
   BlogTeaserCardModel,
   SectionCtaModel,

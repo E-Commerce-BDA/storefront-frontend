@@ -20,9 +20,10 @@
  * Note on validation: the settings readers keep the historical envelope guard
  * (`version` is a number, the payload is an object) because their fallbacks
  * already treat a wrong-typed field as a miss. The sf-060 readers
- * (`getSections`/`getFooter`/`listBlogs`/`getBlog`/`getPage`) instead parse
- * through the `@ecom/contracts` response schemas — the storefront repinned to
- * 1.12.0, so CMS bodies are shape-checked at the boundary exactly once.
+ * (`getFooter`/`listBlogs`/`getBlog`/`getPage`) instead parse through the
+ * `@ecom/contracts` response schemas, while `getSections` validates the
+ * envelope and parses per-section so one unknown section cannot blank the
+ * page.
  */
 
 import {
@@ -34,7 +35,8 @@ import {
   type FooterResponse,
   pageSchema,
   type Page,
-  sectionListResponseSchema,
+  sectionListEnvelopeSchema,
+  sectionSchema,
   type SectionListResponse,
 } from "@ecom/contracts";
 import type { AuthSettings } from "@/lib/auth/settings";
@@ -155,8 +157,24 @@ export function createCmsClient(options: CmsClientOptions): CmsClient {
         `/api/v1/cms/sections?pageKey=${encodeURIComponent(pageKey)}`,
         cmsTag.sections(pageKey),
       );
-      const parsed = sectionListResponseSchema.safeParse(body);
-      return parsed.success ? parsed.data : null;
+      // Tolerant parse: validate the outer envelope, then each section.
+      // One unknown/invalid section must not null the whole page — the
+      // renderer skips only that section. An invalid envelope is an outage.
+      const envelope = sectionListEnvelopeSchema.safeParse(body);
+      if (!envelope.success) return null;
+      const sections = envelope.data.sections.flatMap((raw, index) => {
+        const parsed = sectionSchema.safeParse(raw);
+        if (!parsed.success) {
+          // reason: no logger in this repo yet; a skipped section is
+          // deliberately swallowed so one bad row cannot blank the page.
+          console.warn(
+            `[cms] skipped invalid section at index ${index} on "${pageKey}": ${parsed.error.issues[0]?.message ?? "unknown"}`,
+          );
+          return [];
+        }
+        return [parsed.data];
+      });
+      return { sections, version: envelope.data.version };
     },
 
     async getFooter() {

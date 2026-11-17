@@ -16,7 +16,7 @@
  * `resolveSections`, not five times in JSX.
  */
 
-import type { Section } from "@ecom/contracts";
+import type { PdpTrustItem, Section } from "@ecom/contracts";
 import type { ProductCardData, ProductCardStyleConfig } from "@/lib/commerce/productCard";
 
 /**
@@ -78,6 +78,8 @@ export interface ProductCollectionViewModel {
   key: string;
   type: "product_collection";
   title?: string;
+  /** Accessibility label when no visible title exists (e.g. PDP related). */
+  ariaLabel?: string;
   /** Already ordered (manual picks keep the CMS order; newest is created_desc). */
   cards: ProductCardData[];
   layout: "grid" | "carousel";
@@ -142,15 +144,25 @@ export interface TestimonialModel {
   date?: string;
 }
 
-export interface TestimonialViewModel {
+/** Shared paint for quote collections: home testimonials and PDP reviews. */
+export interface ReviewCollectionBase {
   key: string;
-  type: "testimonial";
   title?: string;
   items: TestimonialModel[];
   layout: "grid" | "marquee";
   speed: number;
   pauseOnHover: boolean;
   bgColor?: string;
+}
+
+export interface TestimonialViewModel extends ReviewCollectionBase {
+  type: "testimonial";
+}
+
+export interface PdpReviewsViewModel extends ReviewCollectionBase {
+  type: "pdp_reviews";
+  /** `"reviews"` on the first active reviews section so `#reviews` targets it. */
+  anchorId?: "reviews";
 }
 
 export interface BlogTeaserCardModel {
@@ -171,6 +183,75 @@ export interface BlogTeaserViewModel {
   bgColor?: string;
 }
 
+export interface PdpDescriptionViewModel {
+  key: string;
+  type: "pdp_description";
+  title?: string;
+  /** Sanitized HTML from a CMS `body`. Exactly one of html/text is set. */
+  html?: string;
+  /** Plain catalog text. Preserves line breaks at paint time. */
+  text?: string;
+  layout: "prose" | "wide";
+  gutterPx?: number;
+  bgColor?: string;
+}
+
+export interface PdpDetailRow {
+  label: string;
+  value: string;
+}
+
+export interface PdpDetailsViewModel {
+  key: string;
+  type: "pdp_details";
+  title?: string;
+  rows: PdpDetailRow[];
+  columns: number;
+  gutterPx?: number;
+  bgColor?: string;
+}
+
+export interface PdpTrustViewModel {
+  key: string;
+  type: "pdp_trust";
+  title?: string;
+  items: PdpTrustItem[];
+  layout: "rows" | "grid";
+  showIcons: boolean;
+  gutterPx?: number;
+  bgColor?: string;
+}
+
+export interface PdpStoryViewModel {
+  key: string;
+  type: "pdp_story";
+  title?: string;
+  /** Sanitized rich text; absent when only media/CTA exists. */
+  html?: string;
+  media?: { src: string; alt: string };
+  ctas: SectionCtaModel[];
+  layout: "text" | "image-left" | "image-right";
+  ratio?: string;
+  imageBlendMode?: "multiply" | "normal";
+  gutterPx?: number;
+  bgColor?: string;
+}
+
+export interface PdpFaqItem {
+  question: string;
+  answer: string;
+}
+
+export interface PdpFaqViewModel {
+  key: string;
+  type: "pdp_faq";
+  title?: string;
+  items: PdpFaqItem[];
+  layout: "accordion" | "list";
+  gutterPx?: number;
+  bgColor?: string;
+}
+
 export type SectionViewModel =
   | HeroViewModel
   | BannerViewModel
@@ -178,7 +259,13 @@ export type SectionViewModel =
   | CategoryShowcaseViewModel
   | BrandStripViewModel
   | TestimonialViewModel
-  | BlogTeaserViewModel;
+  | BlogTeaserViewModel
+  | PdpDescriptionViewModel
+  | PdpDetailsViewModel
+  | PdpReviewsViewModel
+  | PdpTrustViewModel
+  | PdpStoryViewModel
+  | PdpFaqViewModel;
 
 /** The registry key type — same strings as the CMS union, no sixth vocabulary. */
 export type SectionType = Section["type"];

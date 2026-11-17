@@ -46,7 +46,7 @@ export default function ProductCollectionSection({
     ...(model.gutterPx !== undefined ? { "--grid-gap": `${model.gutterPx}px` } : {}),
   } as CSSProperties;
 
-  const label = model.title ?? "Featured products";
+  const label = model.title ?? model.ariaLabel ?? "Featured products";
 
   return (
     <section className={`sf-section sf-collection ${className}`} style={style} aria-label={label} data-layout={model.layout}>

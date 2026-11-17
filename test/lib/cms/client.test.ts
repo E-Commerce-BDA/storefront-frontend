@@ -126,10 +126,24 @@ describe("getSections", () => {
     expect(fetchFn).not.toHaveBeenCalled();
   });
 
-  it("returns null when a section fails the contracts union", async () => {
+  it("skips a section that fails the contracts union and keeps valid ones", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const { cms } = client(async () =>
-      json({ sections: [{ ...SECTION, type: "carousel" }], version: 1 }),
+      json({
+        sections: [{ ...SECTION, type: "carousel" }, SECTION],
+        version: 1,
+      }),
     );
+    expect(await cms.getSections("homepage")).toEqual({
+      sections: [SECTION],
+      version: 1,
+    });
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("returns null only when the envelope itself is invalid", async () => {
+    const { cms } = client(async () => json({ sections: "nope", version: 1 }));
     expect(await cms.getSections("homepage")).toBeNull();
   });
 });

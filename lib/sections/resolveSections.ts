@@ -27,9 +27,13 @@
 
 import type { Blog, Section } from "@ecom/contracts";
 import { catalogClient } from "@/lib/catalog/client";
+import type { ProductDetailDto } from "@/lib/catalog/schemas";
 import { cmsBaseUrl, createCmsClient } from "@/lib/cms/client";
 import type { CatalogProduct } from "@/lib/commerce/fromCatalog";
 import { fromCatalogList } from "@/lib/commerce/fromCatalog";
+import { richTextHtml } from "@/lib/pages/richText";
+import { toCssRatio } from "@/lib/sections/hero";
+import { catalogDetailRows } from "@/lib/sections/pdp";
 import type {
   CategoryTileModel,
   SectionCardOverrides,
@@ -54,6 +58,7 @@ export interface SectionResolveDeps {
     ids?: string[];
     limit?: number;
     sort?: "created_desc";
+    categoryId?: string;
   }): Promise<CatalogProduct[] | null>;
   categories(): Promise<Array<{ id: string; name: string; slug: string; imageUrl?: string | null; isActive?: boolean }> | null>;
   brands(): Promise<Array<{ id: string; name: string; slug: string; logoUrl?: string | null; isActive?: boolean; sortOrder?: number }> | null>;
@@ -66,7 +71,13 @@ export function defaultSectionDeps(): SectionResolveDeps {
   return {
     async products(query) {
       const page = await catalog.listProducts(
-        query.ids ? { ids: query.ids } : { limit: query.limit, sort: query.sort },
+        query.ids
+          ? { ids: query.ids }
+          : {
+              limit: query.limit,
+              sort: query.sort,
+              categoryId: query.categoryId,
+            },
       );
       return page.ok ? page.data.items : null;
     },
@@ -91,17 +102,39 @@ export function defaultSectionDeps(): SectionResolveDeps {
  * Never throws: one malformed section (a content shape newer than this
  * renderer, a slide with a blank headline) costs that section, not the page.
  */
+/**
+ * Page context for types that read the current product. Only the PDP passes
+ * this; a PDP section without it is skipped, never guessed.
+ */
+export interface SectionResolveContext {
+  product?: ProductDetailDto;
+}
+
 export async function resolveSections(
   sections: readonly Section[],
   deps: SectionResolveDeps = defaultSectionDeps(),
+  context: SectionResolveContext = {},
 ): Promise<SectionViewModel[]> {
   const ordered = [...sections].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
   const out: SectionViewModel[] = [];
+  let seenReviews = false;
   for (const section of ordered) {
     if (section.isActive === false) continue;
     try {
-      const model = await buildViewModel(section, deps);
-      if (model !== null) out.push(model);
+      const model = await buildViewModel(section, deps, context);
+      if (model === null) continue;
+      // The `#reviews` anchor exists exactly once: the first active reviews
+      // section. Later reviews sections still paint.
+      if (model.type === "pdp_reviews") {
+        if (!seenReviews) {
+          seenReviews = true;
+          out.push({ ...model, anchorId: "reviews" });
+        } else {
+          out.push(model);
+        }
+      } else {
+        out.push(model);
+      }
     } catch (error) {
       console.error(`[sections] skipped "${section.key}"`, error);
     }
@@ -112,6 +145,7 @@ export async function resolveSections(
 async function buildViewModel(
   section: Section,
   deps: SectionResolveDeps,
+  context: SectionResolveContext,
 ): Promise<SectionViewModel | null> {
   switch (section.type) {
     case "hero":
@@ -128,6 +162,20 @@ async function buildViewModel(
       return blogTeaserModel(section, deps);
     case "testimonial":
       return testimonialModel(section);
+    case "pdp_description":
+      return pdpDescriptionModel(section, context);
+    case "pdp_details":
+      return pdpDetailsModel(section, context);
+    case "pdp_reviews":
+      return pdpReviewsModel(section);
+    case "pdp_related":
+      return pdpRelatedModel(section, deps, context);
+    case "pdp_trust":
+      return pdpTrustModel(section);
+    case "pdp_story":
+      return pdpStoryModel(section);
+    case "pdp_faq":
+      return pdpFaqModel(section);
   }
 }
 
@@ -418,6 +466,229 @@ async function blogTeaserModel(
     type: "blog_teaser",
     ...(nonempty(section.content.title) ? { title: section.content.title } : {}),
     posts: cards,
+    ...(typeof settings?.gutter === "number" ? { gutterPx: settings.gutter } : {}),
+    ...(nonempty(settings?.bgColor) ? { bgColor: settings.bgColor } : {}),
+  };
+}
+
+/* ── PDP builders ─────────────────────────────────────────────────────── */
+
+function pdpDescriptionModel(
+  section: Extract<Section, { type: "pdp_description" }>,
+  context: SectionResolveContext,
+): SectionViewModel | null {
+  const { content, settings } = section;
+  let html: string | undefined;
+  let text: string | undefined;
+  if (content.body !== undefined) {
+    const sanitized = richTextHtml(content.body);
+    if (sanitized !== "") {
+      html = sanitized;
+    } else {
+      // reason: an admin body that sanitizes to nothing (e.g. only a
+      // script) must not blank the section; the catalog copy is the honest
+      // fallback. Hiding is still available via isActive.
+      console.warn(`[sections] pdp_description "${section.key}" sanitized to empty; using catalog description`);
+    }
+  }
+  if (html === undefined) {
+    if (!context.product) return null;
+    if (!nonempty(context.product.description)) return null;
+    text = context.product.description;
+  }
+  return {
+    key: section.key,
+    type: "pdp_description",
+    ...(content.title !== undefined && content.title !== ""
+      ? { title: content.title }
+      : content.title === undefined
+        ? { title: "Description" }
+        : {}),
+    ...(html !== undefined ? { html } : {}),
+    ...(text !== undefined ? { text } : {}),
+    layout: settings?.layout === "wide" ? "wide" : "prose",
+    ...(typeof settings?.gutter === "number" ? { gutterPx: settings.gutter } : {}),
+    ...(nonempty(settings?.bgColor) ? { bgColor: settings.bgColor } : {}),
+  };
+}
+
+function pdpDetailsModel(
+  section: Extract<Section, { type: "pdp_details" }>,
+  context: SectionResolveContext,
+): SectionViewModel | null {
+  const { content, settings } = section;
+  let rows;
+  if (content.rows !== undefined) {
+    rows = content.rows;
+  } else {
+    if (!context.product) return null;
+    rows = catalogDetailRows(context.product);
+  }
+  if (rows.length === 0) return null;
+  return {
+    key: section.key,
+    type: "pdp_details",
+    ...(content.title !== undefined && content.title !== ""
+      ? { title: content.title }
+      : content.title === undefined
+        ? { title: "Details" }
+        : {}),
+    rows,
+    columns: settings?.columns ?? 2,
+    ...(typeof settings?.gutter === "number" ? { gutterPx: settings.gutter } : {}),
+    ...(nonempty(settings?.bgColor) ? { bgColor: settings.bgColor } : {}),
+  };
+}
+
+function pdpReviewsModel(
+  section: Extract<Section, { type: "pdp_reviews" }>,
+): SectionViewModel | null {
+  const maxItems = section.settings?.maxItems ?? 12;
+  const items = (section.content.items ?? []).slice(0, maxItems);
+  if (items.length === 0) return null;
+  const settings = section.settings;
+  return {
+    key: section.key,
+    type: "pdp_reviews",
+    ...(nonempty(section.content.title) ? { title: section.content.title } : {}),
+    items: items.map((item) => ({
+      id: item.id,
+      quote: item.quote,
+      name: item.name,
+      ...(nonempty(item.role) ? { role: item.role } : {}),
+      ...(nonempty(item.avatar) ? { avatar: item.avatar } : {}),
+      ...(typeof item.rating === "number" ? { rating: item.rating } : {}),
+      ...(item.verified !== undefined ? { verified: item.verified } : {}),
+      ...(nonempty(item.date) ? { date: item.date } : {}),
+    })),
+    layout: settings?.layout === "marquee" ? "marquee" : "grid",
+    speed: settings?.speed ?? 60,
+    pauseOnHover: settings?.pauseOnHover !== false,
+    ...(nonempty(settings?.bgColor) ? { bgColor: settings.bgColor } : {}),
+  };
+}
+
+async function pdpRelatedModel(
+  section: Extract<Section, { type: "pdp_related" }>,
+  deps: SectionResolveDeps,
+  context: SectionResolveContext,
+): Promise<SectionViewModel | null> {
+  const product = context.product;
+  if (!product) return null;
+  const { title, source, productIds } = section.content;
+  const maxItems = section.settings?.maxItems ?? DEFAULT_PRODUCT_LIMIT;
+  const effectiveSource = source ?? "category";
+
+  let rows: CatalogProduct[] | null;
+  if (effectiveSource === "manual") {
+    if (!productIds || productIds.length === 0) return null;
+    rows = await deps.products({ ids: productIds.slice(0, 24) });
+    if (rows !== null) rows = orderByIds(rows, productIds.slice(0, 24));
+  } else {
+    const categoryId = product.category?.id;
+    if (!categoryId) return null;
+    rows = await deps.products({ categoryId, limit: maxItems + 1 });
+  }
+  if (rows === null) return null;
+
+  const cards = fromCatalogList(
+    rows.filter((row) => row.id !== product.id && row.status === "active"),
+  ).slice(0, maxItems);
+  if (cards.length === 0) return null;
+
+  const settings = section.settings;
+  const mediaRatio =
+    settings?.ratio !== undefined && settings.ratio !== "custom" ? settings.ratio : undefined;
+  const cardOverrides: SectionCardOverrides = {
+    ...(mediaRatio !== undefined ? { mediaRatio } : {}),
+    ...(settings?.blendMode !== undefined ? { imageBlendMode: settings.blendMode } : {}),
+  };
+  return {
+    key: section.key,
+    type: "product_collection",
+    ...(nonempty(title) ? { title } : {}),
+    ariaLabel: "Related products",
+    cards,
+    layout: section.content.layout === "carousel" ? "carousel" : "grid",
+    ...(typeof settings?.gutter === "number" ? { gutterPx: settings.gutter } : {}),
+    ...(nonempty(settings?.bgColor) ? { bgColor: settings.bgColor } : {}),
+    ...(Object.keys(cardOverrides).length > 0 ? { cardOverrides } : {}),
+  };
+}
+
+function pdpTrustModel(
+  section: Extract<Section, { type: "pdp_trust" }>,
+): SectionViewModel | null {
+  const maxItems = section.settings?.maxItems ?? 6;
+  const items = (section.content.items ?? []).slice(0, maxItems);
+  if (items.length === 0) return null;
+  const settings = section.settings;
+  return {
+    key: section.key,
+    type: "pdp_trust",
+    ...(nonempty(section.content.title) ? { title: section.content.title } : {}),
+    items,
+    layout: settings?.layout === "rows" ? "rows" : "grid",
+    showIcons: settings?.showIcons !== false,
+    ...(typeof settings?.gutter === "number" ? { gutterPx: settings.gutter } : {}),
+    ...(nonempty(settings?.bgColor) ? { bgColor: settings.bgColor } : {}),
+  };
+}
+
+function pdpStoryModel(
+  section: Extract<Section, { type: "pdp_story" }>,
+): SectionViewModel | null {
+  const { content, settings } = section;
+  const html = content.body !== undefined ? richTextHtml(content.body) : "";
+  const hasBody = html !== "";
+  const media = nonempty(content.image)
+    ? { src: content.image, alt: content.imageAlt ?? "" }
+    : undefined;
+  if (!hasBody && media === undefined) return null;
+
+  const layout =
+    settings?.layout !== undefined && settings.layout !== "text"
+      ? settings.layout
+      : settings?.layout === "text"
+        ? "text"
+        : media !== undefined
+          ? "image-right"
+          : "text";
+  const sectionRatio =
+    settings?.ratio === "custom"
+      ? typeof settings.customRatio === "number"
+        ? String(settings.customRatio)
+        : undefined
+      : settings?.ratio;
+
+  return {
+    key: section.key,
+    type: "pdp_story",
+    ...(nonempty(content.title) ? { title: content.title } : {}),
+    ...(hasBody ? { html } : {}),
+    ...(media !== undefined ? { media } : {}),
+    ctas: toCtaModels(content.ctas),
+    layout,
+    ...(sectionRatio !== undefined ? { ratio: toCssRatio(sectionRatio) } : {}),
+    ...(settings?.blendMode !== undefined ? { imageBlendMode: settings.blendMode } : {}),
+    ...(typeof settings?.gutter === "number" ? { gutterPx: settings.gutter } : {}),
+    ...(nonempty(settings?.bgColor) ? { bgColor: settings.bgColor } : {}),
+  };
+}
+
+function pdpFaqModel(
+  section: Extract<Section, { type: "pdp_faq" }>,
+): SectionViewModel | null {
+  const maxItems = section.settings?.maxItems ?? 20;
+  const items = section.content.items.slice(0, maxItems);
+  if (items.length === 0) return null;
+  const settings = section.settings;
+  return {
+    key: section.key,
+    type: "pdp_faq",
+    ...(nonempty(section.content.title) ? { title: section.content.title } : {}),
+    items: items.map((item) => ({ question: item.question, answer: item.answer })),
+    layout: settings?.layout === "list" ? "list" : "accordion",
     ...(typeof settings?.gutter === "number" ? { gutterPx: settings.gutter } : {}),
     ...(nonempty(settings?.bgColor) ? { bgColor: settings.bgColor } : {}),
   };

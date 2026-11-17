@@ -1,5 +1,8 @@
 import type { CSSProperties } from "react";
-import type { TestimonialViewModel, TestimonialModel } from "@/lib/sections/viewModels";
+import type {
+  ReviewCollectionBase,
+  TestimonialModel,
+} from "@/lib/sections/viewModels";
 import { formatMonthYear, starCells, STAR_COUNT } from "@/lib/sections/present";
 import {
   marqueeDurationSeconds,
@@ -20,7 +23,8 @@ import {
  * feature costs one var and no new CSS vocabulary.
  */
 export interface TestimonialSectionProps {
-  model: TestimonialViewModel;
+  model: ReviewCollectionBase;
+  id?: string;
   className?: string;
 }
 
@@ -66,7 +70,7 @@ function Review({ item, ariaHidden }: { item: TestimonialModel; ariaHidden: bool
   );
 }
 
-export default function TestimonialSection({ model, className = "" }: TestimonialSectionProps) {
+export default function TestimonialSection({ model, id, className = "" }: TestimonialSectionProps) {
   const marquee = model.layout === "marquee";
   const style = {
     ...(model.bgColor !== undefined ? { "--section-bg": model.bgColor } : {}),
@@ -84,6 +88,7 @@ export default function TestimonialSection({ model, className = "" }: Testimonia
 
   return (
     <section
+      id={id}
       className={`sf-section sf-testimonials ${className}`}
       style={style}
       aria-label={model.title ?? "What shoppers say"}
