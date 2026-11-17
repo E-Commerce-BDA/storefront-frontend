@@ -59,6 +59,7 @@ export interface SectionResolveDeps {
     limit?: number;
     sort?: "created_desc";
     categoryId?: string;
+    brandId?: string;
   }): Promise<CatalogProduct[] | null>;
   categories(): Promise<Array<{ id: string; name: string; slug: string; imageUrl?: string | null; isActive?: boolean }> | null>;
   brands(): Promise<Array<{ id: string; name: string; slug: string; logoUrl?: string | null; isActive?: boolean; sortOrder?: number }> | null>;
@@ -77,6 +78,7 @@ export function defaultSectionDeps(): SectionResolveDeps {
               limit: query.limit,
               sort: query.sort,
               categoryId: query.categoryId,
+              brandId: query.brandId,
             },
       );
       return page.ok ? page.data.items : null;
@@ -584,6 +586,10 @@ async function pdpRelatedModel(
     if (!productIds || productIds.length === 0) return null;
     rows = await deps.products({ ids: productIds.slice(0, 24) });
     if (rows !== null) rows = orderByIds(rows, productIds.slice(0, 24));
+  } else if (effectiveSource === "brand") {
+    const brandId = product.brand?.id;
+    if (!brandId) return null;
+    rows = await deps.products({ brandId, limit: maxItems + 1 });
   } else {
     const categoryId = product.category?.id;
     if (!categoryId) return null;

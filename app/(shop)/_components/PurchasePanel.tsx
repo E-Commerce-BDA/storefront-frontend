@@ -13,6 +13,7 @@
  * Product title (h1) lives in the right column above ratings, price and buy box.
  */
 import { useMemo, useState } from "react";
+import { useVariantFromURL } from "@/app/hooks/useVariantFromURL";
 import Gallery from "@/components/commerce/Gallery";
 import VariantSelector from "@/components/commerce/VariantSelector";
 import WishlistButton from "@/components/commerce/WishlistButton";
@@ -20,13 +21,9 @@ import QuantityStepper from "@/components/ui/QuantityStepper";
 import Button from "@/components/ui/Button";
 import { useCart } from "@/app/_components/CartProvider";
 import { clampQty, QTY_LIMITS } from "@/lib/commerce/quantity";
-import {
-  defaultSelection,
-  resolveVariant,
-  selectionOptions,
-  type VariantSelection,
-} from "@/lib/commerce/variants";
+import { resolveVariant, selectionOptions } from "@/lib/commerce/variants";
 import type { GalleryImage } from "@/lib/commerce/gallery";
+import type { ResolvedPhotoSettings } from "@/lib/commerce/photoSettings";
 import type { ProductOptionDto, ProductVariantDto } from "@/lib/catalog/schemas";
 
 // Trust now renders as a `pdp_trust` CMS section below the buy box; the
@@ -46,6 +43,8 @@ export interface PurchasePanelProps {
   stock: number;
   rating?: number | null;
   ratingCount?: number | null;
+  /** PDP photo paint, resolved product > section > global by the route. */
+  photoSettings?: ResolvedPhotoSettings;
 }
 
 export default function PurchasePanel({
@@ -59,12 +58,11 @@ export default function PurchasePanel({
   stock,
   rating,
   ratingCount,
+  photoSettings,
 }: PurchasePanelProps) {
   const cart = useCart();
   const [activeIndex, setActiveIndex] = useState(0);
-  const [selection, setSelection] = useState<VariantSelection>(() =>
-    defaultSelection(options, variants),
-  );
+  const { selection, notice, select } = useVariantFromURL(options, variants);
   const [qty, setQty] = useState(1);
 
   const variant = useMemo(
@@ -97,7 +95,21 @@ export default function PurchasePanel({
 
   return (
     <div className="sf-pdp">
-      <Gallery images={images} activeIndex={activeIndex} onIndexChange={setActiveIndex} />
+      <Gallery
+        images={images}
+        activeIndex={activeIndex}
+        onIndexChange={setActiveIndex}
+        {...(photoSettings?.ratio !== undefined && photoSettings.ratio !== "custom"
+          ? { ratio: photoSettings.ratio }
+          : {})}
+        {...(photoSettings?.layout !== undefined ? { layout: photoSettings.layout } : {})}
+        {...(photoSettings?.gutter !== undefined ? { gutterPx: photoSettings.gutter } : {})}
+        {...(photoSettings?.widthPercent !== undefined
+          ? { widthPercent: photoSettings.widthPercent }
+          : {})}
+        {...(photoSettings?.blendMode !== undefined ? { blendMode: photoSettings.blendMode } : {})}
+        {...(photoSettings?.showPhotos !== undefined ? { showPhotos: photoSettings.showPhotos } : {})}
+      />
 
       <div className="flex flex-col gap-5">
         <div className="flex items-start justify-between gap-4">
@@ -129,13 +141,17 @@ export default function PurchasePanel({
           ) : null}
         </div>
 
+        {notice ? (
+          <p className="text-sm text-[var(--text-muted)]" role="status">
+            We picked the closest available option for you.
+          </p>
+        ) : null}
+
         {options.length > 0 ? (
           <VariantSelector
             options={optionViews}
             selected={selection}
-            onSelect={(optionName, valueId) =>
-              setSelection((prev) => ({ ...prev, [optionName]: valueId }))
-            }
+            onSelect={select}
             disabled={outOfStock}
           />
         ) : null}

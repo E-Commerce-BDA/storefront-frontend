@@ -260,6 +260,31 @@ describe("PDP related", () => {
     expect(models).toEqual([]);
     expect(products).not.toHaveBeenCalled();
   });
+
+  it("queries by brand when source is brand", async () => {
+    const brandId = "00000000-0000-4000-8000-0000000000d1";
+    const products = vi.fn(async () => [row(PID), row(OTHER)]);
+    const models = await resolveSections(
+      [section({ type: "pdp_related", content: { source: "brand" }, settings: { maxItems: 1 } })],
+      deps({ products: products as SectionResolveDeps["products"] }),
+      { product: { ...product, brand: { id: brandId, name: "Acme", slug: "acme" } } as never },
+    );
+    expect(products).toHaveBeenCalledWith({ brandId, limit: 2 });
+    expect(models).toHaveLength(1);
+    const model = models[0] as Extract<SectionViewModel, { type: "product_collection" }>;
+    expect(model.cards.map((card) => card.id)).toEqual([OTHER]);
+  });
+
+  it("skips brand source when the product has no brand", async () => {
+    const products = vi.fn(async () => [row(OTHER)]);
+    const models = await resolveSections(
+      [section({ type: "pdp_related", content: { source: "brand" } })],
+      deps({ products: products as SectionResolveDeps["products"] }),
+      { product: { ...product, brand: null } },
+    );
+    expect(models).toEqual([]);
+    expect(products).not.toHaveBeenCalled();
+  });
 });
 
 describe("PDP trust, story, and FAQ", () => {

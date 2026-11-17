@@ -29,6 +29,12 @@ export interface GalleryProps {
   ratio?: MediaRatio;
   /** `contain` letterboxes a photo whose edges matter; `cover` crops. */
   fit?: "cover" | "contain";
+  /** Paint knobs resolved by lib/commerce/photoSettings (sf-055). */
+  layout?: "grid" | "carousel";
+  gutterPx?: number;
+  widthPercent?: number;
+  blendMode?: "multiply" | "normal";
+  showPhotos?: boolean;
   className?: string;
 }
 
@@ -38,6 +44,11 @@ export default function Gallery({
   onIndexChange,
   ratio = GALLERY_DEFAULT_RATIO,
   fit = "cover",
+  layout = "carousel",
+  gutterPx,
+  widthPercent,
+  blendMode,
+  showPhotos = true,
   className = "",
 }: GalleryProps) {
   const index = clampIndex(activeIndex, images.length);
@@ -58,11 +69,20 @@ export default function Gallery({
       role="group"
       aria-label="Product images"
       data-fit={fit}
+      data-layout={layout}
+      data-photos={showPhotos}
       onKeyDown={onKeyDown}
-      style={{ "--gallery-ratio": ratioCss(ratio) } as CSSProperties}
+      style={
+        {
+          "--gallery-ratio": ratioCss(ratio),
+          ...(gutterPx !== undefined ? { "--gallery-gutter": `${gutterPx}px` } : {}),
+          ...(widthPercent !== undefined ? { "--gallery-width": `${widthPercent}%` } : {}),
+          ...(blendMode !== undefined ? { "--gallery-blend": blendMode } : {}),
+        } as CSSProperties
+      }
     >
       <div className="sf-gallery__frame">
-        {active ? (
+        {active && showPhotos ? (
           <img
             className="sf-gallery__img"
             src={active.url}

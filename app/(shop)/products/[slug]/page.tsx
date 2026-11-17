@@ -9,6 +9,7 @@ import { fetchThemeSettings } from "@/lib/cms/theme";
 import { resolveThemeSettings, toBadgeTones } from "@/lib/cms/themeSettings";
 import { GALLERY_MAX_IMAGES, toGalleryImages } from "@/lib/commerce/gallery";
 import { buildProductJsonLd } from "@/lib/commerce/jsonLd";
+import { resolvePhotoSettings } from "@/lib/commerce/photoSettings";
 import { buildPdpFallbackSections, pdpPageKey, summarizePdpReviews } from "@/lib/sections/pdp";
 import { resolveSections } from "@/lib/sections/resolveSections";
 import type { BreadcrumbItem } from "@/lib/shell/pageHeader";
@@ -135,6 +136,13 @@ export default async function ProductPage({
   const reviewSummary = summarizePdpReviews(resolvedSections);
   const theme = resolveThemeSettings({ settings: themeResult.theme });
   const cardTheme = theme.productCard;
+  // Product > section > global. The product bag comes from catalog; the CMS
+  // section layer is currently absent (no photo knobs on PDP section settings
+  // yet), so the two real layers are product and the resolved theme global.
+  const photoSettings = resolvePhotoSettings(
+    [(product.photoSettings ?? {}) as Record<string, unknown>],
+    theme.photoSettings,
+  );
 
   const jsonLd = buildProductJsonLd(product);
 
@@ -153,6 +161,7 @@ export default async function ProductPage({
         stock={product.stock}
         rating={reviewSummary.rating}
         ratingCount={reviewSummary.count}
+        photoSettings={photoSettings}
       />
 
       {resolvedSections.length > 0 ? (

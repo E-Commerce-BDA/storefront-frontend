@@ -2984,6 +2984,25 @@ body {
   border-color: var(--gallery-thumb-active, var(--color-accent));
   border-width: 2px;
 }
+/* sf-055: photo knobs reach paint only through vars/data attrs. */
+.sf-gallery[data-layout="grid"] .sf-gallery__thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: var(--gallery-gutter, 8px);
+}
+.sf-gallery[data-layout="carousel"] .sf-gallery__thumbs {
+  gap: var(--gallery-gutter, 8px);
+}
+.sf-gallery__frame {
+  width: var(--gallery-width, 100%);
+  mix-blend-mode: var(--gallery-blend, normal);
+}
+.sf-gallery[data-photos="false"] .sf-gallery__frame {
+  display: none;
+}
+.sf-productcard__compare[data-compare="true"] {
+  border-color: var(--color-accent);
+}
 
 /* VariantSelector â€” one row per option (components/commerce/VariantSelector,
    product.md Â§14). Faces: text / pill / swatch, chosen by data-display.
@@ -4556,7 +4575,7 @@ body {
 
 
 
-/* -- Listing controls + filter rail — sf-054 -----------------------------
+/* -- Listing controls + filter rail ï¿½ sf-054 -----------------------------
  * Layout lives in utilities/vars; state (busy, discounted) reaches paint only
  * through data attrs. The rail is a sidebar on wide screens and a stacked
  * panel on narrow ones, with no per-component CSS module. */
@@ -4634,4 +4653,55 @@ body {
   border: 1px solid var(--listing-error-border, var(--color-error));
   border-radius: var(--listing-error-radius, 8px);
   color: var(--listing-error, var(--color-error));
+}
+
+/* -- Compare tray — sf-055 (A3.7) -----------------------------------------
+ * Session-only tray; the shareable artifact is /compare?ids=. State reaches
+ * CSS through data attrs, all faces through vars. */
+.sf-compare-tray {
+  position: fixed;
+  inset-inline-end: var(--compare-inset, 16px);
+  inset-block-end: var(--compare-inset, 16px);
+  z-index: var(--compare-z, 40);
+  display: grid;
+  gap: var(--compare-gap, 10px);
+  min-width: var(--compare-min-width, 220px);
+  padding: var(--compare-pad, 14px);
+  border: 1px solid var(--compare-border, var(--border));
+  border-radius: var(--compare-radius, 12px);
+  background: var(--compare-bg, var(--color-navbar-bg));
+  box-shadow: var(--compare-shadow, none);
+}
+.sf-compare-tray__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--compare-head-gap, 8px);
+}
+.sf-compare-tray__count {
+  font-weight: 600;
+  color: var(--compare-title, var(--color-ink));
+}
+.sf-compare-tray__clear {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--compare-clear, var(--color-accent));
+}
+.sf-compare-tray__go {
+  display: block;
+  text-align: center;
+  padding: var(--compare-go-pad, 10px);
+  border-radius: var(--radius-button);
+  background: var(--compare-go-bg, var(--color-accent));
+  color: var(--compare-go-text, var(--color-navbar-bg));
+  text-decoration: none;
+}
+.sf-compare-tray__go[data-disabled="true"] {
+  opacity: var(--compare-disabled-opacity, 0.55);
+  pointer-events: none;
+}
+.sf-compare-tray__notice {
+  margin: 0;
+  color: var(--compare-notice, var(--color-ink));
 }

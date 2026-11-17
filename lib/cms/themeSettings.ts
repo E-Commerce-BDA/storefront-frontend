@@ -13,6 +13,7 @@
  * Numeric defaults mirror today's component defaults exactly.
  */
 
+import type { ThemePhotoSettingsField } from "@ecom/contracts";
 import type { ButtonAnimationField } from "./buttonAnimation";
 import { resolveOverlayMotion, type OverlayMotionField, type ResolvedOverlayMotion } from "@/lib/search/motion";
 import type {
@@ -264,9 +265,22 @@ export interface ThemeSettings {
   tooltip?: ThemeTooltipField;
   dialog?: ThemeDialogField;
   productCard?: ThemeProductCardField;
+  photoSettings?: ThemePhotoSettingsField;
 }
 
 /* Resolved types: all required (produced by resolveTheme below). */
+
+/** Global PDP photo defaults — the "G" layer of product > section > global. */
+export interface ResolvedThemePhotoSettings {
+  format: "horizontal" | "vertical";
+  ratio: "1:1" | "4:3" | "4:5" | "3:4" | "16:9" | "custom";
+  customRatio: number;
+  layout: "grid" | "carousel";
+  gutter: number;
+  widthPercent: number;
+  blendMode: "multiply" | "normal";
+  showPhotos: boolean;
+}
 
 export interface ResolvedThemeButton {
   defaultVariant: ButtonVariant;
@@ -425,6 +439,7 @@ export interface ResolvedThemeSettings {
   tooltip: ResolvedThemeTooltip;
   dialog: ResolvedThemeDialog;
   productCard: ResolvedThemeProductCard;
+  photoSettings: ResolvedThemePhotoSettings;
 }
 
 /* Builtins: today's look = final fallback. */
@@ -548,6 +563,16 @@ export const DEFAULT_THEME: ResolvedThemeSettings = {
     colsDesktop: 4,
     colsTablet: 3,
     colsPhone: 2,
+  },
+  photoSettings: {
+    format: "vertical",
+    ratio: "4:5",
+    customRatio: 1,
+    layout: "carousel",
+    gutter: 8,
+    widthPercent: 100,
+    blendMode: "normal",
+    showPhotos: true,
   },
 };
 
@@ -835,5 +860,35 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
       colsTablet: clampInt(pc?.colsTablet, 2, 3, D.productCard.colsTablet),
       colsPhone: clampInt(pc?.colsPhone, 1, 2, D.productCard.colsPhone),
     },
+    photoSettings: resolveGlobalPhotoSettings(s?.photoSettings, D.photoSettings),
+  };
+}
+
+/** Global photo defaults: CMS admin value clamped, else the builtin face. */
+function resolveGlobalPhotoSettings(
+  field: ThemePhotoSettingsField | undefined,
+  fallback: ResolvedThemePhotoSettings,
+): ResolvedThemePhotoSettings {
+  const ratio =
+    field?.ratio === "1:1" ||
+    field?.ratio === "4:3" ||
+    field?.ratio === "4:5" ||
+    field?.ratio === "3:4" ||
+    field?.ratio === "16:9" ||
+    field?.ratio === "custom"
+      ? field.ratio
+      : fallback.ratio;
+  return {
+    format: field?.format === "horizontal" ? "horizontal" : fallback.format,
+    ratio,
+    customRatio:
+      typeof field?.customRatio === "number" && Number.isFinite(field.customRatio)
+        ? Math.min(2.5, Math.max(0.5, field.customRatio))
+        : fallback.customRatio,
+    layout: field?.layout === "grid" ? "grid" : fallback.layout,
+    gutter: clampInt(field?.gutter, 0, 48, fallback.gutter),
+    widthPercent: clampInt(field?.widthPercent, 25, 100, fallback.widthPercent),
+    blendMode: field?.blendMode === "multiply" ? "multiply" : fallback.blendMode,
+    showPhotos: field?.showPhotos ?? fallback.showPhotos,
   };
 }
