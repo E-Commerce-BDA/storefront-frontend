@@ -19,7 +19,7 @@ export function createHttpSearchSource(): SearchSource {
       );
 
       if (!result.ok) {
-        throw new Error(result.error?.message || result.error?.code || "Search service unavailable");
+        throw new Error(result.message ?? result.code ?? "Search service unavailable");
       }
 
       const { products } = result.data;

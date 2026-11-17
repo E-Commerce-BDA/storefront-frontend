@@ -121,6 +121,17 @@ export const productListResponseSchema = z
   })
   .loose();
 
+/** Facet values for the listing rail — derived from real catalog rows. */
+export const productFacetsSchema = z
+  .object({
+    tags: z.array(z.string()),
+    minPrice: z.number().nullish(),
+    maxPrice: z.number().nullish(),
+  })
+  .loose();
+
+export type ProductFacets = z.infer<typeof productFacetsSchema>;
+
 /* ── detail ──────────────────────────────────────────────────────────────── */
 
 export const variantOptionValueSchema = z

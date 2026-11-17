@@ -4555,3 +4555,83 @@ body {
 
 
 
+
+/* -- Listing controls + filter rail — sf-054 -----------------------------
+ * Layout lives in utilities/vars; state (busy, discounted) reaches paint only
+ * through data attrs. The rail is a sidebar on wide screens and a stacked
+ * panel on narrow ones, with no per-component CSS module. */
+.sf-listing-controls {
+  display: grid;
+  gap: var(--listing-controls-gap, 20px);
+  margin-block: var(--listing-controls-margin-y, 16px 24px);
+}
+@media (min-width: 1024px) {
+  .sf-listing-controls {
+    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+.sf-sort {
+  display: flex;
+  justify-content: flex-end;
+}
+.sf-filter-rail {
+  display: grid;
+  align-content: start;
+  gap: var(--facet-gap, 20px);
+  padding: var(--facet-pad, 16px);
+  border: 1px solid var(--facet-border, var(--border));
+  border-radius: var(--facet-radius, 10px);
+  background: var(--facet-bg, var(--color-navbar-bg));
+}
+.sf-filter-rail__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--facet-head-gap, 8px);
+}
+.sf-filter-rail__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--facet-title-size, 18px);
+  color: var(--facet-title, var(--color-ink));
+}
+.sf-facet {
+  display: grid;
+  gap: var(--facet-inner-gap, 8px);
+}
+.sf-facet__label {
+  font-size: var(--facet-label-size, 14px);
+  font-weight: 600;
+  color: var(--facet-label, var(--color-ink));
+}
+.sf-facet__price {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--facet-price-gap, 8px);
+}
+.sf-facet__tags {
+  display: grid;
+  gap: var(--facet-tag-gap, 6px);
+  max-height: var(--facet-tag-max, 220px);
+  overflow-y: auto;
+}
+.sf-listing-grid {
+  display: grid;
+  gap: var(--listing-grid-gap, 16px);
+}
+.sf-listing-grid[data-status="loading"] {
+  opacity: var(--listing-loading-opacity, 0.85);
+}
+.sf-listing-grid__more {
+  display: flex;
+  justify-content: center;
+  padding-block: var(--listing-more-pad-y, 24px);
+}
+.sf-listing-grid__error {
+  margin: 0;
+  padding: var(--listing-error-pad, 12px);
+  border: 1px solid var(--listing-error-border, var(--color-error));
+  border-radius: var(--listing-error-radius, 8px);
+  color: var(--listing-error, var(--color-error));
+}

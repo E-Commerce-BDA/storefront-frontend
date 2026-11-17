@@ -123,4 +123,23 @@ describe("buildListingQuery", () => {
       buildListingQuery({ tags: ["linen", "summer"], discounted: true }),
     ).toBe("?tags=linen%2Csummer&discounted=true");
   });
+
+  it("parses non-negative price bounds and drops junk", () => {
+    expect(parseListingParams({ minPrice: "10", maxPrice: "50" }).query).toMatchObject({
+      minPrice: 10,
+      maxPrice: 50,
+    });
+    expect(parseListingParams({ minPrice: "-3", maxPrice: "abc" }).query).not.toHaveProperty(
+      "minPrice",
+    );
+    expect(parseListingParams({ minPrice: "-3", maxPrice: "abc" }).query).not.toHaveProperty(
+      "maxPrice",
+    );
+  });
+
+  it("keeps price bounds in the canonical query", () => {
+    expect(buildListingQuery({ minPrice: 10, maxPrice: 50, sort: "price_asc" })).toBe(
+      "?sort=price_asc&minPrice=10&maxPrice=50",
+    );
+  });
 });

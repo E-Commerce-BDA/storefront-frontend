@@ -25,11 +25,13 @@ import {
   brandResponseSchema,
   categoryListResponseSchema,
   categoryResponseSchema,
+  productFacetsSchema,
   productListResponseSchema,
   productResponseSchema,
   type CatalogBrand,
   type CatalogCategory,
   type CatalogSort,
+  type ProductFacets,
   type ProductDetailDto,
   type ProductListItemDto,
 } from "@/lib/catalog/schemas";
@@ -69,6 +71,10 @@ export interface CatalogPage {
 
 export interface CatalogClient {
   listProducts(query?: CatalogQuery): Promise<ServiceResult<CatalogPage>>;
+  getFacets(filter?: {
+    categoryId?: string;
+    brandId?: string;
+  }): Promise<ServiceResult<ProductFacets>>;
   getProduct(slug: string): Promise<ServiceResult<ProductDetailDto>>;
   getProductById(id: string): Promise<ServiceResult<ProductDetailDto>>;
   listCategories(): Promise<ServiceResult<CatalogCategory[]>>;
@@ -111,6 +117,20 @@ export function createCatalogClient(perform: Perform): CatalogClient {
           nextCursor: result.data.nextCursor ?? null,
         },
       };
+    },
+
+    async getFacets(filter = {}) {
+      const result = await perform({
+        path: `${BASE}/products/facets`,
+        query: {
+          categoryId: filter.categoryId,
+          brandId: filter.brandId,
+        },
+        schema: productFacetsSchema,
+        cache,
+      });
+      if (!result.ok) return result;
+      return { ok: true, data: result.data };
     },
 
     async getProduct(slug) {

@@ -49,7 +49,10 @@ export interface ListingParams {
    * is `categoryId`/`brandId` (they need a slug → id fetch), so this is the
    * subset of `CatalogQuery` a query string alone can express.
    */
-  query: Pick<CatalogQuery, "limit" | "q" | "sort" | "cursor">;
+  query: Pick<
+    CatalogQuery,
+    "limit" | "q" | "sort" | "cursor" | "minPrice" | "maxPrice"
+  >;
 }
 
 /** Next 16 hands `searchParams` values that may be repeated; the first wins. */
@@ -98,6 +101,14 @@ function toDiscounted(value: SearchParamValue): boolean | undefined {
   return raw === "true" ? true : undefined;
 }
 
+/** A non-negative price bound; junk or blank is absence, never a zero filter. */
+function toPrice(value: SearchParamValue): number | undefined {
+  const raw = first(value);
+  if (raw === undefined || raw.trim() === "") return undefined;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+}
+
 /** A positive page size, clamped to the catalog cap; junk falls to the default. */
 function toLimit(value: SearchParamValue): number {
   const raw = first(value);
@@ -123,6 +134,10 @@ export function parseListingParams(
   if (q !== undefined) query.q = q;
   if (sort !== undefined) query.sort = sort;
   if (cursor !== undefined) query.cursor = cursor;
+  const minPrice = toPrice(params.minPrice);
+  const maxPrice = toPrice(params.maxPrice);
+  if (minPrice !== undefined) query.minPrice = minPrice;
+  if (maxPrice !== undefined) query.maxPrice = maxPrice;
 
   return { categorySlug, brandSlug, tags, discounted, query };
 }
@@ -140,6 +155,8 @@ export function buildListingQuery(filters: {
   sort?: string | undefined;
   tags?: readonly string[] | undefined;
   discounted?: boolean | undefined;
+  minPrice?: number | undefined;
+  maxPrice?: number | undefined;
   cursor?: string | null | undefined;
 }): string {
   const sp = new URLSearchParams();
@@ -149,6 +166,8 @@ export function buildListingQuery(filters: {
   if (filters.sort) sp.set("sort", filters.sort);
   if (filters.tags && filters.tags.length > 0) sp.set("tags", filters.tags.join(","));
   if (filters.discounted) sp.set("discounted", "true");
+  if (filters.minPrice !== undefined) sp.set("minPrice", String(filters.minPrice));
+  if (filters.maxPrice !== undefined) sp.set("maxPrice", String(filters.maxPrice));
   if (filters.cursor) sp.set("cursor", filters.cursor);
   const search = sp.toString();
   return search === "" ? "" : `?${search}`;

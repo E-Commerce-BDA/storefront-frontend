@@ -246,7 +246,14 @@ export function resolveNavSettings(input: ResolveNavInput, now: number = Date.no
     },
   };
   const account = mergeGroup(D.account, global?.account, shared?.account);
-  const cart = mergeGroup(D.cart, global?.cart, shared?.cart);
+  // The raw CMS field's `drawerActions` has optional booleans; the resolved
+  // value below is computed explicitly and overwrites it, so the merge only
+  // needs the other (compatible) keys.
+  const cart = mergeGroup(
+    D.cart,
+    global?.cart as unknown as Partial<typeof D.cart> | undefined,
+    shared?.cart as unknown as Partial<typeof D.cart> | undefined,
+  );
   const drawerActions = {
     showViewCart:
       shared?.cart?.drawerActions?.showViewCart ??
