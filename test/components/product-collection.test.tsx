@@ -20,6 +20,12 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("@/app/_components/CartProvider", () => ({
   useCart: () => ({ refresh: vi.fn(async () => {}), add: vi.fn() }),
 }));
+vi.mock("@/app/_components/WishlistProvider", () => ({
+  useWishlist: () => ({ ids: [], pendingIds: [], has: () => false, toggle: vi.fn(), remove: vi.fn() }),
+}));
+vi.mock("@/app/_components/CompareProvider", () => ({
+  useCompare: () => ({ ids: [], count: 0, has: () => false, toggle: vi.fn(), clear: vi.fn(), notice: null, dismissNotice: vi.fn(), href: "/compare" }),
+}));
 vi.mock("@/components/commerce/ProductGrid", () => ({
   default: (props: { items: unknown[] }) => {
     harness.items = props.items;

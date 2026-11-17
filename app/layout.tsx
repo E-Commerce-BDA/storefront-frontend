@@ -12,6 +12,7 @@ import NavbarMount from "./_components/NavbarMount";
 import FooterMount from "./_components/FooterMount";
 import CartProvider from "./_components/CartProvider";
 import { WishlistProvider } from "./_components/WishlistProvider";
+import { CompareProvider } from "./_components/CompareProvider";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -69,9 +70,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body style={themeToCssVars(theme)}>
         <CartProvider drawerActions={nav.cart.drawerActions}>
           <WishlistProvider>
-            <NavbarMount nav={nav} />
-            {children}
-            <FooterMount footer={footerResult.footer} />
+            <CompareProvider>
+              <NavbarMount nav={nav} />
+              {children}
+              <FooterMount footer={footerResult.footer} />
+            </CompareProvider>
           </WishlistProvider>
         </CartProvider>
       </body>

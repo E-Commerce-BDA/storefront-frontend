@@ -33,6 +33,9 @@ vi.mock("@/app/_components/WishlistProvider", () => ({
 vi.mock("@/app/_components/CartProvider", () => ({
   useCart: () => ({ refresh: harness.refresh, add: harness.add }),
 }));
+vi.mock("@/app/_components/CompareProvider", () => ({
+  useCompare: () => ({ ids: [], count: 0, has: () => false, toggle: vi.fn(), clear: vi.fn(), notice: null, dismissNotice: vi.fn(), href: "/compare" }),
+}));
 vi.mock("@/components/commerce/ProductGrid", () => ({
   default: (props: { items: unknown }) => {
     harness.lastProps.current = props;

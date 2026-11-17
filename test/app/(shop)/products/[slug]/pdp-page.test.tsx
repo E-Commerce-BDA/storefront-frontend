@@ -36,6 +36,15 @@ vi.mock("next/navigation", () => ({
   notFound: () => {
     throw new Error("not-found");
   },
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  usePathname: () => "/products/ocean-linen-shirt",
+  useSearchParams: () => new URLSearchParams(),
+}));
+vi.mock("@/app/_components/WishlistProvider", () => ({
+  useWishlist: () => ({ has: () => false, toggle: vi.fn(), pendingIds: [] }),
+}));
+vi.mock("@/app/_components/CompareProvider", () => ({
+  useCompare: () => ({ ids: [], count: 0, has: () => false, toggle: vi.fn(), clear: vi.fn(), notice: null, dismissNotice: vi.fn(), href: "/compare" }),
 }));
 
 vi.mock("@/lib/catalog/client", () => ({

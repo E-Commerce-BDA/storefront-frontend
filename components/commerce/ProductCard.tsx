@@ -55,6 +55,8 @@ export interface ProductCardProps extends ProductCardReserved, ProductCardStyleC
   onWishlist?: (p: ProductCardData) => void;
   onQuickAdd?: (p: ProductCardData) => void;
   onShare?: (p: ProductCardData) => void;
+  /** Compare toggle (sf-055); paint reads `compareActive` via data attr. */
+  compareActive?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -131,7 +133,8 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
     selectedAttribute: _reservedAttr,
     onAttribute: _reservedAttrCb,
     onQuickView,
-    onCompare: _reservedCompare,
+    onCompare,
+    compareActive = false,
     className = "",
     style: customStyle,
   },
@@ -139,7 +142,6 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
 ) {
   void _reservedAttr;
   void _reservedAttrCb;
-  void _reservedCompare;
 
   const touchStartXRef = useRef<number>(0);
 
@@ -290,7 +292,8 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
   };
 
   const renderCtas = (containerClass: string) => {
-    if (styles.ctaVariant === "none" || styles.ctaSet.length === 0) return null;
+    if (styles.ctaVariant === "none" && onCompare === undefined) return null;
+    if (styles.ctaSet.length === 0 && onCompare === undefined) return null;
     return (
       <div className={containerClass} role="group" aria-label={`Actions for ${p.name}`}>
         {styles.ctaSet.map((c) => {
@@ -331,6 +334,26 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
             </Button>
           );
         })}
+        {onCompare ? (
+          <Button
+            size="sm"
+            variant="light"
+            bg={styles.ctaBg || "var(--pc-cta-bg, var(--color-navbar-bg, #ffffff))"}
+            textColor={styles.ctaTextColor || "var(--pc-cta-text, var(--color-ink))"}
+            borderColor={styles.ctaBorderColor || "var(--pc-cta-border, var(--border))"}
+            className="sf-productcard__cta sf-productcard__compare"
+            data-compare={compareActive}
+            aria-pressed={compareActive}
+            aria-label={compareActive ? `Remove ${p.name} from compare` : `Add ${p.name} to compare`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCompare(p);
+            }}
+            style={{ width: 36, height: 36, minHeight: 36, padding: 0 }}
+          >
+            <Icon name={compareActive ? "check" : "plus"} size={16} />
+          </Button>
+        ) : null}
       </div>
     );
   };

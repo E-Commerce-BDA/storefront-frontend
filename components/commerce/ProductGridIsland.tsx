@@ -35,6 +35,7 @@ import ProductGrid from "@/components/commerce/ProductGrid";
 import QuickViewDialog from "@/components/commerce/QuickViewDialog";
 import { useCart } from "@/app/_components/CartProvider";
 import { useWishlist } from "@/app/_components/WishlistProvider";
+import { useCompare } from "@/app/_components/CompareProvider";
 import { useQuickAdd } from "@/app/hooks/useQuickAdd";
 import { createCartPort } from "@/lib/cart/port";
 import type { ProductCardData } from "@/lib/commerce/productCard";
@@ -63,6 +64,7 @@ export default function ProductGridIsland({
   const router = useRouter();
   const cart = useCart();
   const wishlist = useWishlist();
+  const compare = useCompare();
   const refresh = cart.refresh;
 
   const [activeQuickView, setActiveQuickView] = useState<ProductCardData | null>(null);
@@ -128,6 +130,8 @@ export default function ProductGridIsland({
         onQuickAdd={(product) => quickAdd(product.id)}
         onQuickView={(product) => setActiveQuickView(product)}
         onWishlist={(product) => void wishlist.toggle(product.id)}
+        onCompare={(product) => compare.toggle(product.id)}
+        compareIds={compare.ids}
       />
 
       <QuickViewDialog

@@ -34,6 +34,8 @@ export interface ProductGridProps {
   onQuickView?: (product: ProductCardData) => void;
   onWishlist?: (product: ProductCardData) => void;
   wishlistedIds?: readonly string[] | Set<string>;
+  onCompare?: (product: ProductCardData) => void;
+  compareIds?: readonly string[];
   /** Theme `productCard.cols*`; absent or out-of-range falls to the defaults. */
   columns?: Partial<GridColumns> | null;
   /** Global theme card layer (flat/styleConfig/product still win). */
@@ -72,6 +74,8 @@ export default function ProductGrid({
   onQuickView,
   onWishlist,
   wishlistedIds,
+  onCompare,
+  compareIds,
   columns,
   themeFallback,
   tones,
@@ -128,6 +132,8 @@ export default function ProductGrid({
               onQuickAdd={onQuickAdd}
               onQuickView={onQuickView}
               onWishlist={onWishlist}
+              onCompare={onCompare}
+              compareActive={compareIds?.includes(item.id) === true}
             />
           </li>
         );
