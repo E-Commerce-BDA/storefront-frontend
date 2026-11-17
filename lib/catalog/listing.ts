@@ -40,6 +40,10 @@ export interface ListingParams {
   categorySlug: string | undefined;
   /** `?brand=` slug — the page resolves it to a `brandId`. */
   brandSlug: string | undefined;
+  /** `?tags=` — comma-separated or repeated. */
+  tags: string[] | undefined;
+  /** `?discounted=true`. */
+  discounted: boolean | undefined;
   /**
    * A ready query. `status` is not here (the client pins `active`) and neither
    * is `categoryId`/`brandId` (they need a slug → id fetch), so this is the
@@ -70,6 +74,30 @@ function toSort(value: SearchParamValue): CatalogSort | undefined {
     : undefined;
 }
 
+/** Tags from a repeated or comma-separated `?tags=`; trimmed, deduped, capped. */
+function toTags(value: SearchParamValue): string[] | undefined {
+  const raw = Array.isArray(value) ? value : [value];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const entry of raw) {
+    if (entry === undefined) continue;
+    for (const part of entry.split(",")) {
+      const tag = part.trim();
+      if (tag === "" || seen.has(tag)) continue;
+      seen.add(tag);
+      out.push(tag);
+      if (out.length >= 10) return out;
+    }
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+/** `?discounted=true` only; anything else is absence. */
+function toDiscounted(value: SearchParamValue): boolean | undefined {
+  const raw = first(value);
+  return raw === "true" ? true : undefined;
+}
+
 /** A positive page size, clamped to the catalog cap; junk falls to the default. */
 function toLimit(value: SearchParamValue): number {
   const raw = first(value);
@@ -88,13 +116,15 @@ export function parseListingParams(
   const q = trimmed(params.q);
   const sort = toSort(params.sort);
   const cursor = trimmed(params.cursor);
+  const tags = toTags(params.tags);
+  const discounted = toDiscounted(params.discounted);
 
   const query: ListingParams["query"] = { limit: toLimit(params.limit) };
   if (q !== undefined) query.q = q;
   if (sort !== undefined) query.sort = sort;
   if (cursor !== undefined) query.cursor = cursor;
 
-  return { categorySlug, brandSlug, query };
+  return { categorySlug, brandSlug, tags, discounted, query };
 }
 
 /**
@@ -108,6 +138,8 @@ export function buildListingQuery(filters: {
   brandSlug?: string | undefined;
   q?: string | undefined;
   sort?: string | undefined;
+  tags?: readonly string[] | undefined;
+  discounted?: boolean | undefined;
   cursor?: string | null | undefined;
 }): string {
   const sp = new URLSearchParams();
@@ -115,6 +147,8 @@ export function buildListingQuery(filters: {
   if (filters.brandSlug) sp.set("brand", filters.brandSlug);
   if (filters.q) sp.set("q", filters.q);
   if (filters.sort) sp.set("sort", filters.sort);
+  if (filters.tags && filters.tags.length > 0) sp.set("tags", filters.tags.join(","));
+  if (filters.discounted) sp.set("discounted", "true");
   if (filters.cursor) sp.set("cursor", filters.cursor);
   const search = sp.toString();
   return search === "" ? "" : `?${search}`;

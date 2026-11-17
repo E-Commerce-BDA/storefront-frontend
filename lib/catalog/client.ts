@@ -47,6 +47,14 @@ export interface CatalogQuery {
   minPrice?: number;
   maxPrice?: number;
   /**
+   * AND filter: products that have **all** listed tags.
+   */
+  tags?: string[];
+  /**
+   * Only products with an active discount row.
+   */
+  discounted?: boolean;
+  /**
    * Manual curation (sf-060 "Most Popular"): fetch exactly these products,
    * in this order, as long as they are active. Sent as a comma-joined list;
    * catalog-svc splits it and pins the row order with `array_position`.
@@ -88,6 +96,8 @@ export function createCatalogClient(perform: Perform): CatalogClient {
           sort: query.sort,
           minPrice: query.minPrice,
           maxPrice: query.maxPrice,
+          tags: query.tags?.length ? query.tags.join(",") : undefined,
+          discounted: query.discounted ? "true" : undefined,
           ids: query.ids?.length ? query.ids.join(",") : undefined,
         },
         schema: productListResponseSchema,

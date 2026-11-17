@@ -104,4 +104,23 @@ describe("buildListingQuery", () => {
   it("encodes a query that needs it", () => {
     expect(buildListingQuery({ q: "running shoes" })).toBe("?q=running+shoes");
   });
+
+  it("parses tags from a comma-separated or repeated value", () => {
+    expect(parseListingParams({ tags: "linen, summer" }).tags).toEqual(["linen", "summer"]);
+    expect(parseListingParams({ tags: ["linen", "summer"] }).tags).toEqual(["linen", "summer"]);
+    expect(parseListingParams({ tags: "   " }).tags).toBeUndefined();
+    expect(parseListingParams({}).tags).toBeUndefined();
+  });
+
+  it("parses discounted only when it is the literal 'true'", () => {
+    expect(parseListingParams({ discounted: "true" }).discounted).toBe(true);
+    expect(parseListingParams({ discounted: "false" }).discounted).toBeUndefined();
+    expect(parseListingParams({ discounted: "1" }).discounted).toBeUndefined();
+  });
+
+  it("round-trips tags and discounted through buildListingQuery", () => {
+    expect(
+      buildListingQuery({ tags: ["linen", "summer"], discounted: true }),
+    ).toBe("?tags=linen%2Csummer&discounted=true");
+  });
 });

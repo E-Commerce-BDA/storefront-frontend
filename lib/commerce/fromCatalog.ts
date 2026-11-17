@@ -304,6 +304,17 @@ export function fromCatalog(product: CatalogProduct): ProductCardData {
   const tag = product.tags?.[0];
   if (tag !== undefined) card.tag = tag;
 
+  // Catalog rating (approved reviews) — only present when catalog-svc
+  // computed it; absent means "no rating", never a zero.
+  const rating = (product as { rating?: number | null }).rating;
+  const ratingCount = (product as { ratingCount?: number | null }).ratingCount;
+  if (typeof rating === "number" && Number.isFinite(rating)) {
+    card.rating = rating;
+    if (typeof ratingCount === "number" && ratingCount > 0) {
+      card.ratingCount = ratingCount;
+    }
+  }
+
   return card;
 }
 

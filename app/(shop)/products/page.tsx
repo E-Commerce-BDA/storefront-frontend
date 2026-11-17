@@ -75,7 +75,7 @@ export default async function ProductsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const { categorySlug, brandSlug, query } = parseListingParams(sp);
+  const { categorySlug, brandSlug, tags, discounted, query } = parseListingParams(sp);
   const catalog = catalogClient();
 
   const titles: string[] = [];
@@ -114,6 +114,8 @@ export default async function ProductsPage({
     ...query,
     ...(categoryId ? { categoryId } : {}),
     ...(brandId ? { brandId } : {}),
+    ...(tags && tags.length > 0 ? { tags } : {}),
+    ...(discounted ? { discounted } : {}),
   });
   if (!page.ok) {
     return (
@@ -146,6 +148,8 @@ export default async function ProductsPage({
           brandSlug,
           q: query.q,
           sort: query.sort,
+          tags,
+          discounted,
           cursor: page.data.nextCursor,
         })}`
       : undefined;

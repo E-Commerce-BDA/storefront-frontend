@@ -15,13 +15,9 @@
  */
 
 import { z } from "zod";
+import { catalogProductSortSchema } from "@ecom/contracts";
 
-export const CATALOG_SORTS = [
-  "price_asc",
-  "price_desc",
-  "created_desc",
-  "name_asc",
-] as const;
+export const CATALOG_SORTS = catalogProductSortSchema.options;
 
 export type CatalogSort = (typeof CATALOG_SORTS)[number];
 
@@ -107,6 +103,8 @@ export const productListItemSchema = z
     primaryImageUrl: z.string().nullish(),
     images: z.array(productImageSchema).nullish(),
     tags: z.array(z.string()).nullish(),
+    rating: z.number().nullish(),
+    ratingCount: z.number().nullish(),
     badges: z.array(cardBadgeSchema).nullish(),
     cardOptions: z.array(cardOptionSchema).nullish(),
     cardVariants: z.array(cardVariantSchema).nullish(),
