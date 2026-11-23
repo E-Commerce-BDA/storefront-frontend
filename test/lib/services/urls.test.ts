@@ -64,7 +64,15 @@ describe("serviceTimeout", () => {
     expect(serviceTimeout("order")).toBeGreaterThan(serviceTimeout("catalog"));
   });
 
-  it("declares exactly the five registered services", () => {
-    expect(SERVICE_NAMES).toEqual(["auth", "cms", "catalog", "cart", "order", "search"]);
+  it("declares exactly the registered services", () => {
+    expect(SERVICE_NAMES).toEqual([
+      "auth",
+      "cms",
+      "catalog",
+      "cart",
+      "order",
+      "search",
+      "analytics",
+    ]);
   });
 });

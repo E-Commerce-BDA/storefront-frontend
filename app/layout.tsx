@@ -13,6 +13,7 @@ import FooterMount from "./_components/FooterMount";
 import CartProvider from "./_components/CartProvider";
 import { WishlistProvider } from "./_components/WishlistProvider";
 import { CompareProvider } from "./_components/CompareProvider";
+import PageViewTracker from "./_components/PageViewTracker";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -74,6 +75,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <NavbarMount nav={nav} />
               {children}
               <FooterMount footer={footerResult.footer} />
+              <PageViewTracker />
             </CompareProvider>
           </WishlistProvider>
         </CartProvider>

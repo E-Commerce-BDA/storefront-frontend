@@ -22,7 +22,7 @@
  * asymmetry.
  */
 
-export type ServiceName = "auth" | "cms" | "catalog" | "cart" | "order" | "search";
+export type ServiceName = "auth" | "cms" | "catalog" | "cart" | "order" | "search" | "analytics";
 
 export interface ServiceDef {
   /** Environment variable that overrides the fallback. */
@@ -41,6 +41,7 @@ export const SERVICES: Record<ServiceName, ServiceDef> = {
   // Payment provider sits in this path; 2.5 s would abort healthy checkouts.
   order: { env: "ORDER_SVC_URL", fallback: "http://localhost:4040", timeoutMs: 8000 },
   search: { env: "SEARCH_SVC_URL", fallback: "http://localhost:4090", timeoutMs: 2000 },
+  analytics: { env: "ANALYTICS_SVC_URL", fallback: "http://localhost:4060", timeoutMs: 2000 },
 };
 
 /**
