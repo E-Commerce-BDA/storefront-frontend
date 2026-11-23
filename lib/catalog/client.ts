@@ -48,13 +48,7 @@ export interface CatalogQuery {
   sort?: CatalogSort;
   minPrice?: number;
   maxPrice?: number;
-  /**
-   * AND filter: products that have **all** listed tags.
-   */
   tags?: string[];
-  /**
-   * Only products with an active discount row.
-   */
   discounted?: boolean;
   /**
    * Manual curation (sf-060 "Most Popular"): fetch exactly these products,

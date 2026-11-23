@@ -1,17 +1,3 @@
-/**
- * Global theme vocabulary — Oceanic Blue v1.0
- * (Admin portal Theme Settings `/cms/theme`, 6.Admin-Panel.md §3.8.)
- *
- * House defaults for Button/Input/Checkbox/Toggle. Admin-facing fields
- * are all-optional (absent = inherit); resolved types are all-required;
- * literals live ONLY in DEFAULT_THEME. No logic beyond the resolver
- * below, no React, no fetch, no DB.
- *
- * Paint convention (shared with navSettings): "" is the concrete "no
- * house override" value — variant/component tokens apply. cleanStr keeps
- * "" (it's a decision, not a miss); only wrong-typed values fall back.
- * Numeric defaults mirror today's component defaults exactly.
- */
 
 import type { ThemePhotoSettingsField } from "@ecom/contracts";
 import type { ButtonAnimationField } from "./buttonAnimation";
@@ -45,7 +31,6 @@ import {
   type TooltipStyleField,
 } from "@/components/ui/Tooltip";
 
-/** Numeric limits for every ranged knob (clamped in resolveTheme). */
 export const THEME_LIMITS = {
   radius: { min: 0, max: 24 },
   checkboxSize: { min: 16, max: 28 },
@@ -72,7 +57,6 @@ export const THEME_LIMITS = {
   gridCols: { min: 1, max: 5 },
 } as const;
 
-/* Admin-facing fields: all optional (absent = inherit). */
 
 export interface ThemeButtonField {
   defaultVariant?: ButtonVariant;
@@ -134,7 +118,6 @@ export interface ThemeIconField {
   size?: number;
   strokeWidth?: number;
   filled?: boolean;
-  /** "" = currentColor behavior (no house override). */
   color?: string;
 }
 
@@ -237,12 +220,10 @@ export type ThemeTooltipField = TooltipStyleField;
 
 export interface ThemeDialogField {
   overlayColor?: string;
-  /** Overlay wash alpha 0–100. */
   overlayAlpha?: number;
   panelBg?: string;
   borderColor?: string;
   borderRadius?: number;
-  /** Panel width cap px. */
   maxWidth?: number;
   titleColor?: string;
   titleSize?: number;
@@ -442,7 +423,6 @@ export interface ResolvedThemeSettings {
   photoSettings: ResolvedThemePhotoSettings;
 }
 
-/* Builtins: today's look = final fallback. */
 
 export const DEFAULT_THEME: ResolvedThemeSettings = {
   button: {

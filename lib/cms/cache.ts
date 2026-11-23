@@ -25,7 +25,6 @@ export interface TtlCache<T> {
 export interface MemoryCacheOptions {
   /** Default 32. */
   maxEntries?: number;
-  /** Injected clock — tests control expiry without sleeping. */
   now?: () => number;
 }
 

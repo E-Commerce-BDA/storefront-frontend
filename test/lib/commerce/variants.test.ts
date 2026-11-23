@@ -1,11 +1,3 @@
-/**
- * Variant selection — availability, defaults and lookup.
- *
- * The model exists so three separate questions have one answer each: which
- * values can the shopper still pick, which variant opens the page, and which
- * variant does the current selection name. All three are wrong in ways that
- * look like a design bug (a dead swatch, the wrong starting price).
- */
 import { describe, expect, it } from "vitest";
 import type { ProductOptionDto, ProductVariantDto } from "@/lib/catalog/schemas";
 import {

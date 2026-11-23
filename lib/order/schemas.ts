@@ -14,12 +14,9 @@
 
 import { z } from "zod";
 
-/* ── money ───────────────────────────────────────────────────────────────── */
 
-/** Dollars, as a number. The service owns the type; the view only formats it. */
 const money = z.number();
 
-/* ── checkout (write + its confirmation) ─────────────────────────────────── */
 
 export const addressSchema = z
   .object({
@@ -28,7 +25,6 @@ export const addressSchema = z
     city: z.string(),
     state: z.string().optional(),
     postalCode: z.string(),
-    /** ISO-3166 alpha-2 — order-svc validates exactly 2 characters. */
     country: z.string().length(2),
   })
   .loose();
@@ -84,7 +80,6 @@ export const checkoutConfirmationSchema = z
   })
   .loose();
 
-/* ── order rows (read) ───────────────────────────────────────────────────── */
 
 export const orderAddressSchema = z
   .object({
@@ -173,7 +168,6 @@ export type CheckoutItemInput = z.infer<typeof checkoutItemInputSchema>;
 export type OrderItemRowDto = z.infer<typeof orderItemRowSchema>;
 export type OrderDto = z.infer<typeof orderSchema>;
 
-/* ── discount code validation ────────────────────────────────────────────── */
 
 export const validateDiscountCodeSchema = z
   .object({

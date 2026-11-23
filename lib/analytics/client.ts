@@ -10,7 +10,6 @@
 import { z } from "zod";
 import { createServiceClient } from "@/lib/http/client";
 
-/** The body the BFF accepts, mapped to the contracts page.viewed payload. */
 export const trackBeaconSchema = z
   .object({
     page: z.string().min(1).max(2048),
@@ -24,7 +23,6 @@ export const trackBeaconSchema = z
 
 export type TrackBeacon = z.infer<typeof trackBeaconSchema>;
 
-/** What analytics-svc 1.16.0 accepts on POST /api/v1/analytics/track. */
 export interface AnalyticsTrackBody extends TrackBeacon {
   sessionId: string;
 }
@@ -54,7 +52,6 @@ export function createAnalyticsClient(
   };
 }
 
-/** Constructed per call so the registry's call-time env read stays honest. */
 export function analyticsClient(): AnalyticsClient {
   return createAnalyticsClient(createServiceClient("analytics"));
 }

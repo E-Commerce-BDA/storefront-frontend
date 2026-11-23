@@ -19,9 +19,7 @@ export const ACCESS_COOKIE = "sf_at";
 export const REFRESH_COOKIE = "sf_rt";
 export const REFRESH_PATH = "/api/auth";
 
-/** 15 minutes — mirrors auth-svc's access-token lifetime. */
 export const ACCESS_TTL_SECONDS = 15 * 60;
-/** 30 days — mirrors auth-svc's refresh-token lifetime. */
 export const REFRESH_TTL_SECONDS = 30 * 24 * 60 * 60;
 
 export interface CookieSpec {
@@ -34,7 +32,6 @@ export interface CookieSpec {
   maxAge: number;
 }
 
-/** The shape both `Request.cookies` and a real cookie jar satisfy. */
 export interface CookieReader {
   get(name: string): { value: string } | undefined;
 }
@@ -101,7 +98,6 @@ export function readCookie(
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 
-/** True when the caller holds a usable access cookie. */
 export function hasSession(cookies: CookieReader): boolean {
   return readCookie(cookies, ACCESS_COOKIE) !== null;
 }

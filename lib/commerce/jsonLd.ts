@@ -24,7 +24,6 @@
 import type { ProductDetailDto } from "@/lib/catalog/schemas";
 
 const CONTEXT = "https://schema.org";
-/** Placeholder until the catalog carries a currency (sf-053). */
 export const PDP_PRICE_CURRENCY = "USD";
 
 function availabilityUrl(stock: number | null | undefined): string {

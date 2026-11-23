@@ -43,16 +43,9 @@ import type {
 
 export const HOME_PAGE_KEY = "homepage";
 
-/** `featured_products` with no `maxItems`: the same strip width sf-051 used. */
 export const DEFAULT_PRODUCT_LIMIT = 8;
-/** `blog_teaser` with no `count`: three cards fit a row without a wrap orphan. */
 export const DEFAULT_TEASER_COUNT = 3;
 
-/**
- * Data sources, injected. The defaults hit the real services; tests hand in
- * fixed tables. A function returning `null` means "this service is down" — the
- * caller's section is skipped and nothing else is told.
- */
 export interface SectionResolveDeps {
   products(query: {
     ids?: string[];
@@ -181,9 +174,7 @@ async function buildViewModel(
   }
 }
 
-/* ── shared primitives ────────────────────────────────────────────────────── */
 
-/** House rule: first CTA is primary, second light, the third quiet. */
 export function toCtaModels(ctas: readonly { text: string; link: string; bg?: string; textColor?: string; borderColor?: string; borderWidth?: number; borderRadius?: number }[] | undefined): SectionCtaModel[] {
   return (ctas ?? []).slice(0, 3).map((cta, i) => ({
     text: cta.text,
@@ -201,7 +192,6 @@ function nonempty(value: string | undefined | null): value is string {
   return typeof value === "string" && value.trim() !== "";
 }
 
-/* ── per-type builders ────────────────────────────────────────────────────── */
 
 function heroModel(section: Extract<Section, { type: "hero" }>): SectionViewModel | null {
   const settings = section.settings;
@@ -473,7 +463,6 @@ async function blogTeaserModel(
   };
 }
 
-/* ── PDP builders ─────────────────────────────────────────────────────── */
 
 function pdpDescriptionModel(
   section: Extract<Section, { type: "pdp_description" }>,
@@ -700,7 +689,6 @@ function pdpFaqModel(
   };
 }
 
-/** Pin rows to the given id order — the curated order is the content. */
 function orderByIds<T extends { id: string }>(rows: readonly T[], ids: readonly string[]): T[] {
   const byId = new Map(rows.map((row) => [row.id, row]));
   const ordered: T[] = [];

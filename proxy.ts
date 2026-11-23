@@ -57,7 +57,6 @@ const SESSION_PATH = "/api/auth/session";
 const REFRESH_ROUTE = "/api/auth/refresh";
 const SIGNIN_PATH = "/signin";
 
-/** Only the routes this file knows how to handle, whatever the matcher says. */
 const GUARDED_RE = /^\/(account|checkout)(\/|$)/;
 
 export const config = {
@@ -94,21 +93,15 @@ export default function proxy(request: NextRequest): NextResponse {
   return result;
 }
 
-/**
- * Put `sf_cid` on the request when the browser has none. Returns the cookie the
- * response has to carry (or null when nothing was minted).
- */
 function ensureGuest(request: NextRequest): CookieSpec | null {
   if (readCookie(request.cookies, GUEST_COOKIE) !== null) return null;
 
   const id = mintGuestId();
-  // Request side: this render can already read the id (RSC and handlers).
   request.cookies.set(GUEST_COOKIE, id);
   // Response side: the browser keeps it for 30 days.
   return guestCookie(id, { secure: isSecureCookie() });
 }
 
-/** Null means "allowed through"; a value is the redirect to send instead. */
 function guard(request: NextRequest): NextResponse | null {
   if (readCookie(request.cookies, ACCESS_COOKIE) !== null) return null;
 

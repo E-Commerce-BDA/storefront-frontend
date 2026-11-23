@@ -35,7 +35,6 @@ function formChrome(elevation: ResolvedAuthStyle["form"]["elevation"]): { border
   }
 }
 
-/** Gradient union → one CSS background value (presentation, not logic). */
 export function panelBackgroundValue(gradient: ResolvedPanelGradient): string {
   const stops = gradient.stops.map((s) => `${s.color} ${s.at}%`).join(", ");
   switch (gradient.type) {
@@ -48,7 +47,6 @@ export function panelBackgroundValue(gradient: ResolvedPanelGradient): string {
   }
 }
 
-/** Panel background by mode: computed gradient, solid, image layer, or none. */
 export function panelBackground(style: ResolvedAuthStyle): string {
   const p = style.panel;
   switch (p.bgMode) {
@@ -65,8 +63,6 @@ export function panelBackground(style: ResolvedAuthStyle): string {
   }
 }
 
-/** Full paint map for one resolved page style. Keys are the contract that
- *  components/auth/* consumes (style-contract tests pin this list). */
 export function authCssVars(style: ResolvedAuthStyle): Record<string, string> {
   const chrome = formChrome(style.form.elevation);
   const t = style.typography;

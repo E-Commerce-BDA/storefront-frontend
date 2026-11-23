@@ -12,11 +12,9 @@
 
 export type OverlayMotionPreset = "smooth" | "snappy" | "oceanic" | "fast" | "flat" | "custom";
 
-/** Admin-facing: everything optional (absent = inherit). */
 export interface OverlayMotionField {
   enabled?: boolean;
   preset?: OverlayMotionPreset;
-  /** Custom duration 150–500ms (only read when preset is "custom"). */
   durationMs?: number;
   /** Custom easing (only read when preset is "custom"). */
   easing?: string;

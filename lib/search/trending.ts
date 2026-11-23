@@ -10,6 +10,5 @@
  */
 
 export interface TrendingSource {
-  /** Ranked trending terms. Aborts on `signal` — stale lists never land. */
   list(signal: AbortSignal): Promise<string[]>;
 }

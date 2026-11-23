@@ -20,7 +20,6 @@ const css = readFileSync(
   "utf8",
 ).replace(/\/\*[\s\S]*?\*\//g, "");
 
-/** All rule bodies whose selector mentions one of these vocabularies. */
 function rulesFor(...prefixes: string[]): string {
   const out: string[] = [];
   for (const match of css.matchAll(/([^{}]+)\{([^}]*)\}/g)) {

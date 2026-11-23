@@ -81,6 +81,11 @@ docs defer to this section where wording differs.)
    else — scattered component-level defaults, defensive `||` chains,
    duplicated literals — need a reason, stated in a comment at the site.
    Test: if removing your `??` changes nothing, it was bloat and it goes.
+   The same test applies to the reason itself: a comment that only restates
+   what the signature, control flow or imports already show is bloat, even
+   when it contains "why". Keep a comment only when it records a rejected
+   alternative, an external constraint, or an invariant the code cannot
+   enforce. See `Documentation/ARCHITECTURE_DECISIONS.md` ADR-comments.
 5. **State reaches CSS only through `data-*` attrs** — never class toggles
    for state.
 6. **A11y is fixed, not customizable:** focus-visible ring, keyboard parity

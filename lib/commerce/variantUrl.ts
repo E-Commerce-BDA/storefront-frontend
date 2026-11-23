@@ -24,11 +24,9 @@ import {
 
 export interface ParsedVariantQuery {
   selection: VariantSelection;
-  /** True when the URL was invalid or named an unbuyable combination. */
   rewritten: boolean;
 }
 
-/** A shopper-facing token for a value label: lowercase kebab, no accents. */
 export function valueSlug(label: string): string {
   return label
     .normalize("NFKD")
@@ -61,7 +59,6 @@ function selectionOfVariant(
   );
 }
 
-/** Nearest purchasable variant: most matching chosen values wins, then first. */
 function nearestPurchasable(
   variants: readonly ProductVariantDto[],
   selection: VariantSelection,
@@ -137,7 +134,6 @@ export function selectionFromQuery(
   };
 }
 
-/** Canonical query for a selection, keys in fixed option (position) order. */
 export function selectionToQuery(
   selection: VariantSelection,
   options: readonly ProductOptionDto[],

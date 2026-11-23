@@ -53,7 +53,6 @@ function isAuthorised(provided: string | null): boolean {
   return constantTimeEqual(provided, secret);
 }
 
-/** SHA-256 both sides first: equal lengths, so timingSafeEqual never throws. */
 function constantTimeEqual(a: string, b: string): boolean {
   return timingSafeEqual(digest(a), digest(b));
 }
@@ -70,7 +69,6 @@ async function readJson(request: NextRequest): Promise<unknown> {
   }
 }
 
-/** Deduplicated, allowlisted, non-empty — or null. */
 function readTags(body: unknown): string[] | null {
   if (typeof body !== "object" || body === null) return null;
   const raw = (body as { tags?: unknown }).tags;

@@ -14,7 +14,6 @@
 
 export const DEFAULT_NEXT_PATH = "/account";
 
-/** Only routes a signed-in shopper can meaningfully resume into. */
 const INTERNAL_NEXT_RE = /^\/(account|checkout|cart)(\/|$|\?)/;
 
 export function safeNextPath(value: unknown): string {

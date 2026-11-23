@@ -1,16 +1,3 @@
-/**
- * PDP photo-settings precedence — sf-055 (product.md §7.6)
- *
- * Product > section > global. A present value at a higher layer wins; an
- * absent one inherits the next layer down; a wrong-typed value is a miss
- * (never a blank page). Every numeric knob is clamped here so paint receives
- * a valid face, and CSS variables mirror the defaults.
- *
- * The `photoSettings` bag arrives as an untrusted record from catalog-svc;
- * the section layer is the CMS knobs a PDP section already carries
- * (`ratio`/`blendMode`/`showPhotos`/`gutter`). Global comes from the resolved
- * theme, never the raw admin document.
- */
 
 import type { ResolvedThemePhotoSettings } from "@/lib/cms/themeSettings";
 import type { MediaRatio } from "./productCard";
@@ -55,11 +42,6 @@ function pick(layers: readonly PhotoSettingsLayer[], key: keyof PhotoSettingsLay
   return undefined;
 }
 
-/**
- * The single merge for PDP photo paint. `layers` is ordered high → low
- * (product, section, global); the global layer is always present as the
- * resolved theme default.
- */
 export function resolvePhotoSettings(
   layers: readonly PhotoSettingsLayer[],
   global: ResolvedThemePhotoSettings,

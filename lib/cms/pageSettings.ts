@@ -20,7 +20,6 @@ import {
 import { createMemoryCache } from "./cache";
 import { cmsBaseUrl } from "./client";
 
-/** Process-local stale store, shared by every auth page render. */
 const pageSettingsCache: AuthSettingsCache = createMemoryCache<AuthSettingsEntry>();
 
 export function fetchAuthPageSettings(

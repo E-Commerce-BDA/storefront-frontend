@@ -1,8 +1,3 @@
-/**
- * Auth style contract — every paint value in .sf-auth* resolves through an
- * --auth-* var (fallbacks mirror DEFAULT_AUTH_SETTINGS) or a status token.
- * A knob painted as a literal bypasses admin overrides and fails here.
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

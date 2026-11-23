@@ -36,7 +36,6 @@ export interface FetchFooterDeps {
 
 export interface FooterResult {
   footer: Footer | null;
-  /** True when served from cache after a source failure. */
   stale: boolean;
   /** True when neither source nor cache had anything — minimal shell rendered. */
   fallback: boolean;

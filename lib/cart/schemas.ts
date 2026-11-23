@@ -1,12 +1,3 @@
-/**
- * Cart schemas — sf-051
- * (cart-svc `src/cart/cart.types.ts`, read from source)
- *
- * Loose objects, strict on the fields the cart UI renders. `unitPrice` is a
- * **number** here (cart-svc prices at write time and normalises `DECIMAL` to a
- * number in its mapper), the same shape order-svc sends after its NUMERIC type
- * parser — so every price on the seam is a number and no view has to convert.
- */
 
 import { z } from "zod";
 
@@ -89,7 +80,6 @@ export const cartMutationSchema = z
 export type CartTotalsDto = z.infer<typeof cartTotalsSchema>;
 export type CartDto = z.infer<typeof cartSchema>;
 export type CartItemDto = z.infer<typeof cartItemSchema>;
-/** cart-svc's answer, `cart` always present. */
 export type CartSnapshot = z.infer<typeof cartResponseSchema>;
 /** Our BFF's answer, `cart` still absent before the first item. */
 export type CartSnapshotDto = z.infer<typeof cartSnapshotSchema>;

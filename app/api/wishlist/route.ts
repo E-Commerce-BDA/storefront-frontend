@@ -29,7 +29,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const hydrated: HydratedWishlistEntry[] = [];
   for (const item of rawItems) {
     const product = productMap.get(item.productId);
-    // Exclude archived/draft or missing products
     if (product && product.status === "active") {
       hydrated.push({
         id: item.id,

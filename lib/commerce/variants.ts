@@ -24,12 +24,10 @@
 
 import type { ProductOptionDto, ProductVariantDto } from "@/lib/catalog/schemas";
 
-/** Option name → option value id. */
 export type VariantSelection = Record<string, string>;
 
 export interface VariantValueView {
   id: string;
-  /** Display label ("Ocean Blue"). */
   value: string;
   swatchHex: string | null;
   swatchImageUrl: string | null;

@@ -1,7 +1,3 @@
-/**
- * Product card data — extends SearchResult additively (never forks).
- * All new fields optional: absent renders the base face.
- */
 import type { SearchResult } from "@/lib/search/source";
 
 export type ProductStock = "in" | "low" | "out";
@@ -73,7 +69,6 @@ export interface ProductCardOption {
 }
 
 export interface ProductCardData extends SearchResult {
-  /** Hover-swap image (admin sets; absent = static cover). */
   hoverImage?: string;
   /** PDP destination (owner routes; absent = onOpen only). */
   url?: string;
@@ -81,17 +76,11 @@ export interface ProductCardData extends SearchResult {
   compareAt?: number;
   stock?: ProductStock;
   wishlisted?: boolean;
-  /** Centralized badge list resolved from catalog registry */
   badges?: ProductCardBadge[];
-  /** Card-projected options (swatches, size pills) */
   options?: ProductCardOption[];
-  /** Multiple product media images for carousel */
   images?: ProductImageItem[];
-  /** Brand identity */
   brand?: { id?: string; name: string };
-  /** Compact card variants for active selection effects */
   cardVariants?: CardVariant[];
-  /** Sparse per-product card settings */
   cardSettings?: Partial<ProductCardStyleConfig>;
 }
 

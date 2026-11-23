@@ -74,7 +74,6 @@ export interface CmsClient {
   getPage(slug: string): Promise<Page | null>;
 }
 
-/** Filters the storefront may pass to the public blog list. */
 export interface CmsBlogListQuery {
   category?: string;
   cursor?: string;
@@ -148,7 +147,6 @@ export function createCmsClient(options: CmsClientOptions): CmsClient {
         : { navbar: envelope.payload as NavSettings, version: envelope.version };
     },
 
-    // --- sf-060 readers: parsed through @ecom/contracts response schemas ----
 
     async getSections(pageKey) {
       // A bad key would mint an off-allowlist tag — refuse before the request.
@@ -201,7 +199,6 @@ export function createCmsClient(options: CmsClientOptions): CmsClient {
         `/api/v1/cms/blogs/${encodeURIComponent(slug)}`,
         cmsTag.blogs,
       );
-      // The controller wraps the post in `{ blog }`; unwrap before parsing.
       const blog =
         typeof body === "object" && body !== null && "blog" in body
           ? (body as { blog: unknown }).blog

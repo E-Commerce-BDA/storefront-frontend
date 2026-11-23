@@ -43,7 +43,6 @@ import type {
   ProductStock,
 } from "./productCard";
 
-/** A row from either catalog read — enough to paint one card. */
 export type CatalogProduct = ProductListItemDto | ProductDetailDto;
 
 const LISTING_FOLDER = "/products";
@@ -56,7 +55,6 @@ const LISTING_FOLDER = "/products";
  */
 const CATEGORY_UNKNOWN = "";
 
-/** Below this many units the card says "low". Same cut as the variant resolver. */
 const LOW_STOCK_ABOVE = 5;
 
 export function toProductStock(stock: number | null | undefined): ProductStock {
@@ -260,9 +258,6 @@ function toCardSettings(
   return { ...settings };
 }
 
-/**
- * One catalog row → one card. Never throws, never fetches, never coerces money.
- */
 export function fromCatalog(product: CatalogProduct): ProductCardData {
   // One guard, four branches: `detail` is an alias of the type predicate, so
   // TypeScript narrows `product` at each use and no `as` is needed below.
@@ -318,7 +313,6 @@ export function fromCatalog(product: CatalogProduct): ProductCardData {
   return card;
 }
 
-/** The whole page in one call — a listing never maps per card at the call site. */
 export function fromCatalogList(products: readonly CatalogProduct[]): ProductCardData[] {
   return products.map(fromCatalog);
 }

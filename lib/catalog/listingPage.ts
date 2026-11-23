@@ -54,7 +54,6 @@ export type ListingLoadResult =
       retry: string;
     };
 
-/** `URLSearchParams` → the resolver's record, first value wins. */
 export function searchParamsToRecord(
   searchParams: URLSearchParams,
 ): Record<string, SearchParamValue> {

@@ -20,11 +20,9 @@ import { PRODUCT_CARD_RATIOS, type MediaRatio } from "./productCard";
 
 export interface GalleryImage {
   url: string;
-  /** Never empty: a meaningful photo needs a name, so it falls back upstream. */
   alt: string;
 }
 
-/** The PDP frame is portrait — same vocabulary as the card (`MediaRatio`). */
 export const GALLERY_DEFAULT_RATIO: MediaRatio = "4:5";
 
 /**
@@ -89,21 +87,18 @@ export function toGalleryImages(
   return gallery;
 }
 
-/** Wrap-around: the last frame's "next" is the first frame, never a no-op. */
 export function stepIndex(index: number, delta: number, length: number): number {
   if (length <= 0) return 0;
   const next = (index + delta) % length;
   return next < 0 ? next + length : next;
 }
 
-/** A stale `activeIndex` (product changed under the island) still renders. */
 export function clampIndex(index: number, length: number): number {
   if (length <= 0) return 0;
   if (!Number.isFinite(index)) return 0;
   return Math.min(Math.max(0, Math.trunc(index)), length - 1);
 }
 
-/** `"4:5"` → the CSS `aspect-ratio` value, from the one ratio table. */
 export function ratioCss(ratio: MediaRatio): string {
   return PRODUCT_CARD_RATIOS[ratio];
 }

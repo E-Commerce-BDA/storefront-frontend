@@ -23,7 +23,6 @@ export function useQuickAdd(port: QuickAddPort): UseQuickAdd {
   const [error, setError] = useState<QuickAddError | null>(null);
   const flights = useRef(new Map<string, AbortController>());
 
-  // Unmount aborts every flight (stale resolves must never land).
   useEffect(() => {
     const open = flights.current;
     return () => {

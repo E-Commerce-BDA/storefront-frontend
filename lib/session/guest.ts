@@ -27,13 +27,10 @@
 import type { CookieSpec } from "@/lib/auth/session";
 
 export const GUEST_COOKIE = "sf_cid";
-/** 30 days — long enough that a browser keeps its basket between visits. */
 export const GUEST_TTL_SECONDS = 30 * 24 * 60 * 60;
 
-/** Mirrors cart-svc's `CartIdentityGuard` pattern. Same regex, one meaning. */
 export const GUEST_ID_PATTERN = /^[A-Za-z0-9._~-]{8,64}$/;
 
-/** A UUID satisfies the guard pattern; `crypto.randomUUID` exists on the edge. */
 export function mintGuestId(): string {
   return crypto.randomUUID();
 }

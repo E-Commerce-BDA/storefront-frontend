@@ -26,7 +26,6 @@ export function removeCompareId(ids: readonly string[], productId: string): stri
   return ids.filter((id) => id !== productId);
 }
 
-/** Order-independent canonical query, capped at the limit. */
 export function compareQuery(ids: readonly string[]): string {
   const unique = [...new Set(ids)].slice(0, COMPARE_LIMIT);
   return unique.length === 0 ? "" : `?ids=${unique.join(",")}`;

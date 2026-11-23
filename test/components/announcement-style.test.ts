@@ -1,8 +1,3 @@
-/**
- * Announcement style contract — .sf-announce paints through --nb-announce-*
- * vars (fallbacks mirror DEFAULT_NAV_SETTINGS). No literals outside var()
- * fallbacks; arrows/dismiss inherit currentColor (no color props, ever).
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

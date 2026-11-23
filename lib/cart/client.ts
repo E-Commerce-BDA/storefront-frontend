@@ -47,7 +47,6 @@ export interface CartMutation {
 }
 
 export interface CartClientOptions {
-  /** Injectable so tests get stable keys. */
   newKey?: () => string;
 }
 

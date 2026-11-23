@@ -49,7 +49,6 @@ function stubAuthService(status: number, body: unknown) {
   return fetchFn;
 }
 
-/** auth-svc and cart-svc in one stub: the URLs are the only thing that differ. */
 function stubServices(routes: Record<string, { status: number; body: unknown }>) {
   const fetchFn = vi.fn(async (url: string | URL | Request) => {
     const href = String(url);

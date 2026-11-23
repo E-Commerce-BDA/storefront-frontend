@@ -33,7 +33,6 @@ export function useSelectOptions(source: OptionsSource): UseSelectOptions {
     source
       .list(controller.signal)
       .then((rows) => {
-        // Stale responses never overwrite: only the latest load lands.
         if (seq.current === id) {
           setOptions(rows);
           setStatus("done");
@@ -47,7 +46,6 @@ export function useSelectOptions(source: OptionsSource): UseSelectOptions {
       });
   }, [source]);
 
-  // Mount loads once; unmount aborts the flight.
   useEffect(() => {
     load();
     return () => {

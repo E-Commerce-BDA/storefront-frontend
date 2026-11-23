@@ -1,10 +1,3 @@
-/**
- * ProductCard model and style resolver unit tests.
- *
- * Verifies pure resolution logic: defaults, clamps, union validations,
- * fallback rules, and CSS variable generation.
- * Pure unit tests. No React, no DOM.
- */
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_PRODUCT_CARD_STYLES,
@@ -139,7 +132,6 @@ describe("resolveProductCardStyles", () => {
   });
 
   it("applies contrast safety fallbacks when dark background is selected", () => {
-    // Dark background with no explicit text color -> automatically sets safe light text
     const darkCard = resolveProductCardStyles({ cardBg: "#0f172a" });
     expect(darkCard.textColor).toBe("#f8fafc");
     expect(darkCard.mutedTextColor).toBe("#94a3b8");

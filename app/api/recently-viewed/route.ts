@@ -22,11 +22,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return jsonNoStore({ products: [] });
   }
 
-  // Hydrate from catalog
-  // Fetch products by querying catalog
   const promises = filteredSlugs.map((slug) => catalogClient().getProduct(slug));
   const results = await Promise.all(promises);
-
   const activeProducts = results.flatMap((res) =>
     res.ok && res.data.status === "active" ? [res.data] : [],
   );

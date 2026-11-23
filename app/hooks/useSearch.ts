@@ -44,7 +44,6 @@ export function useSearch(source: SearchSource, initialDept = "All"): UseSearch 
       source
         .suggest(needle, controller.signal)
         .then((rows) => {
-          // Stale responses never overwrite: only the latest request lands.
           if (seq.current === id) {
             setResults(rows);
             setStatus("done");

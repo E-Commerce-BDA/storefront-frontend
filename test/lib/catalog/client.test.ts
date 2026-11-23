@@ -9,7 +9,6 @@ import { catalogClient, createCatalogClient } from "@/lib/catalog/client";
 import type { Perform, RequestOptions, ServiceResult, ServiceFailure } from "@/lib/http/result";
 import type { ProductDetailDto, ProductListItemDto } from "@/lib/catalog/schemas";
 
-/** A perform that records the request and answers with `response`. */
 function stub<R>(response: R) {
   const calls: RequestOptions<unknown>[] = [];
   const perform: Perform = async <T,>(req: RequestOptions<T>): Promise<ServiceResult<T>> => {

@@ -1,7 +1,3 @@
-/**
- * Overlay motion resolver-unit — preset mapping, custom clamp + allowlist,
- * builtin defaults. Pure in → concrete out; no mocks.
- */
 import { describe, expect, it } from "vitest";
 import { MOTION_PRESETS, resolveOverlayMotion } from "@/lib/search/motion";
 

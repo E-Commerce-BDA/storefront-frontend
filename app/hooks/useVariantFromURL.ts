@@ -25,7 +25,6 @@ function orderedNames(options: readonly ProductOptionDto[]): string[] {
 
 export interface UseVariantFromURL {
   selection: VariantSelection;
-  /** Quiet notice when the URL named an invalid or unbuyable combination. */
   notice: boolean;
   select: (optionName: string, valueId: string) => void;
 }
@@ -45,7 +44,6 @@ export function useVariantFromURL(
   const [notice, setNotice] = useState(false);
   const replaced = useRef(false);
   const signatureRef = useRef<string | null>(null);
-  /** Signature of a user push not yet reflected in the URL. */
   const pendingRef = useRef<string | null>(null);
 
   // Sync on URL change (shared link, Back/Forward) and when the product's

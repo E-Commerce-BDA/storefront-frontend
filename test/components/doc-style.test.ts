@@ -42,7 +42,6 @@ describe("blog/legal style contract", () => {
   it("measures the article, but runs the list full-width — never the legal page", () => {
     expect(css).toMatch(/\.sf-prose\s*\{[^}]*max-width:\s*var\(--prose-measure/);
     expect(css).toMatch(/\.sf-post__title[^}]*max-width:\s*var\(--doc-title-measure/);
-    // A legal page carries no column of its own: only the running line is capped.
     expect(css).not.toMatch(/\.sf-page\s*\{[^}]*max-width/);
     // The blog article takes a centred column (the shopper asked for the post in
     // the middle of the page) — through a var, never a raw number.

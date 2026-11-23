@@ -1,16 +1,3 @@
-/**
- * Wave park-position contract — guards the subpixel-bleed bug forever.
- *
- * Bug: the travelling wave layer (::before) parked with a bare `101%`
- * translate, leaving only ~0.5px of hiding margin below/above the button.
- * Subpixel rounding at some zooms/DPRs ate that margin and a 1px wave
- * sliver + faint border fragments bled through at rest — on different
- * edges per size/zoom (right+bottom on sm, corner arcs on lg).
- *
- * Contract: every travelling origin parks at 100% of its own size PLUS a
- * fixed px buffer (>= 8px), which exceeds any rounding error at any zoom.
- * If anyone reintroduces a %-only park, these tests fail with the line.
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

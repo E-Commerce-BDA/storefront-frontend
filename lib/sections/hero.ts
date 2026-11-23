@@ -19,9 +19,7 @@ export type HeroHeight = "auto" | "viewport";
 export interface HeroCta {
   text: string;
   href: string;
-  /** Absent → primary at the block (Button's own default). Capped, never empty-forced. */
   variant?: "primary" | "light" | "ghost-ink";
-  /** CMS `ctas[]` paint keys, forwarded flat to `Button` when the admin set them. */
   bg?: string;
   textColor?: string;
   borderColor?: string;
@@ -31,24 +29,18 @@ export interface HeroCta {
 
 export interface HeroImage {
   src: string;
-  /** Required when an image is present — an unnamed hero photo is unusable. */
   alt: string;
-  /** Colon form (`"16:9"`) or a plain number (`"1.5"` from `customRatio`). */
   ratio?: string;
 }
 
-/** What a caller may pass — the CMS slide already decided the copy. */
 export interface HeroFields {
   eyebrow?: string;
   title: string;
   body?: string;
-  /** `undefined` and `[]` both mean "no CTA row" now that no copy is invented. */
   ctas?: HeroCta[];
   image?: HeroImage;
   align?: HeroAlign;
-  /** sf-060: `viewport` is a CMS knob, not a class — the CSS reads the data attr. */
   height?: HeroHeight;
-  /** Admin hex overrides; absent keeps the token fallback in the stylesheet. */
   bgColor?: string;
   textColor?: string;
 }
@@ -66,12 +58,10 @@ export interface ResolvedHero {
   textColor?: string;
 }
 
-/** CMS `z.array(ctaSchema).max(3)` mirror — a fourth CTA is dropped, not wrapped. */
 export const HERO_CTA_LIMIT = 3;
 /** The house media ratio, kept in the CSS form so the resolver has one shape. */
 export const HERO_DEFAULT_RATIO = "4 / 3";
 
-/** CMS `ratio` is an enum; the CSS wants `16 / 9`. A plain number passes through. */
 export function toCssRatio(ratio: string | undefined): string | undefined {
   if (ratio === undefined || ratio.trim() === "") return undefined;
   return ratio.replace(":", " / ");

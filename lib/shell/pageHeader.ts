@@ -10,9 +10,7 @@
  */
 
 export interface BreadcrumbItem {
-  /** Visible crumb text; blank labels are dropped, not rendered empty. */
   label: string;
-  /** Destination; a crumb without one renders as plain text. */
   href?: string;
 }
 

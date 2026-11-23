@@ -21,7 +21,6 @@ import { apiError, jsonNoStore, unauthenticated } from "@/lib/bff/handler";
 import { orderClient } from "@/lib/order/client";
 import { identityHeaders, readIdentity } from "@/lib/session/identity";
 
-/** One page of history; the account view shows the most recent and links out. */
 const ORDER_PAGE_SIZE = 20;
 
 export async function GET(request: NextRequest): Promise<NextResponse> {

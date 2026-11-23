@@ -17,7 +17,6 @@ export interface QuickAddResult {
 }
 
 export interface QuickAddPort {
-  /** Add one unit of `productId`. Aborts on `signal`. */
   add(productId: string, signal: AbortSignal): Promise<QuickAddResult>;
 }
 

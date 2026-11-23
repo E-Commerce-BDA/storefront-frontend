@@ -46,7 +46,6 @@ export interface TokenPair {
 export type AuthFailure = {
   ok: false;
   code: AuthErrorCode;
-  /** 0 when the request never reached auth-svc (network, timeout). */
   status: number;
 };
 
@@ -111,7 +110,6 @@ export function createAuthClient(options: {
         signal: AbortSignal.timeout(timeoutMs),
       });
     } catch {
-      // Network, DNS, abort/timeout. status 0 marks "never reached".
       return { ok: false, code: "SERVICE_UNAVAILABLE", status: 0 };
     }
 
@@ -282,7 +280,6 @@ function asSession(value: unknown): AuthSession | null {
   return { user, accessToken, refreshToken };
 }
 
-/** One user parser for login, register and `/me` — same shape, same rules. */
 function asUser(value: unknown): AuthUser | null {
   if (!isRecord(value)) return null;
   if (typeof value.id !== "string" || typeof value.email !== "string") return null;

@@ -14,7 +14,6 @@
  *   cart-svc will answer rather than 400.
  */
 
-/** House floor/ceiling when the caller names neither (per-line stock overrides). */
 export const QTY_LIMITS = { min: 1, max: 99 } as const;
 
 export interface QtyBounds {

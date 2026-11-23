@@ -25,7 +25,6 @@
 export type ServiceName = "auth" | "cms" | "catalog" | "cart" | "order" | "search" | "analytics";
 
 export interface ServiceDef {
-  /** Environment variable that overrides the fallback. */
   env: string;
   /** Local dev default; also the value used when the env var is empty. */
   fallback: string;

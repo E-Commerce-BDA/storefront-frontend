@@ -26,13 +26,11 @@ export const MERGE_TIMEOUT_MS = 1500;
 
 export interface MergeOptions {
   accessToken: string;
-  /** The guest id read from `sf_cid`; null when the shopper had no cart. */
   guestSessionId: string | null;
   client?: CartClient;
   timeoutMs?: number;
 }
 
-/** True when the guest cart was absorbed (or there was nothing to absorb). */
 export async function mergeGuestCart(options: MergeOptions): Promise<boolean> {
   const { accessToken, guestSessionId } = options;
   if (guestSessionId === null) return false;

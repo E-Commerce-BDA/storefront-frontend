@@ -21,7 +21,6 @@
  * `<script>`/`<style>` is dropped entirely — that text was never prose.
  */
 
-/** The only elements that can appear in the output. */
 const ALLOWED_TAGS: readonly string[] = [
   "p",
   "h2",
@@ -36,7 +35,6 @@ const ALLOWED_TAGS: readonly string[] = [
   "a",
 ];
 
-/** Rendered as `<br>` — no closer, no attributes. */
 const VOID_TAGS: readonly string[] = ["br"];
 
 /** Their *content* is code, not prose — dropping the tag must drop the text. */
@@ -74,7 +72,6 @@ function readHref(attrs: string): string | undefined {
 }
 
 export interface SanitizedRichText {
-  /** HTML safe to hand to `dangerouslySetInnerHTML`. */
   html: string;
   /** How many constructs were removed or unwrapped — 0 means the input was already clean. */
   stripped: number;

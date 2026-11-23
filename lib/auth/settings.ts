@@ -1,16 +1,3 @@
-/**
- * Auth settings vocabulary — Oceanic Blue v1.0
- * (Documentation/pages/auth-design.md §2–§3)
- *
- * This file NAMES things, nothing more: what can be customized (shapes),
- * what the world looks like uncustomized (DEFAULT_* = today's look = final
- * fallback), and the numeric limits. No logic, no merging, no clamping —
- * that belongs to resolveSettings.ts. No React, no fetch.
- *
- * Convention (mirrors lib/cms/buttonAnimation.ts): admin-facing fields are
- * all-optional (absent = inherit); resolved types are all-required;
- * hex literals live ONLY in DEFAULT_* (the one legal home for literals).
- */
 
 export type AuthMode = "centered" | "split";
 export type PanelSide = "left" | "right";
@@ -21,7 +8,6 @@ export type PanelBgMode = "solid" | "gradient" | "image" | "pattern" | "none";
 
 export interface GradientStop {
   color: string;
-  /** Position 0–100. Absent = distribute evenly (resolver fills). */
   at?: number;
 }
 
@@ -54,7 +40,6 @@ export interface ElementStyle {
 export type SocialProvider = "google" | "apple" | "facebook";
 export type ErrorStyle = "banner" | "inline";
 
-/** Numeric limits for every ranged knob (clamped in resolveSettings.ts). */
 export const AUTH_LIMITS = {
   formRadius: { min: 0, max: 24 },
   formWidth: { min: 360, max: 480 },
@@ -67,7 +52,6 @@ export const AUTH_LIMITS = {
   pageFadeMs: { min: 150, max: 300 },
 } as const;
 
-/* Admin-facing fields: all optional (absent = inherit). */
 
 export interface AuthLayoutField {
   mode?: AuthMode;

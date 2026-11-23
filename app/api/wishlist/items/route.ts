@@ -15,7 +15,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const { productId } = parsed.data;
   const identity = readIdentity(request.cookies);
 
-  // Guest flow: set sf_pw cookie and signal AUTH_REQUIRED
   if (identity.accessToken === null) {
     const res = NextResponse.json(
       {

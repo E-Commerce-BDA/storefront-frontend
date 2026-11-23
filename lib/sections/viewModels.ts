@@ -1,20 +1,3 @@
-/**
- * Section view models — sf-060
- * (Documentation/components/sections.md §2; plan §6)
- *
- * The seam between the CMS contract and the dumb blocks. A `SectionViewModel`
- * says *"paint exactly this"*: every id has been resolved to a row, every
- * absent style key has been left absent on purpose (absent means "inherit the
- * theme token" — resolving it here would freeze the theme out of the CSS-var
- * precedence chain, the same rule `fromCatalog.toCardSettings` follows for
- * cards), and nothing below this layer fetches, decides, or knows the word
- * "cms".
- *
- * `key` and `type` are stamped by the resolver for the renderer registry;
- * a section the resolver drops (inactive, empty, or its service was down)
- * simply never becomes a view model — "empty ≠ outage" is decided once, in
- * `resolveSections`, not five times in JSX.
- */
 
 import type { PdpTrustItem, Section } from "@ecom/contracts";
 import type { ProductCardData, ProductCardStyleConfig } from "@/lib/commerce/productCard";
@@ -27,11 +10,9 @@ export type SectionCardOverrides = Partial<
   Pick<ProductCardStyleConfig, "mediaRatio" | "imageBlendMode">
 >;
 
-/** Post-CTA-shape: the contract's `link` has become the href the `<a>` takes. */
 export interface SectionCtaModel {
   text: string;
   href: string;
-  /** Index-derived house variant; per-CTA colors override it at the Button. */
   variant: "primary" | "light" | "ghost-ink";
   bg?: string;
   textColor?: string;
@@ -40,13 +21,11 @@ export interface SectionCtaModel {
   borderRadius?: number;
 }
 
-/** `ratio`/`customRatio` were merged into one CSS `aspect-ratio` value. */
 export interface HeroSlideModel {
   id: string;
   eyebrow?: string;
   headline: string;
   subcopy?: string;
-  /** Present only when the slide has a usable image ref; alt may be "". */
   media?: { src: string; alt: string };
   ratio?: string;
   bgColor?: string;
@@ -78,9 +57,7 @@ export interface ProductCollectionViewModel {
   key: string;
   type: "product_collection";
   title?: string;
-  /** Accessibility label when no visible title exists (e.g. PDP related). */
   ariaLabel?: string;
-  /** Already ordered (manual picks keep the CMS order; newest is created_desc). */
   cards: ProductCardData[];
   layout: "grid" | "carousel";
   gutterPx?: number;
@@ -112,7 +89,6 @@ export interface BrandCellModel {
   /** Admin's override of the displayed name (the per-item `label`); when absent
    * the cell shows `name`. It never renders as a second text beside the name. */
   label?: string;
-  /** Admin-customizable brand mark, painted as a small icon beside the name. */
   logo?: string;
   /** The brand's real name — always shown (single line), so a logoless brand is
    * never an empty cell. */
@@ -140,11 +116,9 @@ export interface TestimonialModel {
   avatar?: string;
   rating?: number;
   verified?: boolean;
-  /** ISO date, rendered as a month/year line — never the raw string twice. */
   date?: string;
 }
 
-/** Shared paint for quote collections: home testimonials and PDP reviews. */
 export interface ReviewCollectionBase {
   key: string;
   title?: string;
@@ -161,7 +135,6 @@ export interface TestimonialViewModel extends ReviewCollectionBase {
 
 export interface PdpReviewsViewModel extends ReviewCollectionBase {
   type: "pdp_reviews";
-  /** `"reviews"` on the first active reviews section so `#reviews` targets it. */
   anchorId?: "reviews";
 }
 
@@ -187,9 +160,7 @@ export interface PdpDescriptionViewModel {
   key: string;
   type: "pdp_description";
   title?: string;
-  /** Sanitized HTML from a CMS `body`. Exactly one of html/text is set. */
   html?: string;
-  /** Plain catalog text. Preserves line breaks at paint time. */
   text?: string;
   layout: "prose" | "wide";
   gutterPx?: number;
@@ -226,7 +197,6 @@ export interface PdpStoryViewModel {
   key: string;
   type: "pdp_story";
   title?: string;
-  /** Sanitized rich text; absent when only media/CTA exists. */
   html?: string;
   media?: { src: string; alt: string };
   ctas: SectionCtaModel[];
@@ -267,5 +237,4 @@ export type SectionViewModel =
   | PdpStoryViewModel
   | PdpFaqViewModel;
 
-/** The registry key type — same strings as the CMS union, no sixth vocabulary. */
 export type SectionType = Section["type"];

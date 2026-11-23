@@ -1,15 +1,3 @@
-/**
- * PDP helpers — the per-product section seam.
- *
- * The PDP reads exactly one CMS page key, `pdp-${product.id}`. The
- * `pdp-default` template is materialized into that page by the admin clone
- * endpoint; nothing here reads it at runtime, and no slug key is ever read.
- *
- * This module is pure: it names the page key, builds the synthetic outage
- * fallback sections, and derives the review summary. The actual CMS→view
- * model mapping lives in `resolveSections` so the outage path reuses the
- * same skip/builder rules instead of duplicating a second mapper.
- */
 
 import type { Section } from "@ecom/contracts";
 import type { ProductDetailDto } from "@/lib/catalog/schemas";
@@ -29,9 +17,7 @@ export function pdpPageKey(productId: string): string | null {
 }
 
 export interface PdpReviewSummary {
-  /** Average of authored numeric ratings only; null when none exist. */
   rating: number | null;
-  /** Number of items that supplied that rating — the average's denominator. */
   count: number | null;
 }
 
@@ -56,7 +42,6 @@ export function summarizePdpReviews(
   return { rating: sum / ratings.length, count: ratings.length };
 }
 
-/** Catalog attributes as scalar detail rows; nested values are skipped. */
 export function catalogDetailRows(
   product: ProductDetailDto,
 ): PdpDetailRow[] {

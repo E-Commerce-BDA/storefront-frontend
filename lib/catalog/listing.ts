@@ -27,22 +27,16 @@
 import { CATALOG_SORTS, type CatalogSort } from "@/lib/catalog/schemas";
 import type { CatalogQuery } from "@/lib/catalog/client";
 
-/** Page size when `?limit=` is absent or unusable. */
 export const LISTING_LIMIT = 24;
 /** catalog-svc caps `limit` at 100 (plan §5.5); asking for more is clamped. */
 export const LISTING_MAX_LIMIT = 100;
 
 export type SearchParamValue = string | string[] | undefined;
 
-/** Everything the page needs to fetch one listing. */
 export interface ListingParams {
-  /** `?category=` slug — the page resolves it to a `categoryId`. */
   categorySlug: string | undefined;
-  /** `?brand=` slug — the page resolves it to a `brandId`. */
   brandSlug: string | undefined;
-  /** `?tags=` — comma-separated or repeated. */
   tags: string[] | undefined;
-  /** `?discounted=true`. */
   discounted: boolean | undefined;
   /**
    * A ready query. `status` is not here (the client pins `active`) and neither
@@ -101,7 +95,6 @@ function toDiscounted(value: SearchParamValue): boolean | undefined {
   return raw === "true" ? true : undefined;
 }
 
-/** A non-negative price bound; junk or blank is absence, never a zero filter. */
 function toPrice(value: SearchParamValue): number | undefined {
   const raw = first(value);
   if (raw === undefined || raw.trim() === "") return undefined;

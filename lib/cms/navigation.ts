@@ -38,7 +38,6 @@ export interface FetchNavSettingsDeps {
 export interface NavSettingsResult {
   settings: NavSettings;
   version: number | null;
-  /** True when served from cache after a source failure. */
   stale: boolean;
   /** True when neither source nor cache had anything — demo nav rendered. */
   fallback: boolean;

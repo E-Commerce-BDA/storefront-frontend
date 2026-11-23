@@ -39,7 +39,6 @@ function request(cookie?: string): NextRequest {
   });
 }
 
-/** auth-svc `{user}` and order-svc `{data,nextCursor}` under one fetch. */
 function stubServices(routes: { me: Response; orders: Response }) {
   const fetchFn = vi.fn(async (url: string | URL | Request) => {
     const href = String(url);

@@ -50,7 +50,6 @@ export interface BffOptions<T> {
 
 const REFRESH_PATH = "/api/auth/refresh";
 
-/** Module-level so concurrent 401s share one refresh. */
 let refreshing: Promise<boolean> | null = null;
 
 /**

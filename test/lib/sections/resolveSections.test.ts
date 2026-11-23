@@ -26,7 +26,6 @@ const C2 = "00000000-0000-4000-8000-0000000000c2";
 const P1 = "00000000-0000-4000-8000-0000000000a1";
 const P2 = "00000000-0000-4000-8000-0000000000a2";
 
-/* ── fixtures: schema-valid Section documents ─────────────────────────────── */
 
 const heroSection = (over: Partial<Extract<Section, { type: "hero" }>> = {}) =>
   ({
@@ -142,7 +141,6 @@ function deps(over: Partial<SectionResolveDeps> = {}): SectionResolveDeps {
   };
 }
 
-/* ── the orchestration rules ──────────────────────────────────────────────── */
 
 describe("resolveSections", () => {
   it("keeps the CMS sortOrder, not the array order it was handed", async () => {
@@ -231,7 +229,6 @@ describe("resolveSections", () => {
   });
 });
 
-/* ── hero ─────────────────────────────────────────────────────────────────── */
 
 describe("hero sections", () => {
   it("skips a hero with no slides and a slide with no headline", async () => {
@@ -295,7 +292,6 @@ describe("hero sections", () => {
   });
 });
 
-/* ── featured products ────────────────────────────────────────────────────── */
 
 describe("featured products", () => {
   it("asks the catalog for newest rows when the source is newest", async () => {

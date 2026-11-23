@@ -27,7 +27,6 @@
 import type { CartItemDto, CartSnapshotDto, CartTotalsDto } from "@/lib/cart/schemas";
 
 export interface CartState {
-  /** null until a cart row exists — a guest who has not added anything yet. */
   cartId: string | null;
   items: CartItemDto[];
   totals: CartTotalsDto;
@@ -41,7 +40,6 @@ export function emptyCart(): CartState {
   };
 }
 
-/** The server's envelope → state. `cart` is null before the first item. */
 export function fromSnapshot(snapshot: CartSnapshotDto): CartState {
   return {
     cartId: snapshot.cart?.id ?? null,
@@ -119,13 +117,11 @@ export function reconcile(snapshot: CartSnapshotDto): CartState {
 
 export interface CartView {
   lines: CartItemDto[];
-  /** Units, not lines: "3 items" for one line of qty 3. */
   count: number;
   subtotal: number;
   empty: boolean;
 }
 
-/** The three numbers the shell and the drawer render. */
 export function toView(state: CartState): CartView {
   return {
     lines: state.items,

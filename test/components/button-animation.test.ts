@@ -1,10 +1,3 @@
-/**
- * resolveButtonAnimation unit tests — "same animation for every button".
- *
- * The resolver is the single P>S>G merge point feeding Button.tsx. These
- * tests pin the shared default and the override semantics so no variant,
- * size, or future CMS payload can silently diverge.
- */
 import { describe, expect, it } from "vitest";
 import {
   ANIMATION_LIMITS,

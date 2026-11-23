@@ -14,6 +14,5 @@ import type { SelectOption } from "@/components/ui/Select";
 export type { SelectOption };
 
 export interface OptionsSource {
-  /** Full option list. Aborts on `signal` — stale lists never land. */
   list(signal: AbortSignal): Promise<SelectOption[]>;
 }

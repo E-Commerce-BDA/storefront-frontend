@@ -77,7 +77,6 @@ describe("getGlobalSettings / getNavigation", () => {
   });
 });
 
-// --- sf-060 reader fixtures: schema-valid against @ecom/contracts 1.12.0 ----
 
 const SECTION = {
   key: "hero-home",

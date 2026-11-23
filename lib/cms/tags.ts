@@ -25,7 +25,6 @@ export const CMS_NAVIGATION_TAG = "cms:navigation";
 export const CMS_FOOTER_TAG = "cms:footer";
 export const CMS_BLOGS_TAG = "cms:blogs";
 
-/** Tags that are not derived from a page key or slug. */
 export const CMS_STATIC_TAGS = [
   CMS_GLOBAL_SETTINGS_TAG,
   CMS_NAVIGATION_TAG,

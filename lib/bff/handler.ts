@@ -29,12 +29,10 @@ import type { ServiceResult } from "@/lib/http/result";
 
 const NO_STORE = { "cache-control": "no-store" } as const;
 
-/** A 200 the handler composed itself (empty cart, partial account). */
 export function jsonNoStore(body: unknown, status = 200): NextResponse {
   return NextResponse.json(body, { status, headers: NO_STORE });
 }
 
-/** A failure the handler composed itself (401, 403, 400). */
 export function apiError(status: number, code: string, message?: string): NextResponse {
   const error: { code: string; message?: string } = { code };
   if (message !== undefined) error.message = message;
@@ -53,7 +51,6 @@ export function forbidden(): NextResponse {
   return apiError(403, "FORBIDDEN");
 }
 
-/** 204 — a DELETE that worked has nothing to say. */
 export function noContent(): NextResponse {
   return new NextResponse(null, { status: 204, headers: NO_STORE });
 }

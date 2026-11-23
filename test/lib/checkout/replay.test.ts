@@ -44,7 +44,6 @@ const INPUT: CheckoutInput = {
   payment: { provider: "mock" },
 };
 
-/** What order-svc answers after one successful checkout. */
 const CONFIRMATION: CheckoutConfirmationDto = {
   orderId: "o1",
   orderNumber: "ORD-1",

@@ -12,7 +12,6 @@
 
 import { isAuthErrorCode, type AuthErrorCode } from "./errors";
 
-/** `null` means signed in; anything else is a code the UI has copy for. */
 export async function submitAuth(
   path: string,
   body: unknown,

@@ -24,7 +24,6 @@ type CategoryRef = Pick<
   "id" | "name" | "slug" | "parentId"
 >;
 
-/** Flat active categories → ordered roots with nested children. */
 export function buildCategoryTree(
   categories: readonly CategoryRef[] | null | undefined,
 ): CategoryNode[] {
@@ -86,7 +85,6 @@ export function categoryPath(
   return path;
 }
 
-/** A flat, indented option list for a native category `<select>`. */
 export interface CategoryOption {
   id: string;
   slug: string;
@@ -113,7 +111,6 @@ export function flattenCategoryTree(
   return out;
 }
 
-/** `Home / … / Category`, with every non-current crumb staying inside /products. */
 export function buildCategoryBreadcrumb(
   path: readonly CategoryNode[],
 ): BreadcrumbItem[] {

@@ -19,8 +19,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const refreshToken = readCookie(request.cookies, REFRESH_COOKIE);
 
   if (refreshToken !== null) {
-    // Best effort on purpose: the client never throws, and its result cannot
-    // change the answer — the browser is signed out either way.
     await createAuthClient({ baseUrl: authServiceUrl() }).logout(refreshToken);
   }
 

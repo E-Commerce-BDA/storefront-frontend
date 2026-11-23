@@ -12,18 +12,14 @@
  * viewport is the thing this file exists to prevent.
  */
 
-/** Matches the `--strip-cell` fallback in `.sf-strip__cell`. */
 export const MARQUEE_CELL_PX = 180;
 /** Matches the `--grid-gap` fallback used by the strip track. */
 export const MARQUEE_GAP_PX = 32;
-/** Matches the `--quote-cell` fallback in the testimonial marquee. */
 export const MARQUEE_QUOTE_CELL_PX = 340;
-/** Matches the testimonial track's own gap fallback. */
 export const MARQUEE_QUOTE_GAP_PX = 20;
 /** The contract's own default velocity, restated once for the blocks. */
 export const MARQUEE_DEFAULT_SPEED = 60;
 
-/** One loop is this many pixels of travel. */
 export function marqueeDistancePx(cellCount: number, cellPx = MARQUEE_CELL_PX, gapPx = MARQUEE_GAP_PX): number {
   return Math.max(0, cellCount) * (cellPx + gapPx);
 }

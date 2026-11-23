@@ -21,7 +21,6 @@ export const CATALOG_SORTS = catalogProductSortSchema.options;
 
 export type CatalogSort = (typeof CATALOG_SORTS)[number];
 
-/* ── card-side fragments (mirror `ProductCardData`'s companions) ─────────── */
 
 export const productImageSchema = z
   .object({
@@ -81,7 +80,6 @@ export const cardVariantSchema = z
   })
   .loose();
 
-/* ── list ────────────────────────────────────────────────────────────────── */
 
 export const productListItemSchema = z
   .object({
@@ -238,7 +236,6 @@ export const categoryListResponseSchema = z
 
 export const categoryResponseSchema = z.object({ category: categorySchema }).loose();
 
-/* ── brands ──────────────────────────────────────────────────────────────── */
 
 export const brandSchema = z
   .object({

@@ -24,7 +24,6 @@
  * written down next to the key.
  */
 
-/** The pair carried across one logical attempt's retries. */
 export interface IdemPair {
   key: string;
   hash: string;

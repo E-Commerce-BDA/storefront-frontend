@@ -29,7 +29,6 @@ import { GUEST_COOKIE, guestCookie, isGuestId, mintGuestId } from "@/lib/session
 import type { IdentityHeaders } from "@/lib/cart/client";
 
 export interface Identity {
-  /** null for a guest. */
   userId: string | null;
   accessToken: string | null;
   /** The guest cart id, only when it passes cart-svc's pattern. */

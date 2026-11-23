@@ -1,18 +1,3 @@
-/**
- * Navbar settings vocabulary — Oceanic Blue v1.0
- * (Locked navbar plan: regions, logo, bar, colors, links, search/account/
- * cart, announcement/mobile. Same-everywhere chrome — single shared scope,
- * no per-page overrides in v1.)
- *
- * This file NAMES things, nothing more: what can be customized (shapes),
- * what the world looks like uncustomized (DEFAULT_* = today's look = final
- * fallback), and numeric limits. No logic, no merging, no clamping — that
- * belongs to resolveNav.ts. No React, no fetch.
- *
- * Convention (mirrors lib/auth/settings.ts): admin-facing fields are
- * all-optional (absent = inherit); resolved types are all-required;
- * hex literals live ONLY in DEFAULT_* (the one legal home for literals).
- */
 
 import type { OverlayMotionField, ResolvedOverlayMotion } from "@/lib/search/motion";
 
@@ -38,7 +23,6 @@ export type NavLink =
   | { kind: "category"; label: string; href: string; categoryId: string; icon?: string; badge?: LinkBadge; highlight?: LinkHighlight; schedule?: LinkSchedule }
   | { kind: "custom"; label: string; href: string; icon?: string; badge?: LinkBadge; highlight?: LinkHighlight; schedule?: LinkSchedule };
 
-/** Numeric limits for every ranged knob (clamped in resolveNav.ts). */
 export const NAV_LIMITS = {
   logoHeight: { min: 20, max: 40 },
   barHeight: { min: 56, max: 80 },
@@ -56,7 +40,6 @@ export const NAV_LIMITS = {
   pillRadius: { min: 0, max: 999 },
 } as const;
 
-/** Resolved palette settings: all required (produced by resolveNav.ts). */
 export interface ResolvedPaletteSettings {
   cardBg: string;
   backdrop: string;
@@ -102,7 +85,6 @@ export interface ResolvedPaletteSettings {
   paletteAnimation: ResolvedOverlayMotion;
 }
 
-/** Resolved editorial settings: all required (produced by resolveNav.ts). */
 export interface ResolvedEditorialSettings {
   bg: string;
   bgAlpha: number;
@@ -131,7 +113,6 @@ export interface ResolvedEditorialSettings {
   editorialAnimation: ResolvedOverlayMotion;
 }
 
-/* Admin-facing fields: all optional (absent = inherit). */
 
 export interface NavRegionsField {
   announcement?: boolean;
@@ -195,11 +176,9 @@ export type EditorialTabShape = "pill";
  */
 export interface EditorialOverlayField {
   bg?: string;
-  /** Overlay wash alpha 0–100 (100 = fully opaque bg). */
   bgAlpha?: number;
   /** True = backdrop-filter blur over the page behind the wash. */
   blur?: boolean;
-  /** Blur radius px (only read when blur is true). */
   blurPx?: number;
   eyebrow?: string;
   eyebrowColor?: string;
@@ -217,7 +196,6 @@ export interface EditorialOverlayField {
   tabActiveText?: string;
   tabShape?: EditorialTabShape;
   cardType?: EditorialCardType;
-  /** Card image corner radius px. */
   cardRadius?: number;
   deptColor?: string;
   nameColor?: string;
@@ -248,7 +226,6 @@ export type PaletteRowAction = "quick-add";
 export interface PaletteOverlayField {
   cardBg?: string;
   backdrop?: string;
-  /** Backdrop wash alpha 0–100. */
   backdropAlpha?: number;
   /** True = backdrop-filter blur over the page behind the wash. */
   blur?: boolean;
@@ -274,21 +251,14 @@ export interface PaletteOverlayField {
   quickAddedBg?: string;
   quickAddedText?: string;
   cardType?: PaletteCardType;
-  /** Thumbnail corner radius px. */
   thumbRadius?: number;
-  /** Card width px (clamped). */
   cardMaxWidth?: number;
-  /** Rows scrollport cap px (clamped). */
   rowsMaxHeight?: number;
-  /** Thumbnail box px (clamped, square). */
   thumbSize?: number;
-  /** Search input font px (clamped). */
   inputSize?: number;
-  /** Product name font px (clamped). */
   nameSize?: number;
   /** Pill corner radius px, 999 = stadium (later shape presets ride this var). */
   pillRadius?: number;
-  /** Region visibility toggles (all default true). */
   showFilters?: boolean;
   showTrending?: boolean;
   showRecent?: boolean;
@@ -309,7 +279,6 @@ export interface PaletteOverlayField {
 
 export interface NavSearchField {
   enabled?: boolean;
-  /** Which overlay ships to the client (registry dynamic-imports only this). */
   overlayVariant?: SearchOverlayVariant;
   placeholder?: string;
   /**
@@ -317,9 +286,7 @@ export interface NavSearchField {
    * OverlayMotionField shape — other overlays get their own instances).
    */
   sheetAnimation?: OverlayMotionField;
-  /** Editorial-takeover paint + copy (nested group, see above). */
   editorial?: EditorialOverlayField;
-  /** Palette-modal paint (nested group, see above). */
   palette?: PaletteOverlayField;
 }
 
@@ -374,7 +341,6 @@ export interface NavPageOverrides {
   mobile?: NavMobileField;
 }
 
-/** Admin input: one shared scope (same-everywhere chrome). */
 export interface NavSettings {
   shared?: NavPageOverrides;
 }

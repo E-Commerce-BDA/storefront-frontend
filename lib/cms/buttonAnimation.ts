@@ -1,21 +1,3 @@
-/**
- * Button wave-animation contract — Oceanic Blue v1.0
- * (Documentation/design-system/storefront.md §7.1 + §6, 6.Admin-Panel.md §4.2/§4.6/§5)
- *
- * Dumb-component rule: this file holds types + hardcoded defaults + pure
- * resolvers only. No fetch, no React, no DB. Parent resolves P>S>G and passes
- * the final object into `<Button animation={...}>`.
- *
- * Future network shape (admin panel, NOT implemented yet):
- * - Global default:  `GET /cms/settings/global` → `theme.buttonAnimation: ButtonAnimationField`
- * - Per-button override: `cms_sections.content.slides[].ctas[].animation: ButtonAnimationField`
- *   (same shape for `banner.content.ctas[].animation`). Absent key = inherit,
- *   never `null` — admin "Reset to global" deletes the key (§5.3).
- * - Precedence: `cta.animation ?? section.settings.buttonAnimation ?? global.theme.buttonAnimation ?? DEFAULT_BUTTON_ANIMATION`
- *
- * Today `global`/`section` are `undefined`, so every button resolves to the
- * same `DEFAULT_BUTTON_ANIMATION` (+ per-variant hover colors from Button.tsx).
- */
 
 export type WaveOrigin = "bottom" | "top" | "left" | "right";
 
@@ -28,22 +10,6 @@ export type AnimationKind =
   | "linear"
   | "none";
 
-/**
- * Every knob the admin panel will expose. All optional at the CTA level
- * (partial = inherit), all required once resolved.
- *
- * - waveOrigin: which edge the wave rises from.
- * - peaks: number of wave crests (1-3). 2-3 = wavy multi-peak look.
- * - peakHeight: crest depth in px (wave strip height). Range 4-24.
- * - hoverBg/hoverText/hoverBorderColor: hover palette. hoverBorderColor is
- *   independently pickable from day one (defaults to hoverBg when "auto").
- * - durationMs: wave travel time (0-1000). Spec default 360.
- * - textDelayMs: text/border swap delay (0-500). Spec default 200.
- * - easing: CSS timing function. Presets in EASING_PRESETS, custom allowed.
- * - animationKind: interaction model (wave travel vs fades vs linear vs none).
- * - enabled/useWave: master kill-switches. enabled=false OR kind=none OR
- *   useWave=false+fade-kind → no travelling wave layer.
- */
 export interface ButtonAnimationField {
   enabled?: boolean;
   useWave?: boolean;
@@ -90,15 +56,12 @@ export interface ButtonDisabledField {
  */
 export interface ButtonPressedField {
   enabled?: boolean;
-  /** Uniform scale at press depth, e.g. 0.98. Range 0.9–1 (never grows). */
   scale?: number;
-  /** Vertical dip in px, e.g. 1. Range 0–8. */
   translateY?: number;
   /** Shadow while pressed ("none" flattens). Any box-shadow or "none". */
   shadow?: string;
 }
 
-/** Fully resolved animation — every field concrete. */
 export interface ResolvedButtonAnimation {
   enabled: boolean;
   useWave: boolean;
@@ -240,9 +203,7 @@ export interface AnimationColorFallback {
 export interface ResolveAnimationInput {
   /** Per-button override — future `ctas[].animation` payload. Highest precedence. */
   cta?: ButtonAnimationField;
-  /** Per-section default — future `section.settings.buttonAnimation`. */
   section?: ButtonAnimationField;
-  /** Global default — future `theme.buttonAnimation`. */
   global?: ButtonAnimationField;
   /** Variant hover colors (Button.tsx VARIANTS). Lowest precedence for colors. */
   colors: AnimationColorFallback;

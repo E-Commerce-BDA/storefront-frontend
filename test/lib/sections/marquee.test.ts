@@ -1,12 +1,3 @@
-/**
- * Marquee arithmetic — sf-060.
- *
- * The CMS stores a speed in px/s and CSS needs seconds, so this conversion is
- * the only thing that makes a marquee's speed honest. The parity half matters as
- * much as the maths: the cell width is a *stylesheet* number, and a duration
- * computed from a stale constant would silently change the strip's speed the
- * moment anyone re-tokened it.
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

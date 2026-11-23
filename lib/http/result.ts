@@ -38,32 +38,26 @@ export type FailureKind =
 export interface ServiceFailure {
   ok: false;
   kind: FailureKind;
-  /** 0 = never reached. */
   status: number;
-  /** Upstream domain code (`STOCK_INSUFFICIENT`) or ours (`TIMEOUT`). */
   code: string | null;
   message: string | null;
 }
 
 export type ServiceResult<T> = { ok: true; data: T } | ServiceFailure;
 
-/** The injected transport shape — what `createXClient(perform)` takes. */
 export type Perform = <T>(req: RequestOptions<T>) => Promise<ServiceResult<T>>;
 
 export interface RequestOptions<T> {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   path: string;
-  /** `undefined`/`null`/empty-string members are dropped, not sent as "null". */
   query?: Record<string, string | number | boolean | null | undefined>;
   body?: unknown;
   headers?: Record<string, string>;
-  /** Validate the success body. Mismatch → CONTRACT_MISMATCH, never a cast. */
   schema?: ZodType<T>;
   cache?: { revalidate: number } | "no-store";
   signal?: AbortSignal;
 }
 
-/** The single status→kind table. Adding a status means adding a row here. */
 export function kindForStatus(status: number): FailureKind {
   if (status === 0) return "unavailable";
   if (status === 401) return "unauthorized";
@@ -157,7 +151,6 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** Encode a query object, dropping absent members. Empty → "". */
 export function encodeQuery(
   query: Record<string, string | number | boolean | null | undefined> | undefined,
 ): string {

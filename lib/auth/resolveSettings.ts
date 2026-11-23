@@ -1,18 +1,3 @@
-/**
- * Auth settings resolver — Oceanic Blue v1.0
- * (Documentation/pages/auth-design.md §2 + AGENTS.md §3.4)
- *
- * Holes go in, completeness comes out: partial admin/shared/global scopes
- * resolve to a fully-concrete ResolvedAuthSettings the page renders blindly.
- *
- * REASON FOR ?? IN THIS FILE (AGENTS.md reason-required rule): this file IS
- * the cascade — `page ?? shared ?? global ?? builtin` is the single place
- * defaults resolve. Every other file renders resolved values with no
- * fallbacks. Corrupt/unreadable scopes are not errors here, just misses:
- * CMS down + cold cache lands on builtins (= today's look).
- *
- * No React, no fetch, no logging (pure — the fetcher logs, this resolves).
- */
 
 import {
   AUTH_LIMITS,
@@ -29,9 +14,7 @@ import {
 } from "./settings";
 
 export interface ResolveSettingsInput {
-  /** CMS admin values (shared scope + per-page). Null = CMS unreadable. */
   settings?: AuthSettings | null;
-  /** Global theme scope. Null = absent. */
   global?: AuthPageOverrides | null;
 }
 
@@ -40,7 +23,6 @@ const clampInt = (v: unknown, min: number, max: number, fallback: number): numbe
   return Math.min(max, Math.max(min, n));
 };
 
-/** Per-group merge honoring page > shared > global > builtin (see header). */
 function mergeGroup<T extends object>(builtin: T, global: Partial<T> | undefined, shared: Partial<T> | undefined, page: Partial<T> | undefined): T {
   return { ...builtin, ...global, ...shared, ...page };
 }
@@ -62,7 +44,6 @@ function resolveGradient(
   if (kept.length < L.gradientStops.min) {
     return { ...D.panel.gradient, stops: [...D.panel.gradient.stops] };
   }
-  // Missing positions distribute evenly by index; explicit ones clamp 0–100.
   const filled: ResolvedGradientStop[] = kept
     .map((s, i) => {
       const explicit = typeof s.at === "number" && Number.isFinite(s.at);
@@ -111,7 +92,6 @@ function cleanAttr(tag: string, name: string, value: string): string | null {
     if (/^javascript:/i.test(v)) return null;
     return ` href="${v.replace(/"/g, "")}"`;
   }
-  // style: drop event-handler smuggling and url()/expression().
   const v = value.replace(/expression\s*\(/gi, "").replace(/url\s*\(/gi, "");
   if (/on\w+\s*=/i.test(v)) return null;
   return ` style="${v.replace(/"/g, "")}"`;
@@ -119,7 +99,6 @@ function cleanAttr(tag: string, name: string, value: string): string | null {
 
 export function sanitizeAuthHtml(dirty: unknown): string {
   if (typeof dirty !== "string" || dirty === "") return "";
-  // Strip script/style blocks with content (keep inner text out entirely).
   let out = dirty.replace(/<(script|style|iframe|object|embed)[\s\S]*?<\/\1\s*>/gi, "");
   out = out.replace(/<(script|style|iframe|object|embed)[^>]*\/?>/gi, "");
   out = out.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>/g, (match, tagName: string, attrs: string) => {
@@ -157,7 +136,6 @@ function resolvePage(
   const layout = mergeGroup(builtin.layout, global?.layout, sh("layout"), pageStyle?.layout);
   const form = mergeGroup(builtin.form, global?.form, sh("form"), pageStyle?.form);
   const rawInputs = mergeGroup(builtin.inputs, global?.inputs, sh("inputs"), pageStyle?.inputs);
-  // Gradient resolves separately (partial in, concrete out) — excluded here.
   type PanelNoGradient = Omit<AuthPanelField, "gradient">;
   const pagePanel: PanelNoGradient = { ...pageStyle?.panel };
   delete (pagePanel as { gradient?: unknown }).gradient;
@@ -199,7 +177,6 @@ function resolvePage(
       bullets: sanitizeAuthHtml(content.bullets),
       quote: sanitizeAuthHtml(content.quote),
       microcopy: sanitizeAuthHtml(content.microcopy),
-      // Plain text by contract (React escapes on render); links allowlisted.
       formTitle: typeof content.formTitle === "string" ? content.formTitle : "",
       footerLinks: Array.isArray(content.footerLinks)
         ? content.footerLinks

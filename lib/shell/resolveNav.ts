@@ -30,9 +30,7 @@ import {
 import { resolveOverlayMotion } from "@/lib/search/motion";
 
 export interface ResolveNavInput {
-  /** CMS admin values. Null = CMS unreadable (builtins render). */
   settings?: NavSettings | null;
-  /** Global theme scope. Null = absent. */
   global?: NavPageOverrides | null;
 }
 

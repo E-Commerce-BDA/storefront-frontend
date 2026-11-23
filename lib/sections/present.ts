@@ -19,7 +19,6 @@ export function formatMonthYear(value: string | undefined | null): string | unde
   return MONTH_YEAR.format(parsed);
 }
 
-/** Five cells, `n` of them filled; `n` outside 1..5 paints no star row at all. */
 export const STAR_COUNT = 5;
 
 export function starCells(rating: number | undefined): boolean[] | undefined {

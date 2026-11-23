@@ -19,10 +19,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return jsonNoStore({ consumed: false });
   }
 
-  // Attempt to add the item to the user's wishlist
   await wishlistClient().addItem(identityHeaders(identity), pendingProductId);
 
-  // Clear the cookie regardless of success so it isn't retried indefinitely
   const res = jsonNoStore({ consumed: true, productId: pendingProductId });
   res.cookies.set(clearPendingWishlistCookie({ secure: isSecureCookie() }));
   return res;

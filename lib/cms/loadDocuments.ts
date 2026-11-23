@@ -59,14 +59,6 @@ export async function loadPage(slug: string): Promise<Page | null> {
   return client().getPage(slug);
 }
 
-/**
- * `generateStaticParams` for `/blog/[slug]`.
- *
- * On a CMS outage this returns `[]`, which is correct and not a silent failure:
- * Next then renders each requested slug on demand (ISR), and a post nobody has
- * requested yet simply has no prerendered HTML. Prerendering an empty list is a
- * slower site, not a broken one.
- */
 export async function blogStaticParams(): Promise<Array<{ slug: string }>> {
   const listed = await loadPublishedBlogs({ limit: 50 });
   if (listed === null) return [];

@@ -25,10 +25,8 @@ export interface AuthSettingsEntry {
 }
 
 export interface AuthSettingsResult {
-  /** Null only when source AND cache both fail (resolver renders builtins). */
   settings: AuthSettings | null;
   version: number | null;
-  /** True when served from cache after a source failure. */
   stale: boolean;
 }
 
@@ -46,7 +44,6 @@ export interface FetchAuthSettingsDeps {
   cache: AuthSettingsCache;
   /** Source timeout; slow CMS never blocks a render. Default 1500ms. */
   timeoutMs?: number;
-  /** Cache TTL on population. Default 300s. */
   cacheTtlSeconds?: number;
 }
 
