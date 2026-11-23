@@ -31,7 +31,6 @@ export function compareQuery(ids: readonly string[]): string {
   return unique.length === 0 ? "" : `?ids=${unique.join(",")}`;
 }
 
-/** Parse `?ids=a,b`, dropping blanks and entries past the cap. */
 export function parseCompareQuery(raw: string | null | undefined): string[] {
   if (!raw) return [];
   const seen = new Set<string>();

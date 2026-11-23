@@ -1,8 +1,3 @@
-/**
- * CartLineItem style contract — .sf-cartline paints through tokens, drives the
- * pending face off data-pending (an explicit solid, never `opacity`), gates the
- * remove hover on :not([disabled]), keeps a focus ring, and ships no motion.
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

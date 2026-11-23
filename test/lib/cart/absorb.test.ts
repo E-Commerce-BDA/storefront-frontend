@@ -77,7 +77,6 @@ describe("absorbGuestCart", () => {
       accessToken: "at_1",
     });
 
-    // The guest cart is still reachable under the old id.
     expect(merged).toBe(false);
     expect(response.cookies.get(GUEST_COOKIE)).toBeUndefined();
   });

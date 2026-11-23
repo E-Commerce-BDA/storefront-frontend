@@ -37,7 +37,6 @@ describe("allowlist", () => {
   it("closes what the admin left open, and ignores a closer with no opener", () => {
     expect(sanitizeRichText("<p>one").html).toBe("<p>one</p>");
     expect(sanitizeRichText("</p>only a closer").html).toBe("only a closer");
-    // A closer deep in the tree closes its parent chain rather than nesting.
     expect(sanitizeRichText("<ul><li>a</ul>").html).toBe("<ul><li>a</li></ul>");
   });
 });

@@ -1,7 +1,3 @@
-/**
- * Palette resolver-unit — nested per-key merge, motion exclusion, string
- * cleaning, numeric clamps, v1-union check. Pure in → complete out.
- */
 import { describe, expect, it } from "vitest";
 import { DEFAULT_NAV_SETTINGS } from "@/lib/shell/navSettings";
 import { resolveNavSettings } from "@/lib/shell/resolveNav";

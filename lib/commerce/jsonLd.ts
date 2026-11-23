@@ -59,7 +59,6 @@ export function buildProductJsonLd(product: ProductDetailDto): Record<string, un
       : [
           {
             "@type": "Offer",
-            // The purchasable figure the shopper sees is the effective price.
             price: product.effectivePrice ?? product.price,
             priceCurrency: PDP_PRICE_CURRENCY,
             availability: availabilityUrl(product.stock),

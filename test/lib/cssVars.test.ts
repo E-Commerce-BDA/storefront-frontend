@@ -1,7 +1,3 @@
-/**
- * Auth CSS var emitter — every paint knob emits a var; gradient renders
- * valid CSS for all three types. (AGENTS.md §4 trio, resolver-unit leg.)
- */
 import { describe, expect, it } from "vitest";
 import { DEFAULT_AUTH_SETTINGS } from "@/lib/auth/settings";
 import { authCssVars, panelBackground, panelBackgroundValue } from "@/lib/auth/cssVars";

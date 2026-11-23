@@ -77,7 +77,6 @@ describe("fetchNavSettings", () => {
     const result = await fetchNavSettings({ source, cache: cache() });
 
     expect(result).toEqual({ settings: DEMO_NAV_INPUT, version: null, stale: false, fallback: true });
-    // Demo input still resolves — the navbar renders, it is just not live.
     expect(resolveNavSettings({ settings: result.settings, global: null }).links.items.length).toBeGreaterThan(0);
   });
 

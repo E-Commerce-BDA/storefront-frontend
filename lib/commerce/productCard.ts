@@ -70,9 +70,7 @@ export interface ProductCardOption {
 
 export interface ProductCardData extends SearchResult {
   hoverImage?: string;
-  /** PDP destination (owner routes; absent = onOpen only). */
   url?: string;
-  /** Compare-at price (strikethrough + sale face when above price). */
   compareAt?: number;
   stock?: ProductStock;
   wishlisted?: boolean;
@@ -470,9 +468,6 @@ export interface ResolvedVariantState {
   isOutOfStock: boolean;
 }
 
-/**
- * Pure variant resolver for selection effects on catalog grids.
- */
 export function resolveSelectedVariant(
   product: ProductCardData,
   selectedOptions?: Record<string, string>,
@@ -495,7 +490,6 @@ export function resolveSelectedVariant(
       ) ?? null;
   }
 
-  // Base image selection
   let baseImage = product.image;
   if (product.images && product.images.length > 0) {
     const idx = Math.max(0, Math.min(activeImageIndex, product.images.length - 1));

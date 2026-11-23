@@ -80,7 +80,6 @@ describe("fromCatalog", () => {
   });
 
   it("compares against the effective price, not the raw one", () => {
-    // compareAt 40 > effective 32 is a real saving even though list price is 40.
     const card = fromCatalog(listRow({ price: 40, effectivePrice: 32, compareAtPrice: 40 }));
     expect(card.price).toBe(32);
     expect(card.compareAt).toBe(40);

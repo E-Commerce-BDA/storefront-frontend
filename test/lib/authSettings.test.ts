@@ -1,7 +1,3 @@
-/**
- * Auth settings fetcher — hit / miss / stale / down / timeout.
- * Source + cache are stubbed interfaces; no network, no mocks of fetch.
- */
 import { describe, expect, it, vi } from "vitest";
 import {
   createCmsSource,

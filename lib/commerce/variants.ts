@@ -42,18 +42,15 @@ export interface VariantOptionView {
   values: VariantValueView[];
 }
 
-/** In stock and not retired — the only rows worth offering. */
 export function isPurchasable(variant: ProductVariantDto): boolean {
   return variant.stock > 0 && variant.isActive !== false;
 }
 
-/** The value id one variant carries for an option, or null when it does not. */
 function valueOf(variant: ProductVariantDto, optionName: string): string | null {
   const match = variant.options.find((entry) => entry.optionName === optionName);
   return match ? match.optionValueId : null;
 }
 
-/** True when every chosen value matches this variant (a partial selection fits broadly). */
 export function selectionFits(
   selection: VariantSelection,
   variant: ProductVariantDto,
@@ -109,10 +106,6 @@ export function orderedOptions(
   return [...options].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
 }
 
-/**
- * What the selector renders: every option, every value, each marked
- * `available` against the rest of the current selection.
- */
 export function selectionOptions(
   options: readonly ProductOptionDto[],
   variants: readonly ProductVariantDto[],

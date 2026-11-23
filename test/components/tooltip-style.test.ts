@@ -43,8 +43,6 @@ describe("tooltip style contract", () => {
   it("supports fade/slide/none animation modes", () => {
     expect(css).toMatch(/\[data-tip-anim="slide"\]/);
     expect(css).toMatch(/\[data-tip-anim="none"\][^{]*\{\s*transition:\s*none/);
-    // fade = base visible transform (no drift rule): only slide carries
-    // rest-offset transforms.
     const driftRules = css.match(/\[data-tip-anim="slide"\][^{}]*\{[^}]*transform:/g) ?? [];
     expect(driftRules.length).toBeGreaterThan(0);
     const fadeDrift = css.match(/\[data-tip-anim="fade"\][^{}]*\{[^}]*transform:/g) ?? [];

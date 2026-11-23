@@ -1,8 +1,3 @@
-/**
- * Toast style contract — .sf-toast paints through tokens; bottom-center
- * geometry; fade arrival killed under reduced-motion; no literals outside
- * var() fallbacks.
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

@@ -81,6 +81,5 @@ export type CartTotalsDto = z.infer<typeof cartTotalsSchema>;
 export type CartDto = z.infer<typeof cartSchema>;
 export type CartItemDto = z.infer<typeof cartItemSchema>;
 export type CartSnapshot = z.infer<typeof cartResponseSchema>;
-/** Our BFF's answer, `cart` still absent before the first item. */
 export type CartSnapshotDto = z.infer<typeof cartSnapshotSchema>;
 export type CartMutationDto = z.infer<typeof cartMutationSchema>;

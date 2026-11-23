@@ -39,7 +39,6 @@ export interface NavSettingsResult {
   settings: NavSettings;
   version: number | null;
   stale: boolean;
-  /** True when neither source nor cache had anything — demo nav rendered. */
   fallback: boolean;
 }
 

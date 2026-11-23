@@ -1,8 +1,3 @@
-/**
- * Pill style contract — .sf-pill paints through --pill-* vars and Oceanic
- * tokens; state via data hooks; active face never hover-repaints; disabled
- * faces are explicit solids (no opacity); no literals outside var() fallbacks.
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

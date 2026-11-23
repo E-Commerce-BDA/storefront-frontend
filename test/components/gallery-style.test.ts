@@ -1,7 +1,3 @@
-/**
- * Gallery style contract — .sf-gallery keeps the frame's ratio a var, paints
- * through tokens, and never repaints the thumb that is already open.
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

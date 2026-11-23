@@ -45,7 +45,6 @@ export interface HeroFields {
   textColor?: string;
 }
 
-/** What the resolver guarantees the block can rely on. */
 export interface ResolvedHero {
   eyebrow?: string;
   title: string;

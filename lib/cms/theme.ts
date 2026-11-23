@@ -29,7 +29,6 @@ export interface FetchThemeDeps {
 export interface ThemeResult {
   theme: ThemeSettings | null;
   stale: boolean;
-  /** True when neither source nor cache had anything — builtins render. */
   fallback: boolean;
 }
 

@@ -137,14 +137,12 @@ describe("resolveProductCardStyles", () => {
     expect(darkCard.mutedTextColor).toBe("#94a3b8");
     expect(darkCard.priceColor).toBe("#38bdf8");
 
-    // Dark background with explicit text color -> honors user choice
     const customDark = resolveProductCardStyles({
       cardBg: "#000000",
       textColor: "#ffd700",
     });
     expect(customDark.textColor).toBe("#ffd700");
 
-    // Light background -> leaves empty for css cascade default
     const lightCard = resolveProductCardStyles({ cardBg: "#ffffff" });
     expect(lightCard.textColor).toBe("");
   });

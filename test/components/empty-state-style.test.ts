@@ -1,7 +1,3 @@
-/**
- * EmptyState style contract — .sf-empty resolves glyph wash, title and body
- * through --empty-* vars over tokens, and paints nothing from literals.
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

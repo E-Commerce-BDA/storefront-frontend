@@ -23,7 +23,6 @@ export interface TtlCache<T> {
 }
 
 export interface MemoryCacheOptions {
-  /** Default 32. */
   maxEntries?: number;
   now?: () => number;
 }

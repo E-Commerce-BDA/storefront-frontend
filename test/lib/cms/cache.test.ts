@@ -33,7 +33,6 @@ describe("createMemoryCache", () => {
     time.advance(299_000);
     expect(store.get("cms:page-settings:auth")).toBe("hero");
 
-    // Expiry is inclusive: at exactly 300 s the entry is already useless.
     time.advance(1_000);
     expect(store.get("cms:page-settings:auth")).toBeNull();
   });
@@ -46,7 +45,6 @@ describe("createMemoryCache", () => {
     time.advance(61_000);
     expect(store.get("a")).toBeNull();
 
-    // The slot the expired entry occupied is free again.
     store.set("b", "2", 60);
     expect(store.get("b")).toBe("2");
   });

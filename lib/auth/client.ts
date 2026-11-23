@@ -121,7 +121,6 @@ export function createAuthClient(options: {
       };
     }
 
-    // 204 (logout) and any empty body: no payload to parse.
     if (response.status === 204) return { ok: true, data: null };
 
     try {

@@ -33,7 +33,6 @@ describe("toGalleryImages", () => {
       image({ url: "d.jpg" }),
     ]);
 
-    // Unsorted rows keep their relative order after the sorted ones.
     expect(urls(gallery)).toEqual(["b.jpg", "a.jpg", "c.jpg", "d.jpg"]);
   });
 

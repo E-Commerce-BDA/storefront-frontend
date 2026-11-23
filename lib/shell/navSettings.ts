@@ -177,7 +177,6 @@ export type EditorialTabShape = "pill";
 export interface EditorialOverlayField {
   bg?: string;
   bgAlpha?: number;
-  /** True = backdrop-filter blur over the page behind the wash. */
   blur?: boolean;
   blurPx?: number;
   eyebrow?: string;
@@ -227,7 +226,6 @@ export interface PaletteOverlayField {
   cardBg?: string;
   backdrop?: string;
   backdropAlpha?: number;
-  /** True = backdrop-filter blur over the page behind the wash. */
   blur?: boolean;
   /** Blur radius px (only read when blur is true). */
   blurPx?: number;
@@ -266,7 +264,6 @@ export interface PaletteOverlayField {
   showTags?: boolean;
   showDept?: boolean;
   showFooter?: boolean;
-  /** Row action set (v1-only union, see PaletteRowAction). */
   rowAction?: PaletteRowAction;
   /** True = owner surfaces a notification on quick-add (default on). */
   notifyOnQuickAdd?: boolean;
@@ -327,7 +324,6 @@ export interface NavMobileField {
   drawerSide?: DrawerSide;
 }
 
-/** Full per-scope style set (single shared scope in v1). */
 export interface NavPageOverrides {
   regions?: NavRegionsField;
   logo?: NavLogoField;
@@ -345,7 +341,6 @@ export interface NavSettings {
   shared?: NavPageOverrides;
 }
 
-/* Resolved types: all required (produced by resolveNav.ts). */
 
 export interface ResolvedNavLink {
   kind: "category" | "custom";

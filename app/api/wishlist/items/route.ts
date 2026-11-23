@@ -29,7 +29,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return res;
   }
 
-  // Authenticated flow: forward to cart-svc
   const result = await wishlistClient().addItem(identityHeaders(identity), productId);
   return toResponse(result, { status: 201 });
 }

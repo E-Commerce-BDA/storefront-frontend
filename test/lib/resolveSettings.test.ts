@@ -30,10 +30,8 @@ describe("resolveAuthSettings", () => {
         pages: { signin: { mode: "centered", panelSide: "right" } },
       },
     });
-    // Page layout comes from the page scope; form radius from shared (beats global).
     expect(r.signin.layout).toEqual({ mode: "centered", panelSide: "right", ratio: "50-50", mobile: "stacked" });
     expect(r.signin.form.radius).toBe(2);
-    // Untouched page inherits shared too.
     expect(r.signup.form.radius).toBe(2);
   });
 

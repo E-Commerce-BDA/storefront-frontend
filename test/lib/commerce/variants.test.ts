@@ -58,7 +58,6 @@ function variant(
   } as ProductVariantDto;
 }
 
-// Red only in S; blue in both sizes. Nothing in Red/M.
 const variants = [variant("red-s", RED, S), variant("blue-s", BLUE, S), variant("blue-m", BLUE, M)];
 
 describe("isPurchasable", () => {
@@ -140,7 +139,6 @@ describe("selectionOptions", () => {
   });
 
   it("judges an option against the rest of the selection, not in isolation", () => {
-    // Red exists (in S) but not in M — with M selected, Red is a dead end.
     const views = selectionOptions(options, variants, { [COLOR]: BLUE, [SIZE]: M });
     const red = views[0].values.find((value) => value.id === RED);
 

@@ -53,7 +53,6 @@ export function readIdentity(cookies: CookieReader): Identity {
   return { userId: null, accessToken, sessionId };
 }
 
-/** True when the request carries anything a service would accept. */
 export function hasIdentity(identity: Identity): boolean {
   return identity.accessToken !== null || identity.sessionId !== null;
 }

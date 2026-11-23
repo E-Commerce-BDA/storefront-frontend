@@ -1,9 +1,3 @@
-/**
- * The quantity clamp — one function behind every unit the shopper picks.
- *
- * The cases that matter are the illegal ones: a fraction, a zero, a typed 500,
- * and the degenerate range the PDP can produce when stock is 0.
- */
 import { describe, expect, it } from "vitest";
 import { QTY_LIMITS, clampQty } from "@/lib/commerce/quantity";
 

@@ -26,7 +26,6 @@ export type ServiceName = "auth" | "cms" | "catalog" | "cart" | "order" | "searc
 
 export interface ServiceDef {
   env: string;
-  /** Local dev default; also the value used when the env var is empty. */
   fallback: string;
   /** Per-request budget. A slow service is a slow render, not an exception. */
   timeoutMs: number;

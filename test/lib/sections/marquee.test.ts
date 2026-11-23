@@ -29,7 +29,6 @@ describe("marqueeDistancePx", () => {
 
 describe("marqueeDurationSeconds", () => {
   it("divides distance by speed", () => {
-    // 6 cells × 212px = 1272px at 60px/s = 21.2s
     expect(marqueeDurationSeconds(6, 60)).toBe(21.2);
   });
 
@@ -50,7 +49,6 @@ describe("marqueeDurationSeconds", () => {
   });
 
   it("accepts the quote row's wider cell without changing the formula", () => {
-    // 4 quotes × (340 + 20)px = 1440px at 60px/s = 24s
     expect(marqueeDurationSeconds(4, 60, MARQUEE_QUOTE_CELL_PX, MARQUEE_QUOTE_GAP_PX)).toBe(24);
     expect(marqueeDurationSeconds(4, 60)).toBeLessThan(24);
   });

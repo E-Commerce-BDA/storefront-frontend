@@ -1,8 +1,3 @@
-/**
- * Select style contract — wrap/arrow/popup paint through --se-* vars and
- * tokens; state via data hooks; subtle keyframed arrival killed under
- * reduced-motion; no literals outside var() fallbacks.
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

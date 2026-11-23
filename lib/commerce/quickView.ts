@@ -11,7 +11,6 @@ export interface ResolvedQuickView {
 
 export function getDefaultQuickViewOptions(product: ProductCardData): Record<string, string> {
   if (product.cardVariants && product.cardVariants.length > 0) {
-    // Prefer the first in-stock variant
     const inStock = product.cardVariants.find((v) => v.stock > 0);
     const chosen = inStock ?? product.cardVariants[0];
     if (chosen && chosen.optionValues) {

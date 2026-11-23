@@ -1,9 +1,3 @@
-/**
- * Navbar style contract — .sf-navbar/.sf-navlogo/.sf-navcart/
- * .sf-mobiledrawer paint through --nb-* vars and Oceanic tokens; state
- * via data hooks; slide keyframes buffered; reduced-motion kills all
- * navbar motion; no literals outside var() fallbacks.
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

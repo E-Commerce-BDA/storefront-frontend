@@ -249,7 +249,6 @@ export interface ThemeSettings {
   photoSettings?: ThemePhotoSettingsField;
 }
 
-/* Resolved types: all required (produced by resolveTheme below). */
 
 /** Global PDP photo defaults — the "G" layer of product > section > global. */
 export interface ResolvedThemePhotoSettings {
@@ -479,8 +478,6 @@ export const DEFAULT_THEME: ResolvedThemeSettings = {
   // Tooltip builtins mirror DEFAULT_TOOLTIP_STYLE exactly (same source —
   // imported, not duplicated, so they can't drift).
   tooltip: { ...DEFAULT_TOOLTIP_STYLE },
-  // Dialog builtins mirror today's hardcoded look: ink wash at half,
-  // white panel, radius-card 12, max-w-md 448, ink title 18.
   dialog: {
     overlayColor: "#0a2540",
     overlayAlpha: 50,
@@ -494,8 +491,6 @@ export const DEFAULT_THEME: ResolvedThemeSettings = {
     bodyWeight: 400,
     bodyColor: "",
   },
-  // Card builtins mirror today's component defaults: transparent card,
-  // 4:5 media, left badge, actions-center, 15px info faces.
   productCard: {
     cardType: "standard",
     cardBg: "",
@@ -532,7 +527,6 @@ export const DEFAULT_THEME: ResolvedThemeSettings = {
     priceSize: 15,
     textAlign: "left",
     eyebrow: "category",
-    // Image carousel arrows/indicators ship hidden; admins can re-enable them.
     imageNav: "none",
     imageIndicator: "none",
     imageIndicatorPosition: "bottom",
@@ -623,8 +617,6 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
     return Math.min(max, Math.max(min, n));
   };
   const nonEmpty = (v: unknown): v is string => typeof v === "string" && v !== "";
-  // Custom badges: id + bg + textColor required (incomplete = miss);
-  // border defaults to bg, style union-checked to solid. Capped (sanity).
   const STYLES: BadgeBorderStyle[] = ["solid", "dashed", "dotted"];
   const custom: ResolvedCustomBadge[] = (Array.isArray(bd?.custom) ? bd.custom : [])
     .filter((e) => e && nonEmpty(e.id) && nonEmpty(e.bg) && nonEmpty(e.textColor))
@@ -844,7 +836,6 @@ export function resolveThemeSettings(input: ResolveThemeInput): ResolvedThemeSet
   };
 }
 
-/** Global photo defaults: CMS admin value clamped, else the builtin face. */
 function resolveGlobalPhotoSettings(
   field: ThemePhotoSettingsField | undefined,
   fallback: ResolvedThemePhotoSettings,

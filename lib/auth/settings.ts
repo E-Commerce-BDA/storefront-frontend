@@ -136,7 +136,6 @@ export interface AuthSeoField {
   description?: string;
 }
 
-/** Full per-scope style set (shared shape; forgot owns its own copy). */
 export interface AuthPageOverrides {
   layout?: AuthLayoutField;
   form?: AuthFormField;
@@ -156,7 +155,6 @@ export interface AuthPageLayout {
   panelSide?: PanelSide;
 }
 
-/** Admin input: shared set (signin+signup) + per-page layout/side + forgot's own style. */
 export interface AuthSettings {
   shared?: AuthPageOverrides;
   pages?: {
@@ -166,7 +164,6 @@ export interface AuthSettings {
   };
 }
 
-/* Resolved types: all required (produced by resolveSettings.ts). */
 
 export interface ResolvedGradientStop {
   color: string;

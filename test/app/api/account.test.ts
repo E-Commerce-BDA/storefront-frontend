@@ -94,7 +94,6 @@ describe("GET /api/account", () => {
       ordersError: null,
     });
 
-    // Both calls carry the same Bearer, and both run before either resolves.
     expect(fetchFn).toHaveBeenCalledTimes(2);
     for (const [, init] of fetchFn.mock.calls as unknown as [string, RequestInit][]) {
       expect((init.headers as Record<string, string>).authorization).toBe("Bearer at_1");

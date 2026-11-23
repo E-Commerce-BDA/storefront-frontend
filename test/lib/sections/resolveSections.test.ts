@@ -384,7 +384,6 @@ describe("featured products", () => {
   });
 });
 
-/* ── categories, brands, blogs, quotes ────────────────────────────────────── */
 
 describe("category showcase", () => {
   it("links each tile to the listing's own category filter", async () => {
@@ -436,7 +435,6 @@ describe("brand strip", () => {
     const strip = models[0] as { brands: { id: string; name: string; label?: string; logo?: string }[] };
     expect(strip.brands.map((b) => b.id)).toEqual([B2, B1, B3]);
     expect(strip.brands[0]).toMatchObject({ label: "Cove Studio", name: "Cove" });
-    // B2 has no logo, so the cell falls back to the wordmark; B1 keeps its art.
     expect(strip.brands[0].logo).toBeUndefined();
     expect(strip.brands[1].logo).toBe("/media/seed/brand-1.png");
     expect(Object.prototype.hasOwnProperty.call(strip.brands[1], "label")).toBe(false);

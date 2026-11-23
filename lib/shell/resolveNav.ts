@@ -39,7 +39,6 @@ const clampInt = (v: unknown, min: number, max: number, fallback: number): numbe
   return Math.min(max, Math.max(min, n));
 };
 
-/** Per-group merge honoring shared → global → builtin (see header). */
 function mergeGroup<T extends object>(builtin: T, global: Partial<T> | undefined, shared: Partial<T> | undefined): T {
   return { ...builtin, ...global, ...shared };
 }
@@ -54,7 +53,6 @@ function bound(value: string | undefined): number | null {
   return Number.isFinite(t) ? t : null;
 }
 
-/** True while `now` sits inside the window; unbounded sides stay open. */
 function inWindow(schedule: LinkSchedule | undefined, now: number): boolean {
   const start = bound(schedule?.startsAt);
   const end = bound(schedule?.endsAt);

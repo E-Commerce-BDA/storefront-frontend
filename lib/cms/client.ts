@@ -112,7 +112,6 @@ export function createCmsClient(options: CmsClientOptions): CmsClient {
       if (!response.ok) return null;
       return await response.json();
     } catch {
-      // Network, abort/timeout, or a body that is not JSON.
       return null;
     }
   }

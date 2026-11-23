@@ -129,8 +129,6 @@ function resolvePage(
   isolateFromShared: boolean,
 ): ResolvedAuthStyle {
   const builtin = DEFAULT_AUTH_SETTINGS[key];
-  // Forgot's own groups replace shared groups wholesale when present:
-  // a present page group skips shared for that group (global still applies).
   const sh = <K extends keyof AuthPageOverrides>(group: K): AuthPageOverrides[K] | undefined =>
     isolateFromShared && pageStyle?.[group] !== undefined ? undefined : shared?.[group];
   const layout = mergeGroup(builtin.layout, global?.layout, sh("layout"), pageStyle?.layout);
@@ -207,8 +205,6 @@ export function resolveAuthSettings(input: ResolveSettingsInput): ResolvedAuthSe
   const shared = settings?.shared ?? undefined;
   const pages = settings?.pages ?? undefined;
   const f = pages?.forgot;
-  // Forgot's layout comes from its page entry; its style groups replace
-  // shared wholesale when present (isolateFromShared = true).
   const forgotStyle: AuthPageOverrides | undefined =
     f === undefined
       ? undefined

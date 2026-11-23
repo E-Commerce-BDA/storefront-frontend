@@ -1,11 +1,3 @@
-/**
- * PDP section resolve — the per-product seam.
- *
- * Covers: one `pdp-<id>` page key, catalog-vs-CMS description/details
- * fallback, sanitized rich text, authored-only review ratings, related
- * exclusion/caps, typed trust icons, story/FAQ builders, and the outage-only
- * fallback (which contains no reviews, story, or FAQ).
- */
 import { describe, expect, it, vi } from "vitest";
 import type { Section } from "@ecom/contracts";
 import type { ProductDetailDto } from "@/lib/catalog/schemas";

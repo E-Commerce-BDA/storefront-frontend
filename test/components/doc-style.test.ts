@@ -57,7 +57,6 @@ describe("blog/legal style contract", () => {
     // so an auto height is 0 until the file decodes and the article jumps.
     expect(css).toMatch(/\.sf-post__cover-img\s*\{[^}]*height:\s*var\(--post-cover-height/);
     expect(css).toMatch(/\.sf-post__cover-img\s*\{[^}]*object-fit:\s*cover/);
-    // In-content figures and legal-page images still flow at their natural ratio.
     expect(css).toMatch(/\.sf-post__img[^}]*height:\s*auto/);
   });
 

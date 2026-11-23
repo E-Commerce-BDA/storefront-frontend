@@ -1,8 +1,3 @@
-/**
- * VariantSelector style contract — three faces from data-display, selection via
- * data-active, unavailability via aria-disabled (a solid, never opacity), and
- * hover that never repaints a face the shopper already has.
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

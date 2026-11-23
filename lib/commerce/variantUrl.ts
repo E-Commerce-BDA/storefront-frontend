@@ -52,7 +52,6 @@ function selectionOfVariant(
   for (const entry of variant.options) {
     selection[entry.optionName] = entry.optionValueId;
   }
-  // Keep only options the product still declares, in declared order.
   const known = new Set(options.map((option) => option.name));
   return Object.fromEntries(
     Object.entries(selection).filter(([name]) => known.has(name)),
@@ -103,7 +102,6 @@ export function selectionFromQuery(
     selection[option.name] = id;
   }
 
-  // No variant keys in the URL: the builtin opening selection, no rewrite.
   if (Object.keys(selection).length === 0) {
     return { selection: defaultSelection(options, variants), rewritten: false };
   }

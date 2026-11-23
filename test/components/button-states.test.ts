@@ -25,7 +25,6 @@ const SANS_WHITESPACE = (s: string) => s.replace(/\s+/g, "");
 
 describe("disabled/loading state contract", () => {
   it("gates every hover rule off disabled buttons (unless explicitly opted in)", () => {
-    // Collect each selector list that contains :hover on .sf-btn.
     const hoverSelectors = [...css.matchAll(/([^{}]*\.sf-btn[^{}]*?:hover[^{}]*?)\{/g)].map((m) =>
       SANS_WHITESPACE(m[1]),
     );

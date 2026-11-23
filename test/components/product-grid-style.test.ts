@@ -1,7 +1,3 @@
-/**
- * ProductGrid style contract — .sf-grid keeps columns as vars, paints quick-add
- * state through tokens with explicit solids (never opacity), and adds no motion.
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

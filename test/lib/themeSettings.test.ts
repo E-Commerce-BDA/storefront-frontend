@@ -1,8 +1,3 @@
-/**
- * Theme resolver-unit — builtins out of nothing, garbage misses, "" kept
- * as no-override, clamps, union checks, animation forwarded unresolved.
- * Pure in → complete out.
- */
 import { describe, expect, it } from "vitest";
 import { DEFAULT_THEME, resolveThemeSettings } from "@/lib/cms/themeSettings";
 

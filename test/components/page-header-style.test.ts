@@ -1,8 +1,3 @@
-/**
- * PageHeader style contract — .sf-page-header paints through vars, draws the
- * crumb separator as content (not markup), keeps a visible focus ring on crumb
- * links, styles the current crumb off aria-current, and ships no motion.
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

@@ -175,7 +175,6 @@ describe("POST /api/auth/login — guest cart merge (A4.6)", () => {
       "x-session-id": GUEST,
     });
 
-    // Cookies land first, rotation last: the response is a signed-in one either way.
     const cookies = response.headers.getSetCookie();
     expect(cookies.some((cookie) => cookie.startsWith(`${ACCESS_COOKIE}=`))).toBe(true);
     const guest = cookies.find((cookie) => cookie.startsWith(`${GUEST_COOKIE}=`)) ?? "";
@@ -217,7 +216,6 @@ describe("POST /api/auth/login — guest cart merge (A4.6)", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ user: { id: "u1" } });
-    // No rotation: the guest cart is still reachable under the old id.
     expect(
       response.headers
         .getSetCookie()

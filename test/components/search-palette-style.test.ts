@@ -1,8 +1,3 @@
-/**
- * Search palette style contract — .sf-searchpalette paints through --pl-*
- * vars (+ --pill-* faces) and Oceanic tokens; state via data hooks;
- * centered modal geometry; no literals outside var() fallbacks.
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

@@ -64,7 +64,6 @@ function escapeText(value: string): string {
     .replace(/>/g, "&gt;");
 }
 
-/** Pull `href="…"` out of an attribute string (double, single, or bare). */
 function readHref(attrs: string): string | undefined {
   const match = attrs.match(/href\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'`=<>]+))/i);
   if (!match) return undefined;
@@ -73,7 +72,6 @@ function readHref(attrs: string): string | undefined {
 
 export interface SanitizedRichText {
   html: string;
-  /** How many constructs were removed or unwrapped — 0 means the input was already clean. */
   stripped: number;
 }
 
@@ -113,7 +111,6 @@ export function sanitizeRichText(input: string): SanitizedRichText {
 
     const match = TAG_RE.exec(rest);
     if (match === null) {
-      // A `<` that opens nothing (`x < y`, `<p`, a mangled tag) is literal text.
       html += "&lt;";
       rest = rest.slice(1);
       continue;
@@ -132,7 +129,6 @@ export function sanitizeRichText(input: string): SanitizedRichText {
         const closer = rest.toLowerCase().indexOf(`</${name}`);
         rest = closer === -1 ? "" : rest.slice(closer);
       }
-      // Otherwise: unwrapped. The text between the tags still renders.
       continue;
     }
 

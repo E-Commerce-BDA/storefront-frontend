@@ -1,8 +1,3 @@
-/**
- * Search editorial style contract — .sf-editorial paints through --ed-*
- * vars and Oceanic tokens; state via data hooks; scrollable takeover;
- * no literals outside var() fallbacks.
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

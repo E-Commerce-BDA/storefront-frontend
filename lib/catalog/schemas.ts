@@ -119,7 +119,6 @@ export const productListResponseSchema = z
   })
   .loose();
 
-/** Facet values for the listing rail — derived from real catalog rows. */
 export const productFacetsSchema = z
   .object({
     tags: z.array(z.string()),
@@ -130,7 +129,6 @@ export const productFacetsSchema = z
 
 export type ProductFacets = z.infer<typeof productFacetsSchema>;
 
-/* ── detail ──────────────────────────────────────────────────────────────── */
 
 export const variantOptionValueSchema = z
   .object({
@@ -216,7 +214,6 @@ export const productDetailSchema = z
 
 export const productResponseSchema = z.object({ product: productDetailSchema }).loose();
 
-/* ── categories ──────────────────────────────────────────────────────────── */
 
 export const categorySchema = z
   .object({

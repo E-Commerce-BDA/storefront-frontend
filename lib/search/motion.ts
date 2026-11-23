@@ -75,11 +75,6 @@ function cleanEasing(v: unknown, fallback: string): string {
   return typeof v === "string" && EASING_ALLOWLIST.has(v) ? v : fallback;
 }
 
-/**
- * Resolve one variant's motion: preset wins unless "custom" (then the
- * admin's duration/easing, clamped + allowlisted). Builtins = sheet
- * defaults (enabled, smooth 240 ease-out).
- */
 export function resolveOverlayMotion(
   admin?: OverlayMotionField | null,
   builtin: ResolvedOverlayMotion = { enabled: true, durationMs: 240, easing: "ease-out", travel: "full" },

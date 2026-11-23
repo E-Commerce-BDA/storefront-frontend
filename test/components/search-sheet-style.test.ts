@@ -1,8 +1,3 @@
-/**
- * Search sheet style contract — .sf-searchsheet paints through vars and
- * Oceanic tokens; state via data-active hooks; no literals outside var()
- * fallbacks.
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

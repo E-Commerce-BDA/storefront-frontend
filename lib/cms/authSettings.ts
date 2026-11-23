@@ -75,7 +75,6 @@ export async function fetchAuthSettings(
   return { settings: null, version: null, stale: false };
 }
 
-/** Default source against cms-svc (`GET /api/v1/cms/settings/page/:pageKey`). */
 export function createCmsSource(
   baseUrl: string,
   fetchFn: typeof fetch = fetch,

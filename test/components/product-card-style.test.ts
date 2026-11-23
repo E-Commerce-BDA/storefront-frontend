@@ -1,9 +1,3 @@
-/**
- * ProductCard style contract — .sf-productcard paints through --pc-*
- * vars and tokens; state via data hooks; hover-only CTA layer with
- * touch rules; reduced-motion instant; no literals outside var()
- * fallbacks.
- */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

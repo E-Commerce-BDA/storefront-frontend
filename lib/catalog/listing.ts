@@ -54,7 +54,6 @@ function first(value: SearchParamValue): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-/** A non-empty trimmed string, or `undefined`. Whitespace is absence. */
 function trimmed(value: SearchParamValue): string | undefined {
   const raw = first(value);
   if (raw === undefined) return undefined;
@@ -62,7 +61,6 @@ function trimmed(value: SearchParamValue): string | undefined {
   return out === "" ? undefined : out;
 }
 
-/** Only a sort the catalog actually offers survives the whitelist. */
 function toSort(value: SearchParamValue): CatalogSort | undefined {
   const raw = first(value);
   if (raw === undefined) return undefined;
@@ -71,7 +69,6 @@ function toSort(value: SearchParamValue): CatalogSort | undefined {
     : undefined;
 }
 
-/** Tags from a repeated or comma-separated `?tags=`; trimmed, deduped, capped. */
 function toTags(value: SearchParamValue): string[] | undefined {
   const raw = Array.isArray(value) ? value : [value];
   const seen = new Set<string>();
@@ -89,7 +86,6 @@ function toTags(value: SearchParamValue): string[] | undefined {
   return out.length > 0 ? out : undefined;
 }
 
-/** `?discounted=true` only; anything else is absence. */
 function toDiscounted(value: SearchParamValue): boolean | undefined {
   const raw = first(value);
   return raw === "true" ? true : undefined;
@@ -102,7 +98,6 @@ function toPrice(value: SearchParamValue): number | undefined {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
-/** A positive page size, clamped to the catalog cap; junk falls to the default. */
 function toLimit(value: SearchParamValue): number {
   const raw = first(value);
   if (raw === undefined) return LISTING_LIMIT;

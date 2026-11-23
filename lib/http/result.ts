@@ -67,7 +67,6 @@ export function kindForStatus(status: number): FailureKind {
   if (status === 429) return "rate-limited";
   if (status === 502) return "upstream";
   if (status >= 500) return "unavailable";
-  // Any other 4xx (405, 408, 413…): the request was refused as built.
   return "invalid";
 }
 
@@ -107,7 +106,6 @@ export async function readFailure(response: Response): Promise<ServiceFailure> {
       if (typeof envelope.message === "string") message = envelope.message;
     }
   } catch {
-    // Not JSON — the fallback below is the whole story.
   }
 
   if (message === null || message.length === 0) {

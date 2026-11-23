@@ -58,7 +58,6 @@ export interface ButtonPressedField {
   enabled?: boolean;
   scale?: number;
   translateY?: number;
-  /** Shadow while pressed ("none" flattens). Any box-shadow or "none". */
   shadow?: string;
 }
 

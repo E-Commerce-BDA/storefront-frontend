@@ -63,7 +63,6 @@ export function useVariantFromURL(
       orderedNames(options).map((name) => parsed.selection[name] ?? ""),
     );
 
-    // A committed choice is optimistic: keep it until the URL catches up.
     if (pendingRef.current !== null) {
       if (pendingRef.current === parsedSignature) pendingRef.current = null;
       else return;

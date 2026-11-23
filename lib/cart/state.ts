@@ -154,7 +154,6 @@ function round(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-/** Marks a line that has no server id yet (see `applyAdd`). */
 export const PENDING_PREFIX = "pending:";
 
 export function pendingItemId(key: string): string {
