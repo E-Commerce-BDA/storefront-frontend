@@ -11,10 +11,11 @@ Typical shapes:
 - Paraphrases: `// Check minPrice <= maxPrice`, `// Insert order fixture`
 - Type labels: `// Admin order list with filtering, searching, and pagination`
 
-A comment with "why" is still DELETE if every claim is visible. Example:
-"Clamp once (1–10): a 0-cap would swallow every push, unbounded growth is a
-leak" above code that literally clamps to 1–10 — the numbers are in the code;
-the rationale is generic and already implied.
+A comment with "why" is DELETE only if its reason is visible too. An obvious
+action is not enough. Example: "Clamp once (1–10): a 0-cap would swallow every
+push, unbounded growth is a leak" above code that clamps to 1–10 is KEEP — the
+numbers are visible, but the two rejected alternatives are not. Pass 2 cut this
+comment and had to restore it; that was a doc error, not a review error.
 
 ## KEEP — not visible in the code
 
@@ -39,6 +40,12 @@ files (`next-env.d.ts`, `dist/`, `node_modules/`, `.next/`).
 
 ## Method
 
-For each comment, read 5 lines before and 15 lines after. Ask: could a reader
-who knows the language recover every claim from those lines alone? If yes →
-DELETE. If any claim survives that test → KEEP or POINTER.
+For each comment, read 5 lines before and 15 lines after, then ask two questions:
+
+1. Is every factual claim recoverable from those lines alone?
+2. Is there any reason, rejected alternative, external constraint or cross-file
+   fact that those lines do NOT show?
+
+DELETE only when (1) is yes AND (2) is no. A yes to (2) always wins, even when
+the action itself is obvious — otherwise the comment is the only copy of a
+decision.
