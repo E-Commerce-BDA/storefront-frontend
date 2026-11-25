@@ -59,6 +59,35 @@ export interface RegisterInput extends CredentialsInput {
   lastName: string;
 }
 
+/** sf-059: account-depth inputs, mirroring auth-svc's DTOs (all optional names). */
+export interface UpdateProfileInput {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  avatarUrl?: string;
+}
+
+export interface ChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface AccountAddressInput {
+  type?: string;
+  label?: string;
+  line1: string;
+  line2?: string;
+  city: string;
+  state?: string;
+  postalCode: string;
+  country?: string;
+  isDefault?: boolean;
+}
+
+export interface AccountAddressDto extends AccountAddressInput {
+  id: string;
+}
+
 export interface AuthClient {
   login(input: CredentialsInput): Promise<AuthResult<AuthSession>>;
   register(input: RegisterInput): Promise<AuthResult<AuthSession>>;
@@ -69,9 +98,23 @@ export interface AuthClient {
    * wants `firstName`/`email`, which no cookie carries) — sf-051.
    */
   me(accessToken: string): Promise<AuthResult<AuthUser>>;
+  updateProfile(accessToken: string, input: UpdateProfileInput): Promise<AuthResult<AuthUser>>;
+  changePassword(accessToken: string, input: ChangePasswordInput): Promise<AuthResult<null>>;
+  listAddresses(accessToken: string): Promise<AuthResult<AccountAddressDto[]>>;
+  createAddress(accessToken: string, input: AccountAddressInput): Promise<AuthResult<AccountAddressDto>>;
+  updateAddress(accessToken: string, id: string, input: Partial<AccountAddressInput>): Promise<AuthResult<AccountAddressDto>>;
+  deleteAddress(accessToken: string, id: string): Promise<AuthResult<null>>;
 }
 
-type Operation = "login" | "register" | "refresh" | "logout" | "me";
+type Operation =
+  | "login"
+  | "register"
+  | "refresh"
+  | "logout"
+  | "me"
+  | "updateProfile"
+  | "changePassword"
+  | "addresses";
 
 export const AUTH_SERVICE_TIMEOUT_MS = 3000;
 
@@ -164,6 +207,48 @@ export function createAuthClient(options: {
     }
   }
 
+  /**
+   * Authenticated writes. Same failure vocabulary as `get`; the Bearer is
+   * attached here and nowhere downstream, so an island can never see it.
+   */
+  async function write(
+    method: "PATCH" | "POST" | "DELETE",
+    path: string,
+    accessToken: string,
+    body: unknown,
+    operation: Operation,
+  ): Promise<AuthResult<unknown>> {
+    let response: Response;
+    try {
+      response = await fetchFn(`${baseUrl}${path}`, {
+        method,
+        headers: {
+          accept: "application/json",
+          authorization: `Bearer ${accessToken}`,
+          ...(body === undefined ? {} : { "content-type": "application/json" }),
+        },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+        signal: AbortSignal.timeout(timeoutMs),
+        cache: "no-store",
+      });
+    } catch {
+      return { ok: false, code: "SERVICE_UNAVAILABLE", status: 0 };
+    }
+    if (!response.ok) {
+      return {
+        ok: false,
+        code: classify(response.status, await readCode(response), operation),
+        status: response.status,
+      };
+    }
+    if (response.status === 204) return { ok: true, data: null };
+    try {
+      return { ok: true, data: await response.json() };
+    } catch {
+      return { ok: false, code: "SERVICE_UNAVAILABLE", status: response.status };
+    }
+  }
+
   return {
     async login(input) {
       const result = await post("/api/v1/auth/login", input, "login");
@@ -225,6 +310,72 @@ export function createAuthClient(options: {
         return { ok: false, code: "SERVICE_UNAVAILABLE", status: 200 };
       }
       return { ok: true, data: user };
+    },
+
+    async updateProfile(accessToken, input) {
+      const result = await write("PATCH", "/api/v1/auth/me", accessToken, input, "updateProfile");
+      if (!result.ok) return result;
+      const user = asUser(isRecord(result.data) ? result.data.user : result.data);
+      if (user === null) return { ok: false, code: "SERVICE_UNAVAILABLE", status: 200 };
+      return { ok: true, data: user };
+    },
+
+    async changePassword(accessToken, input) {
+      const result = await write(
+        "PATCH",
+        "/api/v1/auth/me/password",
+        accessToken,
+        input,
+        "changePassword",
+      );
+      return result.ok ? { ok: true, data: null } : result;
+    },
+
+    async listAddresses(accessToken) {
+      const result = await get("/api/v1/auth/me/addresses", accessToken, "addresses");
+      if (!result.ok) return result;
+      const raw = Array.isArray(result.data)
+        ? result.data
+        : isRecord(result.data) && Array.isArray(result.data.addresses)
+          ? result.data.addresses
+          : null;
+      if (raw === null) return { ok: false, code: "SERVICE_UNAVAILABLE", status: 200 };
+      return { ok: true, data: raw.filter(isAddress) };
+    },
+
+    async createAddress(accessToken, input) {
+      const result = await write("POST", "/api/v1/auth/me/addresses", accessToken, input, "addresses");
+      if (!result.ok) return result;
+      const raw = unwrapAddress(result.data);
+      return raw === null
+        ? { ok: false, code: "SERVICE_UNAVAILABLE", status: 200 }
+        : { ok: true, data: raw };
+    },
+
+    async updateAddress(accessToken, id, input) {
+      const result = await write(
+        "PATCH",
+        `/api/v1/auth/me/addresses/${encodeURIComponent(id)}`,
+        accessToken,
+        input,
+        "addresses",
+      );
+      if (!result.ok) return result;
+      const raw = unwrapAddress(result.data);
+      return raw === null
+        ? { ok: false, code: "SERVICE_UNAVAILABLE", status: 200 }
+        : { ok: true, data: raw };
+    },
+
+    async deleteAddress(accessToken, id) {
+      const result = await write(
+        "DELETE",
+        `/api/v1/auth/me/addresses/${encodeURIComponent(id)}`,
+        accessToken,
+        undefined,
+        "addresses",
+      );
+      return result.ok ? { ok: true, data: null } : result;
     },
   };
 }
@@ -289,6 +440,22 @@ function asUser(value: unknown): AuthUser | null {
       ? value.roles.filter((role): role is string => typeof role === "string")
       : [],
   };
+}
+
+function isAddress(value: unknown): value is AccountAddressDto {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.id === "string" &&
+    typeof value.line1 === "string" &&
+    typeof value.city === "string" &&
+    typeof value.postalCode === "string"
+  );
+}
+
+/** auth-svc wraps a single address in `{ address }`; a list is unwrapped above. */
+function unwrapAddress(value: unknown): AccountAddressDto | null {
+  const candidate = isRecord(value) && "address" in value ? value.address : value;
+  return isAddress(candidate) ? candidate : null;
 }
 
 function asTokenPair(value: unknown): TokenPair | null {

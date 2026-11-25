@@ -28,6 +28,16 @@ vi.mock("@/app/_components/WishlistProvider", () => ({
     remove: async () => false,
   }),
 }));
+const accountPort = vi.hoisted(() => ({
+  fetchAddresses: vi.fn(async () => ({ ok: true, data: [] })),
+  patchProfile: vi.fn(),
+  patchPassword: vi.fn(),
+  postAddress: vi.fn(),
+  patchAddress: vi.fn(),
+  deleteAddress: vi.fn(),
+}));
+
+vi.mock("@/lib/account/port", () => accountPort);
 vi.mock("@/lib/http/browser", () => ({ bff }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 vi.mock("@/app/_components/CartProvider", () => ({ useCart: () => ({ clear }) }));
@@ -76,6 +86,18 @@ describe("AccountView", () => {
     // Money renders as the raw number, the same face as every other surface —
     // once per row (both rows share the fixture total on purpose).
     expect(screen.getAllByText("$50.36")).toHaveLength(2);
+  });
+
+  it("renders profile, address book and password sections on /account", async () => {
+    bff.mockResolvedValue({ ok: true, data: { user, orders: [], ordersError: null } });
+    render(<AccountView />);
+
+    await waitFor(() => expect(screen.queryByText("Ada Lovelace")).not.toBeNull());
+    expect(screen.getByLabelText("First name")).not.toBeNull();
+    expect(screen.getByText("Address book")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Add address" })).not.toBeNull();
+    expect(screen.getByLabelText(/Current password/)).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Change password" })).not.toBeNull();
   });
 
   it("renders saved wishlist items on /account with a link to the full list", async () => {

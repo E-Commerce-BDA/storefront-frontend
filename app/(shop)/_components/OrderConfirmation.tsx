@@ -21,6 +21,7 @@ import { Badge, Button, EmptyState, Icon } from "@/components/ui";
 import { bff } from "@/lib/http/browser";
 import { orderSchema, type OrderDto } from "@/lib/order/schemas";
 import type { ServiceResult } from "@/lib/http/result";
+import ReviewForm from "./ReviewForm";
 
 export interface OrderConfirmationProps {
   orderId: string;
@@ -127,6 +128,38 @@ export default function OrderConfirmation({
         </address>
       </div>
 
+      {order.status_history && order.status_history.length > 0 ? (
+        <section aria-label="Order timeline" className="grid gap-2">
+          <h3 className="m-0 text-sm font-semibold text-[var(--color-ink)]">Timeline</h3>
+          <ol className="m-0 grid list-none gap-2 p-0" role="list">
+            {order.status_history.map((event, index) => (
+              <li
+                key={event.id ?? `${event.to_status}-${index}`}
+                className="flex flex-wrap items-baseline justify-between gap-2 text-sm text-[var(--text-muted)]"
+              >
+                <span className="text-[var(--color-ink)]">{event.to_status}</span>
+                <span>{event.note ?? ""}</span>
+                <span>{event.created_at ? formatStamp(event.created_at) : ""}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
+
+      {order.status === "delivered" ? (
+        <section aria-label="Write a review" className="grid gap-3">
+          <h3 className="m-0 text-sm font-semibold text-[var(--color-ink)]">Review your items</h3>
+          {order.items.map((item) => (
+            <ReviewForm
+              key={item.id}
+              orderId={order.id}
+              productId={item.product_id}
+              productName={item.product_name}
+            />
+          ))}
+        </section>
+      ) : null}
+
       <div className="flex gap-3">
         <Button variant="light" onClick={() => router.push("/account")}>
           Order history
@@ -137,6 +170,13 @@ export default function OrderConfirmation({
       </div>
     </div>
   );
+}
+
+/** Timeline stamps are display-only; a bad value shows raw rather than "Invalid Date". */
+function formatStamp(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
 function SummaryRow({ term, value }: { term: string; value: number }) {

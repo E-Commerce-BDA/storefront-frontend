@@ -25,6 +25,9 @@ import { useCart } from "@/app/_components/CartProvider";
 import { useWishlist } from "@/app/_components/WishlistProvider";
 import { bff } from "@/lib/http/browser";
 import { orderSchema } from "@/lib/order/schemas";
+import ProfileForm from "./ProfileForm";
+import AddressBook from "./AddressBook";
+import PasswordForm from "./PasswordForm";
 import type { OrderDto } from "@/lib/order/schemas";
 
 const accountResponseSchema = z
@@ -132,6 +135,25 @@ export default function AccountView() {
           My wishlist
         </Button>
       </div>
+
+      <section aria-label="Profile" className="mb-8 grid gap-4">
+        <h2 className="m-0 text-base font-semibold text-[var(--color-ink)]">Profile</h2>
+        <ProfileForm
+          email={data.user.email}
+          firstName={data.user.firstName}
+          lastName={data.user.lastName}
+        />
+      </section>
+
+      <section aria-label="Address book" className="mb-8 grid gap-4">
+        <h2 className="m-0 text-base font-semibold text-[var(--color-ink)]">Address book</h2>
+        <AddressBook />
+      </section>
+
+      <section aria-label="Password" className="mb-8 grid gap-4">
+        <h2 className="m-0 text-base font-semibold text-[var(--color-ink)]">Password</h2>
+        <PasswordForm />
+      </section>
 
       <section aria-label="Saved items" className="mb-8 grid gap-3">
         <div className="flex items-baseline justify-between gap-4">
