@@ -33,9 +33,17 @@ export function jsonNoStore(body: unknown, status = 200): NextResponse {
   return NextResponse.json(body, { status, headers: NO_STORE });
 }
 
-export function apiError(status: number, code: string, message?: string): NextResponse {
-  const error: { code: string; message?: string } = { code };
+export function apiError(
+  status: number,
+  code: string,
+  message?: string,
+  details?: unknown,
+): NextResponse {
+  const error: { code: string; message?: string; details?: unknown } = { code };
   if (message !== undefined) error.message = message;
+  // ord-013: pass structured stock shortfall through untouched. It is data
+  // from our own order service, never a string parsed out of the message.
+  if (details !== undefined) error.details = details;
   return NextResponse.json({ error }, { status, headers: NO_STORE });
 }
 
@@ -69,6 +77,7 @@ export function toResponse<T>(
       result.status === 0 ? 503 : result.status,
       result.code ?? "SERVICE_UNAVAILABLE",
       result.message ?? undefined,
+      result.details,
     );
   }
   return jsonNoStore(result.data ?? null, init.status ?? 200);

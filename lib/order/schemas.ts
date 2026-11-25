@@ -191,3 +191,17 @@ export const discountValidationResultSchema = z
   .loose();
 
 export type DiscountValidationResult = z.infer<typeof discountValidationResultSchema>;
+
+/** ord-013: `error.details` on a 409 STOCK_INSUFFICIENT. Parsed, never inferred from prose. */
+export const stockShortfallSchema = z
+  .object({
+    itemIds: z.array(z.string()),
+    items: z.array(
+      z
+        .object({ productId: z.string(), variantId: z.string().nullish() })
+        .loose(),
+    ),
+  })
+  .loose();
+
+export type StockShortfall = z.infer<typeof stockShortfallSchema>;

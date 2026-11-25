@@ -206,6 +206,33 @@ describe("CheckoutForm", () => {
     expect(cart.clear).not.toHaveBeenCalled();
   });
 
+  it("highlights only the lines named by the 409 structured details (ord-013)", async () => {
+    cart.items = [
+      line({ id: "i1", productId: "p1", productName: "Mug" }),
+      line({ id: "i2", productId: "p2", productName: "Plate" }),
+    ];
+    cart.count = 2;
+    bff.mockResolvedValue({
+      ok: false,
+      kind: "conflict",
+      status: 409,
+      code: "STOCK_INSUFFICIENT",
+      message: "a prose string that must never be parsed",
+      details: { itemIds: ["p1"], items: [{ productId: "p1", variantId: null }] },
+    });
+    render(<CheckoutForm />);
+    fillAddress();
+    submit();
+
+    await waitFor(() =>
+      expect(screen.getByText("Some items are no longer available.")).not.toBeNull(),
+    );
+    const highlighted = screen.getByRole("list", { name: "Unavailable items" });
+    expect(highlighted.textContent).toContain("Mug");
+    expect(highlighted.textContent).not.toContain("Plate");
+    expect(highlighted.querySelector('[data-shortfall-item="p1"]')).not.toBeNull();
+  });
+
   it("burns the key only when the attempt was closed", async () => {
     bff.mockResolvedValue(fail(409, "IDEMPOTENCY_CONFLICT", "conflict"));
     render(<CheckoutForm />);

@@ -59,6 +59,16 @@ describe("readFailure", () => {
     });
   });
 
+  it("carries structured error details through untouched (ord-013)", async () => {
+    const details = { itemIds: ["p1"], items: [{ productId: "p1", variantId: null }] };
+    const result = await readFailure(
+      json({ error: { code: "STOCK_INSUFFICIENT", message: "no stock", details } }, 409),
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.details).toEqual(details);
+  });
+
   it("survives a body that is not the envelope (proxy HTML, empty 502)", async () => {
     const result = await readFailure(
       new Response("<html>bad gateway</html>", { status: 502, statusText: "Bad Gateway" }),

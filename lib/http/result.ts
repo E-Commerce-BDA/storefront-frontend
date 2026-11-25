@@ -41,6 +41,11 @@ export interface ServiceFailure {
   status: number;
   code: string | null;
   message: string | null;
+  /**
+   * Structured error detail (ord-013's stock shortfall). Kept raw here because
+   * this transport owns no domain schemas; the consuming island parses it.
+   */
+  details?: unknown;
 }
 
 export type ServiceResult<T> = { ok: true; data: T } | ServiceFailure;
@@ -75,8 +80,16 @@ export function failure(
   status: number,
   code: string | null,
   message: string | null,
+  details?: unknown,
 ): ServiceFailure {
-  return { ok: false, kind: kindForStatus(status), status, code, message };
+  return {
+    ok: false,
+    kind: kindForStatus(status),
+    status,
+    code,
+    message,
+    ...(details === undefined ? {} : { details }),
+  };
 }
 
 /**
@@ -98,6 +111,7 @@ export async function readFailure(response: Response): Promise<ServiceFailure> {
   const status = response.status;
   let code: string | null = null;
   let message: string | null = null;
+  let details: unknown;
 
   try {
     const body: unknown = await response.json();
@@ -105,6 +119,7 @@ export async function readFailure(response: Response): Promise<ServiceFailure> {
     if (isRecord(envelope)) {
       if (typeof envelope.code === "string") code = envelope.code;
       if (typeof envelope.message === "string") message = envelope.message;
+      if ("details" in envelope) details = envelope.details;
     }
   } catch {
   }
@@ -112,7 +127,7 @@ export async function readFailure(response: Response): Promise<ServiceFailure> {
   if (message === null || message.length === 0) {
     message = response.statusText || `service returned ${status}`;
   }
-  return failure(status, code, message);
+  return failure(status, code, message, details);
 }
 
 /**

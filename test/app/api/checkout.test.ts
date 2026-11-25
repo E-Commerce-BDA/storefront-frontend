@@ -151,6 +151,26 @@ describe("POST /api/checkout", () => {
     expect(await response.json()).toMatchObject({ error: { code: "STOCK_INSUFFICIENT" } });
   });
 
+  it("forwards the structured stock shortfall, not just the code (ord-013)", async () => {
+    vi.stubEnv("ORDER_SVC_URL", "http://order.test");
+    const details = {
+      itemIds: ["p1"],
+      items: [{ productId: "p1", variantId: null }],
+    };
+    stubOrder(409, {
+      error: { code: "STOCK_INSUFFICIENT", message: "not enough stock", details },
+    });
+
+    const response = await POST(
+      request(BODY, { cookie: `${ACCESS_COOKIE}=at_1`, "x-idempotency-key": "k1" }),
+    );
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({
+      error: { code: "STOCK_INSUFFICIENT", details },
+    });
+  });
+
   it("forwards a 503 as retryable, not as a payment failure", async () => {
     vi.stubEnv("ORDER_SVC_URL", "http://order.test");
     stubOrder(503, { error: { code: "PAYMENT_UNAVAILABLE", message: "down" } });

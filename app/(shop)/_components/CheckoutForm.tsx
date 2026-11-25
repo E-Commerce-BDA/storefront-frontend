@@ -47,6 +47,8 @@ import {
 } from "@/lib/order/schemas";
 import { discountAmount, totalAfterDiscount } from "@/lib/order/discount";
 import { nextKey, type IdemPair } from "@/lib/checkout/idempotency";
+import { isShortLine, resolveShortfall } from "@/lib/checkout/shortfall";
+import type { StockShortfall } from "@/lib/order/schemas";
 
 /** `describeFailure` input: a failure plus the status it arrived with. */
 export interface CheckoutCopy {
@@ -57,6 +59,8 @@ export interface CheckoutCopy {
   rotateKey: boolean;
   /** Auto-retry with the *same* key (IN_PROGRESS polls twice at 1 s). */
   retryWithSameKey: boolean;
+  /** ord-013: structured ids from the 409, or null when the service sent none. */
+  shortfall: StockShortfall | null;
 }
 
 /**
@@ -71,24 +75,30 @@ export function describeFailure(failure: ServiceFailure): CheckoutCopy {
   if (code.startsWith("STOCK_") || code.startsWith("RESERVATION_")) {
     // The 409 carries no item ids, so no line is blamed (A5.7) — the banner
     // sends the shopper to the cart, which is where the truth is editable.
-    return { message: "Some items are no longer available.", toCart: true, rotateKey: false, retryWithSameKey: false };
+    return {
+      message: "Some items are no longer available.",
+      toCart: true,
+      rotateKey: false,
+      retryWithSameKey: false,
+      shortfall: resolveShortfall(failure.details),
+    };
   }
   if (code === "IDEMPOTENCY_CONFLICT" || code === "ORDER_ATTEMPT_CLOSED") {
-    return { message: "Your attempt was closed — submit again.", toCart: false, rotateKey: true, retryWithSameKey: false };
+    return { message: "Your attempt was closed — submit again.", toCart: false, rotateKey: true, retryWithSameKey: false, shortfall: null };
   }
   if (code === "IDEMPOTENCY_IN_PROGRESS") {
-    return { message: "Your order is still being processed…", toCart: false, rotateKey: false, retryWithSameKey: true };
+    return { message: "Your order is still being processed…", toCart: false, rotateKey: false, retryWithSameKey: true, shortfall: null };
   }
   if (failure.kind === "upstream") {
-    return { message: "Payment could not be completed.", toCart: false, rotateKey: false, retryWithSameKey: false };
+    return { message: "Payment could not be completed.", toCart: false, rotateKey: false, retryWithSameKey: false, shortfall: null };
   }
   if (failure.kind === "unavailable") {
-    return { message: "Nothing was charged — try again.", toCart: false, rotateKey: false, retryWithSameKey: false };
+    return { message: "Nothing was charged — try again.", toCart: false, rotateKey: false, retryWithSameKey: false, shortfall: null };
   }
   if (failure.kind === "invalid") {
-    return { message: failure.message || "The order details need a fix.", toCart: false, rotateKey: false, retryWithSameKey: false };
+    return { message: failure.message || "The order details need a fix.", toCart: false, rotateKey: false, retryWithSameKey: false, shortfall: null };
   }
-  return { message: "Checkout is unavailable right now.", toCart: false, rotateKey: false, retryWithSameKey: false };
+  return { message: "Checkout is unavailable right now.", toCart: false, rotateKey: false, retryWithSameKey: false, shortfall: null };
 }
 
 /** Quiet window before a typed coupon is re-validated (cart mirror). */
@@ -282,6 +292,9 @@ export default function CheckoutForm() {
   const hasPlaceholders = cart.items.some((line) => isPendingId(line.id));
   const discount = discountAmount(discountResult, cart.subtotal);
   const estimatedTotal = totalAfterDiscount(cart.subtotal, discount);
+  const shortfall = banner?.shortfall ?? null;
+  const shortLines =
+    shortfall === null ? [] : cart.items.filter((line) => isShortLine(shortfall, line));
 
   return (
     <div className="grid gap-8 md:grid-cols-[1fr_360px]">
@@ -300,6 +313,20 @@ export default function CheckoutForm() {
           >
             <div className="grid gap-2">
               <p className="m-0 text-sm text-[var(--color-ink)]">{banner.message}</p>
+              {shortLines.length > 0 ? (
+                <ul className="m-0 grid list-none gap-1 p-0" role="list" aria-label="Unavailable items">
+                  {shortLines.map((line) => (
+                    <li
+                      key={line.id}
+                      data-shortfall-item={line.productId}
+                      className="rounded-[var(--radius-sm,6px)] bg-[var(--surface-hover)] px-2 py-1 text-xs font-medium text-[var(--color-ink)]"
+                    >
+                      {line.productName || line.productId}
+                      {line.variantId ? ` · ${line.variantId}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
               {banner.toCart ? (
                 <Button variant="light" size="sm" onClick={() => router.push("/cart")}>
                   Review cart
