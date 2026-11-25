@@ -30,6 +30,10 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Checkbox, Input, Select, Textarea } from "@/components/ui";
 import CartLineItem from "@/components/shell/CartLineItem";
+import CheckoutSteps from "@/components/shell/CheckoutSteps";
+import { fetchAddresses } from "@/lib/account/port";
+import type { AddressDto } from "@/lib/account/schemas";
+import { resolveCheckoutSteps } from "@/lib/checkout/steps";
 import { useCart } from "@/app/_components/CartProvider";
 import { bff } from "@/lib/http/browser";
 import { isPendingId } from "@/lib/cart/state";
@@ -160,10 +164,42 @@ export default function CheckoutForm() {
     };
   }, [discountCode, cart.subtotal]);
 
+  // Details is the active step on /checkout; the chrome never navigates.
+  const [steps] = useState(() => resolveCheckoutSteps(1));
+  const [savedAddresses, setSavedAddresses] = useState<AddressDto[]>([]);
+  const [selectedAddress, setSelectedAddress] = useState("");
+  const [shippingMethod, setShippingMethod] = useState("standard");
+
   const [shipping, setShipping] = useState<AddressForm>(EMPTY_ADDRESS);
   const [sameBilling, setSameBilling] = useState(true);
   const [billing, setBilling] = useState<AddressForm>(EMPTY_ADDRESS);
   const [notes, setNotes] = useState("");
+
+  // Saved addresses are a convenience, not a requirement: a guest or a failed
+  // read simply sees the empty "use a new address" option.
+  useEffect(() => {
+    let alive = true;
+    void fetchAddresses().then((res) => {
+      if (alive && res.ok) setSavedAddresses(res.data);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  function pickAddress(id: string) {
+    setSelectedAddress(id);
+    const address = savedAddresses.find((saved) => saved.id === id);
+    if (address === undefined) return;
+    setShipping({
+      line1: address.line1,
+      line2: address.line2 ?? "",
+      city: address.city,
+      state: address.state ?? "",
+      postalCode: address.postalCode,
+      country: address.country ?? "US",
+    });
+  }
 
   const [banner, setBanner] = useState<CheckoutCopy | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -256,6 +292,7 @@ export default function CheckoutForm() {
           void submit();
         }}
       >
+        <CheckoutSteps steps={steps} />
         {banner ? (
           <div
             role="alert"
@@ -274,6 +311,20 @@ export default function CheckoutForm() {
 
         <fieldset className="grid gap-4 border-0 p-0 min-w-0" disabled={submitting}>
           <legend className="mb-2 p-0 text-base font-semibold text-[var(--color-ink)]">Shipping address</legend>
+          {savedAddresses.length > 0 ? (
+            <Select
+              label="Use a saved address"
+              value={selectedAddress}
+              onChange={pickAddress}
+              options={[
+                { value: "", label: "Use a new address" },
+                ...savedAddresses.map((address) => ({
+                  value: address.id,
+                  label: `${address.label || "Saved address"} — ${address.line1}, ${address.city}`,
+                })),
+              ]}
+            />
+          ) : null}
           <Input label="Address line 1" value={shipping.line1} onChange={(v) => setShipping({ ...shipping, line1: v })} required />
           <Input label="Address line 2" value={shipping.line2} onChange={(v) => setShipping({ ...shipping, line2: v })} />
           <div className="grid gap-4 sm:grid-cols-2">
@@ -308,6 +359,23 @@ export default function CheckoutForm() {
             </fieldset>
           ) : null}
         </div>
+
+        <fieldset className="grid gap-4 border-0 p-0 min-w-0" disabled={submitting}>
+          <legend className="mb-2 p-0 text-base font-semibold text-[var(--color-ink)]">Shipping method</legend>
+          <Select
+            label="Method"
+            value={shippingMethod}
+            onChange={setShippingMethod}
+            options={[
+              { value: "standard", label: "Standard" },
+              { value: "express", label: "Express" },
+              { value: "overnight", label: "Overnight" },
+            ]}
+          />
+          <p className="m-0 text-xs text-[var(--text-muted)]">
+            The order service calculates the final shipping fee; this choice does not change the total shown here.
+          </p>
+        </fieldset>
 
         <fieldset className="grid gap-4 border-0 p-0 min-w-0" disabled={submitting}>
           <legend className="mb-2 p-0 text-base font-semibold text-[var(--color-ink)]">Payment</legend>

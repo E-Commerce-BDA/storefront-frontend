@@ -26,6 +26,7 @@ import {
 } from "@/lib/bff/handler";
 import { cartClient } from "@/lib/cart/client";
 import { emptyCart } from "@/lib/cart/state";
+import { catalogClient } from "@/lib/catalog/client";
 import { hasIdentity, identityHeaders, readIdentity } from "@/lib/session/identity";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -36,7 +37,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return jsonNoStore({ cart: null, items, totals });
   }
 
-  return toResponse(await cartClient().getCart(identityHeaders(identity)));
+  const result = await cartClient().getCart(identityHeaders(identity));
+  if (!result.ok || result.data.items.length === 0) return toResponse(result);
+
+  // sf-058: cart-svc deliberately stores no stock, so enrich our own answer
+  // from catalog. The read is tagged and cached; a catalog outage leaves every
+  // line uncapped (house ceiling) instead of breaking the cart.
+  const ids = Array.from(new Set(result.data.items.map((item) => item.productId)));
+  const catalog = await catalogClient().listProducts({ ids });
+  const stockById = new Map(
+    catalog.ok ? catalog.data.items.map((product) => [product.id, product.stock]) : [],
+  );
+  return jsonNoStore({
+    ...result.data,
+    items: result.data.items.map((item) => ({
+      ...item,
+      stock: stockById.get(item.productId) ?? null,
+    })),
+  });
 }
 
 export async function DELETE(request: NextRequest): Promise<NextResponse> {

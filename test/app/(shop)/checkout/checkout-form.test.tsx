@@ -25,6 +25,11 @@ const push = vi.hoisted(() => vi.fn());
 const replace = vi.hoisted(() => vi.fn());
 const bff = vi.hoisted(() => vi.fn());
 const search = vi.hoisted(() => ({ params: new URLSearchParams() }));
+const addresses = vi.hoisted(() => ({ value: [] as Array<{ id: string; label: string; line1: string; city: string; postalCode: string; country: string }> }));
+
+vi.mock("@/lib/account/port", () => ({
+  fetchAddresses: vi.fn(async () => ({ ok: true, data: addresses.value })),
+}));
 
 vi.mock("@/app/_components/CartProvider", () => ({
   useCart: () => ({
@@ -92,6 +97,7 @@ beforeEach(() => {
   push.mockClear();
   replace.mockClear();
   search.params = new URLSearchParams();
+  addresses.value = [];
   bff.mockReset();
 });
 
@@ -135,6 +141,22 @@ describe("CheckoutForm", () => {
     await waitFor(() => expect(bff).toHaveBeenCalledTimes(1));
     const [, opts] = bff.mock.calls[0];
     expect(opts.body.discountCode).toBe("SAVE10");
+  });
+
+  it("renders the step chrome, saved-address picker and shipping method (A4.4/A5.1/A5.2)", async () => {
+    addresses.value = [
+      { id: "a1", label: "Home", line1: "9 Saved St", city: "Portland", postalCode: "97201", country: "US" },
+    ];
+    bff.mockResolvedValue(ok(confirmation));
+    render(<CheckoutForm />);
+
+    expect(screen.getByRole("navigation", { name: "Checkout progress" })).not.toBeNull();
+    expect(screen.getAllByText("Details").length).toBeGreaterThan(0);
+    const picker = await screen.findByLabelText("Use a saved address");
+    fireEvent.change(picker, { target: { value: "a1" } });
+    expect((screen.getByLabelText(/Address line 1/) as HTMLInputElement).value).toBe("9 Saved St");
+    expect(screen.getByLabelText("Method")).not.toBeNull();
+    expect(screen.getByText(/calculates the final shipping fee/)).not.toBeNull();
   });
 
   it("carries the cart's coupon into the summary as a discount line (A5.3)", async () => {

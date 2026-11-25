@@ -1,14 +1,19 @@
 "use client";
 
 import Image from "next/image";
-import { Icon, IconButton, QuantityStepper } from "@/components/ui";
+import { Checkbox, Icon, IconButton, QuantityStepper } from "@/components/ui";
 import type { CartItemDto } from "@/lib/cart/schemas";
+import { stockCeiling } from "@/lib/cart/stock";
 
 export interface CartTableProps {
   items: CartItemDto[];
   pending?: Record<string, boolean>;
   onQty: (itemId: string, qty: number) => void;
   onRemove: (itemId: string) => void;
+  /** sf-058 batch select; parent owns the set (controlled-only). */
+  selectedIds?: readonly string[];
+  onToggleSelected?: (itemId: string) => void;
+  onToggleAll?: () => void;
   className?: string;
 }
 
@@ -17,13 +22,26 @@ export default function CartTable({
   pending = {},
   onQty,
   onRemove,
+  selectedIds = [],
+  onToggleSelected,
+  onToggleAll,
   className = "",
 }: CartTableProps) {
+  const allSelected = items.length > 0 && items.every((line) => selectedIds.includes(line.id));
   return (
     <div className={`overflow-x-auto ${className}`}>
       <table className="w-full text-left text-sm text-[var(--color-ink)]" aria-label="Shopping cart items">
         <thead className="border-b border-[var(--border)] text-xs uppercase tracking-wider text-[var(--text-muted)]">
           <tr>
+            {onToggleAll ? (
+              <th scope="col" className="pb-3 pr-3 font-medium">
+                <Checkbox
+                  label="Select all cart items"
+                  checked={allSelected}
+                  onChange={onToggleAll}
+                />
+              </th>
+            ) : null}
             <th scope="col" className="pb-3 font-medium">Product</th>
             <th scope="col" className="pb-3 text-right font-medium">Price</th>
             <th scope="col" className="pb-3 text-center font-medium">Quantity</th>
@@ -37,13 +55,26 @@ export default function CartTable({
           {items.map((line) => {
             const isPending = pending[line.id] === true;
             const lineTotal = line.unitPrice * line.qty;
+            const ceiling = stockCeiling(line.stock);
+            const selected = selectedIds.includes(line.id);
 
             return (
               <tr
                 key={line.id}
                 className={`transition-opacity ${isPending ? "opacity-60 pointer-events-none" : ""}`}
                 data-pending={isPending ? "true" : undefined}
+                data-selected={selected ? "true" : undefined}
+                data-stock-capped={line.stock != null && ceiling < 99 ? "true" : undefined}
               >
+                {onToggleSelected ? (
+                  <td className="py-4 pr-3">
+                    <Checkbox
+                      label={`Select ${line.productName}`}
+                      checked={selected}
+                      onChange={() => onToggleSelected(line.id)}
+                    />
+                  </td>
+                ) : null}
                 <td className="py-4 pr-4">
                   <div className="flex items-center gap-3">
                     {line.imageUrl ? (
@@ -83,12 +114,17 @@ export default function CartTable({
                     <QuantityStepper
                       value={line.qty}
                       min={1}
-                      max={99}
+                      max={ceiling}
                       onChange={(nextQty) => onQty(line.id, nextQty)}
                       label={`${line.productName} quantity`}
                       disabled={isPending}
                     />
                   </div>
+                  {line.stock != null && ceiling < 99 ? (
+                    <span className="mt-1 block text-xs text-[var(--text-muted)]" data-stock-hint={line.id}>
+                      Only {ceiling} left
+                    </span>
+                  ) : null}
                 </td>
 
                 <td className="whitespace-nowrap py-4 text-right font-semibold text-[var(--color-ink)]">

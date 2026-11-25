@@ -23,6 +23,8 @@ import { useRouter } from "next/navigation";
 import { Button, EmptyState, Icon, Input } from "@/components/ui";
 import CartTable from "@/components/shell/CartTable";
 import { useCart } from "@/app/_components/CartProvider";
+import { useWishlist } from "@/app/_components/WishlistProvider";
+import { capToStock } from "@/lib/cart/stock";
 import { bff } from "@/lib/http/browser";
 import { discountAmount, totalAfterDiscount } from "@/lib/order/discount";
 import {
@@ -35,7 +37,9 @@ export const CART_QTY_DEBOUNCE_MS = 350;
 
 export default function CartView() {
   const cart = useCart();
+  const wishlist = useWishlist();
   const router = useRouter();
+  const [selected, setSelected] = useState<string[]>([]);
 
   /** Typed-but-unsubmitted quantities, keyed by line id (see header note). */
   const [draft, setDraft] = useState<Record<string, number>>({});
@@ -70,7 +74,10 @@ export default function CartView() {
       itemId,
       setTimeout(() => {
         timers.current.delete(itemId);
-        const finalQty = draftRef.current[itemId] ?? qty;
+        const line = cart.items.find((item) => item.id === itemId);
+        const finalQty = capToStock(draftRef.current[itemId] ?? qty, line?.stock);
+        draftRef.current = { ...draftRef.current, [itemId]: finalQty };
+        setDraft((prev) => ({ ...prev, [itemId]: finalQty }));
         setInFlight((prev) => ({ ...prev, [itemId]: true }));
         void cart.setQty(itemId, finalQty).then(() => {
           setInFlight((prev) => ({ ...prev, [itemId]: false }));
@@ -123,6 +130,33 @@ export default function CartView() {
     setCouponError(null);
   }
 
+  function toggleSelected(itemId: string) {
+    setSelected((prev) =>
+      prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId],
+    );
+  }
+
+  function toggleAll() {
+    setSelected((prev) =>
+      prev.length === cart.items.length ? [] : cart.items.map((line) => line.id),
+    );
+  }
+
+  async function removeSelected() {
+    const ids = [...selected];
+    setSelected([]);
+    await Promise.all(ids.map((id) => cart.remove(id)));
+  }
+
+  async function moveSelected() {
+    const lines = cart.items.filter((line) => selected.includes(line.id));
+    setSelected([]);
+    await Promise.all(lines.map((line) => wishlist.toggle(line.productId)));
+    await Promise.all(lines.map((line) => cart.remove(line.id)));
+  }
+
+  const selectedLines = cart.items.filter((line) => selected.includes(line.id));
+
   if (cart.status === "loading" && cart.items.length === 0) {
     return (
       <p className="text-sm text-[var(--text-muted)]" role="status">
@@ -163,12 +197,40 @@ export default function CartView() {
   return (
     <div className="grid gap-8 md:grid-cols-[1fr_340px]">
       <div className="min-w-0">
+        {selected.length > 0 ? (
+          <div
+            className="mb-3 flex flex-wrap items-center gap-3 rounded-[var(--radius-md,10px)] border border-[var(--border)] bg-[var(--surface-hover)] px-4 py-3 text-sm"
+            role="group"
+            aria-label="Selected cart items"
+          >
+            <span className="font-medium text-[var(--color-ink)]" data-selected-count={selected.length}>
+              {selected.length} selected
+            </span>
+            <Button variant="light" size="sm" onClick={() => void removeSelected()}>
+              Remove selected
+            </Button>
+            <Button variant="light" size="sm" onClick={() => void moveSelected()}>
+              Move selected to wishlist
+            </Button>
+            <Button variant="ghost-ink" size="sm" onClick={() => setSelected([])}>
+              Clear selection
+            </Button>
+          </div>
+        ) : null}
         <CartTable
           items={displayItems}
           pending={inFlight}
           onQty={changeQty}
           onRemove={(itemId) => void cart.remove(itemId)}
+          selectedIds={selected}
+          onToggleSelected={toggleSelected}
+          onToggleAll={toggleAll}
         />
+        {selectedLines.length > 0 ? (
+          <span className="sr-only" aria-live="polite">
+            {selectedLines.map((line) => line.productName).join(", ")} selected
+          </span>
+        ) : null}
       </div>
 
       <aside className="flex flex-col gap-5 self-start rounded-[var(--radius-md,10px)] border border-[var(--border)] bg-[var(--surface-raised,var(--surface))] p-5 shadow-sm">

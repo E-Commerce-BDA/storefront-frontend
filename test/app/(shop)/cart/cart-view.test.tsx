@@ -23,6 +23,11 @@ const cart = vi.hoisted(() => ({
 }));
 const push = vi.fn();
 const bff = vi.hoisted(() => vi.fn());
+const wishlistToggle = vi.hoisted(() => vi.fn(async () => true));
+
+vi.mock("@/app/_components/WishlistProvider", () => ({
+  useWishlist: () => ({ toggle: wishlistToggle, has: () => false, items: [] }),
+}));
 
 vi.mock("@/lib/http/browser", () => ({ bff }));
 
@@ -63,6 +68,7 @@ beforeEach(() => {
   cart.clear.mockClear();
   push.mockClear();
   bff.mockReset();
+  wishlistToggle.mockClear();
   setCart([]);
 });
 
@@ -106,6 +112,44 @@ describe("CartView", () => {
     act(() => void vi.advanceTimersByTime(CART_QTY_DEBOUNCE_MS));
     expect(cart.setQty).toHaveBeenCalledTimes(1);
     expect(cart.setQty).toHaveBeenCalledWith("i1", 3);
+  });
+
+  it("caps a typed quantity at the line's stock ceiling (A4.2)", () => {
+    vi.useFakeTimers();
+    setCart([line({ id: "i1", qty: 1, stock: 3 })]);
+    const { container } = render(<CartView />);
+    expect(screen.getByText("Only 3 left")).not.toBeNull();
+    expect(container.querySelector('[data-stock-capped="true"]')).not.toBeNull();
+
+    const plus = screen.getByLabelText("Increase quantity");
+    for (let i = 0; i < 4; i += 1) {
+      fireEvent.click(plus);
+      act(() => void vi.advanceTimersByTime(10));
+    }
+    act(() => void vi.advanceTimersByTime(CART_QTY_DEBOUNCE_MS));
+    expect(cart.setQty).toHaveBeenCalledTimes(1);
+    expect(cart.setQty).toHaveBeenCalledWith("i1", 3);
+  });
+
+  it("batch-removes selected lines and moves them to the wishlist (A4.3)", async () => {
+    setCart([
+      line({ id: "i1", productId: "p1", productName: "Mug" }),
+      line({ id: "i2", productId: "p2", productName: "Plate" }),
+    ]);
+    render(<CartView />);
+
+    fireEvent.click(screen.getByLabelText("Select Mug"));
+    fireEvent.click(screen.getByLabelText("Select Plate"));
+    expect(screen.getByText("2 selected")).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Remove selected" }));
+    await waitFor(() => expect(cart.remove).toHaveBeenCalledTimes(2));
+    expect(cart.remove).toHaveBeenCalledWith("i1");
+    expect(cart.remove).toHaveBeenCalledWith("i2");
+
+    fireEvent.click(screen.getByLabelText("Select all cart items"));
+    fireEvent.click(screen.getByRole("button", { name: "Move selected to wishlist" }));
+    await waitFor(() => expect(wishlistToggle).toHaveBeenCalledWith("p1"));
+    expect(wishlistToggle).toHaveBeenCalledWith("p2");
   });
 
   it("removes a line through the store", () => {

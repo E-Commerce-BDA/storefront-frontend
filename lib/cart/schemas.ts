@@ -32,6 +32,8 @@ export const cartItemSchema = z
     productSlug: z.string().nullish(),
     imageUrl: z.string().nullish(),
     variantLabel: z.string().nullish(),
+    /** sf-058: attached by our BFF from catalog; cart-svc never holds stock. */
+    stock: z.number().nullish(),
     addedAt: z.string().optional(),
   })
   .loose();
