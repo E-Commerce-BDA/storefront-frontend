@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e:live": "node e2e/checkout-live.mjs"
   },
   "dependencies": {
     "@ecom/contracts": "file:../../ecom-contracts/ecom-contracts-1.16.0.tgz",
