@@ -75,7 +75,6 @@ export function toProductStock(stock: number | null | undefined): ProductStock {
 function toImages(
   images: readonly ProductImageDto[] | null | undefined,
   primaryImageUrl: string | null | undefined,
-  name: string,
 ): { image: string; images?: ProductImageItem[]; hoverImage?: string } {
   const seen = new Set<string>();
   const items: ProductImageItem[] = [];
@@ -270,7 +269,7 @@ export function fromCatalog(product: CatalogProduct): ProductCardData {
   const brandName = detail ? product.brand?.name : product.brandName;
   const categoryName = detail ? product.category?.name : product.categoryName;
   const options = toCardOptions(product.cardOptions);
-  const image = toImages(product.images, detail ? undefined : product.primaryImageUrl, product.name);
+  const image = toImages(product.images, detail ? undefined : product.primaryImageUrl);
   const variants = toCardVariants(detail ? undefined : product.cardVariants);
 
   const card: ProductCardData = {

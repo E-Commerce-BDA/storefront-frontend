@@ -1,5 +1,5 @@
 import type { NextRequest, NextResponse } from "next/server";
-import { apiError, jsonNoStore, toResponse, unauthenticated } from "@/lib/bff/handler";
+import { jsonNoStore, toResponse, unauthenticated } from "@/lib/bff/handler";
 import { catalogClient } from "@/lib/catalog/client";
 import { identityHeaders, readIdentity } from "@/lib/session/identity";
 import { wishlistClient } from "@/lib/wishlist/client";

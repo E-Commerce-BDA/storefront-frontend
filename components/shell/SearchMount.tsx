@@ -11,7 +11,7 @@ import {
   type LazyExoticComponent,
 } from "react";
 import { useRouter } from "next/navigation";
-import { Icon, Toast } from "@/components/ui";
+import { Toast } from "@/components/ui";
 import { resolveSearchOverlay, type SearchOverlayId } from "./searchRegistry";
 import { useSearch } from "@/app/hooks/useSearch";
 import { useRecentSearches } from "@/app/hooks/useRecentSearches";

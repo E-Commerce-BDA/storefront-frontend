@@ -382,8 +382,8 @@ export default function PreviewPage() {
   const [pcShowDept, setPcShowDept] = useState(true);
   const [pcCardBg, setPcCardBg] = useState("");
   const [pcBorderColor, setPcBorderColor] = useState("");
-  const [pcTextColor, setPcTextColor] = useState("");
-  const [pcPriceColor, setPcPriceColor] = useState("");
+  const [pcTextColor] = useState("");
+  const [pcPriceColor] = useState("");
   const [pcTextAlign, setPcTextAlign] = useState<TextAlign>("left");
   const [pcCtaVariant, setPcCtaVariant] = useState<CtaVariant>("overlay");
   const [pcCtaStyle, setPcCtaStyle] = useState<CtaStyle>("icon");

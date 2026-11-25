@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { Icon, IconButton, QuantityStepper } from "@/components/ui";
 import type { CartItemDto } from "@/lib/cart/schemas";
 

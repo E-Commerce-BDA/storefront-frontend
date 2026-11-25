@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { productListItemSchema, type ProductListItemDto } from "@/lib/catalog/schemas";
+import { productListItemSchema } from "@/lib/catalog/schemas";
 
 export const wishlistItemSchema = z
   .object({

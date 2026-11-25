@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { GET as getWishlist } from "@/app/api/wishlist/route";
 import { POST as postWishlistItem } from "@/app/api/wishlist/items/route";
-import { DELETE as deleteWishlistItem } from "@/app/api/wishlist/items/[id]/route";
 import { POST as consumePending } from "@/app/api/wishlist/consume-pending/route";
 import { ACCESS_COOKIE } from "@/lib/auth/session";
 import { PENDING_WISHLIST_COOKIE } from "@/lib/wishlist/pending";
@@ -66,7 +65,7 @@ describe("Wishlist API BFF", () => {
 
   it("POST /api/wishlist/consume-pending claims cookie and clears it", async () => {
     vi.stubEnv("CART_SVC_URL", "http://cart.test");
-    const fetchFn = stubFetch(201, {
+    stubFetch(201, {
       item: { id: "w-2", productId: "prod-99", addedAt: "2026-11-02T10:00:00Z" },
     });
 

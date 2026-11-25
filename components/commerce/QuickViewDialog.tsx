@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Badge, Button, Dialog, Icon, QuantityStepper } from "@/components/ui";
+import { Button, Dialog, Icon, QuantityStepper } from "@/components/ui";
 import WishlistButton from "@/components/commerce/WishlistButton";
 import type { ProductCardData } from "@/lib/commerce/productCard";
 import {

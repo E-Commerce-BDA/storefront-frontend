@@ -27,7 +27,6 @@ import type { SelectVariant } from "@/components/ui/Select";
 import {
   DEFAULT_TOOLTIP_STYLE,
   TOOLTIP_LIMITS,
-  type TooltipAnimation,
   type TooltipStyleField,
 } from "@/components/ui/Tooltip";
 
