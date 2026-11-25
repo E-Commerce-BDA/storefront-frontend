@@ -16,7 +16,18 @@ const bff = vi.hoisted(() => vi.fn());
 const push = vi.hoisted(() => vi.fn());
 const clear = vi.hoisted(() => vi.fn(async () => true));
 const logoutFetch = vi.hoisted(() => vi.fn(async () => new Response(null, { status: 204 })));
+const wishlistItems = vi.hoisted(() => ({ value: [] as Array<{ id: string; productId: string; product: { name: string; slug: string; price: number } }> }));
 
+vi.mock("@/app/_components/WishlistProvider", () => ({
+  useWishlist: () => ({
+    items: wishlistItems.value,
+    ids: wishlistItems.value.map((i) => i.productId),
+    count: wishlistItems.value.length,
+    has: () => false,
+    toggle: async () => false,
+    remove: async () => false,
+  }),
+}));
 vi.mock("@/lib/http/browser", () => ({ bff }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 vi.mock("@/app/_components/CartProvider", () => ({ useCart: () => ({ clear }) }));
@@ -40,6 +51,7 @@ const order = (over: Partial<OrderDto> = {}): OrderDto => ({
 });
 
 beforeEach(() => {
+  wishlistItems.value = [];
   bff.mockReset();
   push.mockClear();
   clear.mockClear();
@@ -64,6 +76,18 @@ describe("AccountView", () => {
     // Money renders as the raw number, the same face as every other surface —
     // once per row (both rows share the fixture total on purpose).
     expect(screen.getAllByText("$50.36")).toHaveLength(2);
+  });
+
+  it("renders saved wishlist items on /account with a link to the full list", async () => {
+    wishlistItems.value = [
+      { id: "w1", productId: "p1", product: { name: "Linen Shirt", slug: "linen-shirt", price: 42 } },
+    ];
+    bff.mockResolvedValue({ ok: true, data: { user, orders: [], ordersError: null } });
+    render(<AccountView />);
+
+    await waitFor(() => expect(screen.queryByText("Ada Lovelace")).not.toBeNull());
+    expect(screen.getByText("Linen Shirt").closest("a")?.getAttribute("href")).toBe("/products/linen-shirt");
+    expect(screen.getByRole("button", { name: "View all" })).not.toBeNull();
   });
 
   it("keeps the profile when the order history failed (partial degradation)", async () => {

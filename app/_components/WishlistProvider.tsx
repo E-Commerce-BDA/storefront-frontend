@@ -10,7 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useRouter } from "next/navigation";
+import WishlistSignInPrompt from "@/components/commerce/WishlistSignInPrompt";
 import { AUTH_CHANGED_EVENT } from "@/lib/auth/events";
 import {
   deleteWishlistItem,
@@ -18,6 +18,7 @@ import {
   postConsumePending,
   postWishlistItem,
 } from "@/lib/wishlist/port";
+import { resolveWishlistGuestPrompt } from "@/lib/wishlist/prompt";
 import type { HydratedWishlistEntry } from "@/lib/wishlist/schemas";
 
 export interface WishlistContextValue {
@@ -31,15 +32,19 @@ export interface WishlistContextValue {
   remove: (itemId: string) => Promise<boolean>;
   refresh: () => Promise<void>;
   pendingIds: readonly string[];
+  /** sf-056: a guest tried to save; the product stays in the sf_pw cookie. */
+  guestPromptProductId: string | null;
+  dismissGuestPrompt: () => void;
 }
 
 const WishlistContext = createContext<WishlistContextValue | null>(null);
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
-  const router = useRouter();
   const [items, setItems] = useState<HydratedWishlistEntry[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [pendingIds, setPendingIds] = useState<string[]>([]);
+  const [optimisticIds, setOptimisticIds] = useState<string[]>([]);
+  const [guestPrompt, setGuestPrompt] = useState<{ productId: string; next: string } | null>(null);
   const loadingRef = useRef(false);
 
   const refresh = useCallback(async () => {
@@ -81,8 +86,9 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const has = useCallback(
-    (productId: string) => items.some((it) => it.productId === productId),
-    [items],
+    (productId: string) =>
+      optimisticIds.includes(productId) || items.some((it) => it.productId === productId),
+    [items, optimisticIds],
   );
 
   const itemFor = useCallback(
@@ -107,16 +113,23 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         }
         return true;
       } else {
+        // Optimistic add: paint the saved face immediately, then revert if the
+        // write fails. No fake product is inserted — ids drive the toggles,
+        // the hydrated card only appears after the real read.
+        setOptimisticIds((prev) => (prev.includes(productId) ? prev : [...prev, productId]));
         const res = await postWishlistItem(productId);
+        setOptimisticIds((prev) => prev.filter((id) => id !== productId));
         setPendingIds((prev) => prev.filter((id) => id !== productId));
 
         if (!res.ok) {
           if (res.status === 401) {
-            // Guest attempted to save: pending cookie is set by BFF, redirect to sign-in
-            const next = typeof window !== "undefined"
-              ? window.location.pathname + window.location.search
-              : "/";
-            router.push(`/signin?next=${encodeURIComponent(next)}`);
+            // The BFF already parked the product in the HttpOnly sf_pw cookie.
+            // Prompt rather than yank the shopper off the page; the link carries
+            // the current page as `next` so the product is still in reach.
+            setGuestPrompt({
+              productId,
+              next: typeof window !== "undefined" ? window.location.pathname + window.location.search : "/products",
+            });
           }
           return false;
         }
@@ -126,7 +139,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         return true;
       }
     },
-    [items, refresh, router],
+    [items, refresh],
   );
 
   const remove = useCallback(
@@ -151,11 +164,28 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     [items],
   );
 
+  const dismissGuestPrompt = useCallback(() => setGuestPrompt(null), []);
+
+  // Escape is a request to close, never an owner of the prompt's open-state.
+  useEffect(() => {
+    if (guestPrompt === null) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") dismissGuestPrompt();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [guestPrompt, dismissGuestPrompt]);
+
+  const ids = useMemo(
+    () => Array.from(new Set([...items.map((i) => i.productId), ...optimisticIds])),
+    [items, optimisticIds],
+  );
+
   const value = useMemo<WishlistContextValue>(
     () => ({
       items,
-      ids: items.map((i) => i.productId),
-      count: items.length,
+      ids,
+      count: ids.length,
       status,
       has,
       itemFor,
@@ -163,11 +193,27 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       remove,
       refresh,
       pendingIds,
+      guestPromptProductId: guestPrompt?.productId ?? null,
+      dismissGuestPrompt,
     }),
-    [items, status, has, itemFor, toggle, remove, refresh, pendingIds],
+    [items, ids, status, has, itemFor, toggle, remove, refresh, pendingIds, guestPrompt, dismissGuestPrompt],
   );
 
-  return <WishlistContext.Provider value={value}>{children}</WishlistContext.Provider>;
+  const promptModel =
+    guestPrompt === null
+      ? null
+      : resolveWishlistGuestPrompt(guestPrompt.next, {
+          productName: items.find((i) => i.productId === guestPrompt.productId)?.product.name,
+        });
+
+  return (
+    <WishlistContext.Provider value={value}>
+      {children}
+      {promptModel ? (
+        <WishlistSignInPrompt model={promptModel} onDismiss={dismissGuestPrompt} />
+      ) : null}
+    </WishlistContext.Provider>
+  );
 }
 
 const DEFAULT_WISHLIST: WishlistContextValue = {
@@ -181,6 +227,8 @@ const DEFAULT_WISHLIST: WishlistContextValue = {
   remove: async () => false,
   refresh: async () => {},
   pendingIds: [],
+  guestPromptProductId: null,
+  dismissGuestPrompt: () => {},
 };
 
 export function useWishlist(): WishlistContextValue {

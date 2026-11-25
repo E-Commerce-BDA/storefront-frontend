@@ -731,6 +731,83 @@ body {
     animation: none;
   }
 }
+/* Guest wishlist prompt (sf-056). Paint and motion stay var-driven;
+   the hover/focus contract is mirrored in the style-contract test. */
+.sf-wishlist-prompt {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.sf-wishlist-prompt__backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--scrim, rgba(10, 37, 64, 0.45));
+}
+.sf-wishlist-prompt__panel {
+  position: relative;
+  width: min(100%, 420px);
+  display: grid;
+  gap: 12px;
+  padding: 24px;
+  background: var(--surface-raised, var(--surface));
+  color: var(--color-ink);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 10px);
+  animation: sf-wishlist-prompt-in 180ms ease-out;
+}
+.sf-wishlist-prompt__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+.sf-wishlist-prompt__body {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.sf-wishlist-prompt__item {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.sf-wishlist-prompt__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sf-wishlist-prompt__signin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm, 6px);
+  background: var(--color-navy);
+  color: var(--color-on-navy, #fff);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.sf-wishlist-prompt__signin:focus-visible,
+.sf-wishlist-prompt__panel button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+@keyframes sf-wishlist-prompt-in {
+  from {
+    transform: translateY(calc(8px + 2px));
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sf-wishlist-prompt__panel {
+    animation: none;
+  }
+}
 .sf-navlogo {
   display: inline-flex;
   align-items: center;

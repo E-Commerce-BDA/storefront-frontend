@@ -22,6 +22,7 @@ import { z } from "zod";
 import { Badge, Button, EmptyState, Icon } from "@/components/ui";
 import PageHeader from "@/components/shell/PageHeader";
 import { useCart } from "@/app/_components/CartProvider";
+import { useWishlist } from "@/app/_components/WishlistProvider";
 import { bff } from "@/lib/http/browser";
 import { orderSchema } from "@/lib/order/schemas";
 import type { OrderDto } from "@/lib/order/schemas";
@@ -49,6 +50,7 @@ type AccountView = z.infer<typeof accountResponseSchema>;
 export default function AccountView() {
   const router = useRouter();
   const cart = useCart();
+  const wishlist = useWishlist();
   const [data, setData] = useState<AccountView | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
@@ -130,6 +132,33 @@ export default function AccountView() {
           My wishlist
         </Button>
       </div>
+
+      <section aria-label="Saved items" className="mb-8 grid gap-3">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="m-0 text-base font-semibold text-[var(--color-ink)]">Wishlist</h2>
+          <Button variant="light" size="sm" onClick={() => router.push("/wishlist")}>
+            View all
+          </Button>
+        </div>
+        {wishlist.items.length === 0 ? (
+          <p className="m-0 text-sm text-[var(--text-muted)]">
+            Nothing saved yet. Tap the heart on any product to keep it here.
+          </p>
+        ) : (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {wishlist.items.slice(0, 4).map((entry) => (
+              <Link
+                key={entry.id}
+                href={`/products/${encodeURIComponent(entry.product.slug)}`}
+                className="flex items-baseline justify-between gap-3 rounded-[var(--radius-md,10px)] border border-[var(--border)] px-4 py-3 text-sm transition-colors hover:border-[var(--color-navy)] hover:bg-[var(--surface-hover)]"
+              >
+                <span className="truncate text-[var(--color-ink)]">{entry.product.name}</span>
+                <span className="font-medium text-[var(--color-ink)]">${entry.product.price}</span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section aria-label="Order history" className="grid gap-4">
         <h2 className="m-0 text-base font-semibold text-[var(--color-ink)]">Recent orders</h2>
