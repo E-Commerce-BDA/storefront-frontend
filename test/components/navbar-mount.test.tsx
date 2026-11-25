@@ -80,6 +80,18 @@ describe("NavbarMount", () => {
     expect(screen.queryByRole("dialog", { name: "Menu" })).toBeNull();
   });
 
+  it("opens the account menu with a POST sign-out form (sf-072)", () => {
+    render(<NavbarMount nav={DEFAULT_NAV_SETTINGS} />);
+    expect(screen.queryByRole("button", { name: "Sign out" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Account" }));
+    expect(screen.getByRole("navigation", { name: "Account menu" })).not.toBeNull();
+    const signOut = screen.getByRole("button", { name: "Sign out" });
+    expect(signOut.closest("form")?.getAttribute("action")).toBe("/api/auth/logout");
+    expect(signOut.closest("form")?.getAttribute("method")).toBe("post");
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("button", { name: "Sign out" })).toBeNull();
+  });
+
   it("raises the cart drawer from the navbar cart trigger", () => {
     render(<NavbarMount nav={DEFAULT_NAV_SETTINGS} />);
     fireEvent.click(screen.getByRole("button", { name: "Cart" }));

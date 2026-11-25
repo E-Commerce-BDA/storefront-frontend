@@ -5,6 +5,8 @@ import NavLinks from "./NavLinks";
 import NavLogo from "./NavLogo";
 import NavSearchTrigger from "./NavSearchTrigger";
 import NavAccountButton from "./NavAccountButton";
+import AccountMenu from "./AccountMenu";
+import type { AccountMenuModel } from "@/lib/shell/accountMenu";
 import NavWishlistButton from "./NavWishlistButton";
 import NavCartButton from "./NavCartButton";
 import MobileDrawer from "./MobileDrawer";
@@ -58,6 +60,8 @@ export interface NavbarProps {
   /** Live cart region (sf-051): count from the store, onOpen raises the drawer. */
   cart: { count: number; onOpen: () => void };
   account?: { onOpen: () => void; disabled?: boolean };
+  /** sf-072: controlled dropdown; open-state and close callback owned by NavbarMount. */
+  accountMenu?: { model: AccountMenuModel; open: boolean; onClose: () => void };
   wishlist?: { count: number; onOpen: () => void; disabled?: boolean };
   isMobile: boolean;
   mobileOpen: boolean;
@@ -78,6 +82,7 @@ export default function Navbar({
   announcement,
   cart,
   account,
+  accountMenu,
   wishlist,
   isMobile,
   mobileOpen,
@@ -139,15 +144,24 @@ export default function Navbar({
               <NavSearchTrigger onOpen={onSearchOpen} />
             </span>
           )}
-          {/* Account + wishlist stay preview-disabled (deferred to sf-056 and the
-              account menu); the cart is live from sf-051 — count from the store,
-              onOpen raises the drawer. Never a dead click. */}
+          {/* Account opens the sf-072 menu (links + POST sign-out form); the cart
+              is live from sf-051 — count from the store, onOpen raises the drawer.
+              Never a dead click. */}
           {regions.account && (
-            <NavAccountButton
-              onAccount={account?.onOpen ?? (() => {})}
-              label="Account"
-              disabled={account?.disabled ?? false}
-            />
+            <span className="sf-accountmenu__anchor" data-accountmenu-anchor="true">
+              <NavAccountButton
+                onAccount={account?.onOpen ?? (() => {})}
+                label="Account"
+                disabled={account?.disabled ?? false}
+              />
+              {accountMenu ? (
+                <AccountMenu
+                  model={accountMenu.model}
+                  open={accountMenu.open}
+                  onClose={accountMenu.onClose}
+                />
+              ) : null}
+            </span>
           )}
           {regions.wishlist && (
             <NavWishlistButton

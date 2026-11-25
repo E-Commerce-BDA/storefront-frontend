@@ -661,6 +661,76 @@ body {
   align-items: center;
   gap: 8px;
 }
+/* Account dropdown (sf-072). Positioning is layout; paint/state/motion stay
+   var-only and data-driven so the style contract can read them. */
+.sf-accountmenu__anchor {
+  position: relative;
+  display: inline-flex;
+}
+.sf-accountmenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 45;
+  min-width: 180px;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  background: var(--surface-raised, var(--surface));
+  color: var(--color-ink);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 10px);
+  animation: sf-accountmenu-in 160ms ease-out;
+}
+.sf-accountmenu[hidden],
+.sf-accountmenu[data-open="false"] {
+  display: none;
+}
+.sf-accountmenu__list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sf-accountmenu__link,
+.sf-accountmenu__signout {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.sf-accountmenu__link:not([aria-disabled="true"]):hover,
+.sf-accountmenu__signout:not([disabled]):hover {
+  background: var(--surface-hover);
+}
+.sf-accountmenu__link:focus-visible,
+.sf-accountmenu__signout:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+@keyframes sf-accountmenu-in {
+  from {
+    transform: translateY(calc(-8px - 2px));
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sf-accountmenu,
+  [data-open] .sf-accountmenu {
+    animation: none;
+  }
+}
 .sf-navlogo {
   display: inline-flex;
   align-items: center;

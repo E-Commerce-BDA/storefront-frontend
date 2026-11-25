@@ -52,6 +52,38 @@ describe("POST /api/auth/logout", () => {
     expect(response.headers.getSetCookie()).toHaveLength(2);
   });
 
+  it("303s a form POST to a safe next path with both cookies expired", async () => {
+    vi.stubEnv("AUTH_SVC_URL", "http://auth.test");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(null, { status: 204 })));
+
+    const form = new NextRequest("http://localhost/api/auth/logout", {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: "next=%2F",
+    });
+    const response = await POST(form);
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("http://localhost/");
+    expect(response.headers.getSetCookie()).toHaveLength(2);
+    expect(response.headers.getSetCookie().every((c) => /max-age=0/i.test(c))).toBe(true);
+  });
+
+  it("refuses an off-origin next and keeps the bare 204", async () => {
+    vi.stubEnv("AUTH_SVC_URL", "http://auth.test");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(null, { status: 204 })));
+
+    const form = new NextRequest("http://localhost/api/auth/logout", {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: "next=%2F%2Fevil.test",
+    });
+    const response = await POST(form);
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("location")).toBeNull();
+  });
+
   it("still signs the browser out when auth-svc is unreachable", async () => {
     vi.stubEnv("AUTH_SVC_URL", "http://auth.test");
     vi.stubGlobal(

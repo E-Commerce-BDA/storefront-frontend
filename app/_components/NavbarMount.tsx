@@ -6,9 +6,11 @@ import Navbar from "@/components/shell/Navbar";
 import SearchMount, { preloadSearchOverlay } from "@/components/shell/SearchMount";
 import { useCart } from "./CartProvider";
 import { useWishlist } from "./WishlistProvider";
+import { resolveAccountMenu } from "@/lib/shell/accountMenu";
 import type { ResolvedNavSettings } from "@/lib/shell/navSettings";
 
 const COLLAPSE_MS = 220;
+const ACCOUNT_MENU = resolveAccountMenu();
 
 function prefersReducedMotion(): boolean {
   return (
@@ -34,6 +36,7 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
   const [closing, setClosing] = useState(false);
   const [active, setActive] = useState(0);
   const [barHidden, setBarHidden] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   const query = `(max-width: ${nav.mobile.breakpoint - 1}px)`;
   const subscribe = useCallback(
@@ -71,6 +74,30 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, [nav.bar.sticky]);
+
+  // The account dropdown is owned here (controlled-only): Escape and an
+  // outside pointer merely call the close setter, never own open-state.
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAccountMenuOpen(false);
+    };
+    const onPointer = (event: PointerEvent) => {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest("[data-accountmenu-anchor]") === null
+      ) {
+        setAccountMenuOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer);
+    };
+  }, [accountMenuOpen]);
 
   // Two-phase dismiss (HomeChrome pattern, preserved verbatim): collapsing
   // class animates, unmount follows. Instant when animation is off or
@@ -112,7 +139,12 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
         mobileOpen={mobileOpen}
         mobileSide={nav.mobile.drawerSide}
         cart={{ count: cart.count, onOpen: cart.openDrawer }}
-        account={{ onOpen: () => router.push("/account") }}
+        account={{ onOpen: () => setAccountMenuOpen((open) => !open) }}
+        accountMenu={{
+          model: ACCOUNT_MENU,
+          open: accountMenuOpen,
+          onClose: () => setAccountMenuOpen(false),
+        }}
         wishlist={{ count: wishlist.count, onOpen: () => router.push("/wishlist") }}
         onMenuOpen={() => setMobileOpen(true)}
         onMenuClose={() => setMobileOpen(false)}
