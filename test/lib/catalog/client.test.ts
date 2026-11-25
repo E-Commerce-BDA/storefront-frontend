@@ -69,7 +69,7 @@ describe("listProducts", () => {
     const request = calls[0];
     expect(request.path).toBe("/api/v1/catalog/products");
     expect(request.query).toMatchObject({ status: "active" });
-    expect(request.cache).toEqual({ revalidate: 60 });
+    expect(request.cache).toEqual({ revalidate: 60, tags: ["catalog:listings", "catalog:products"] });
   });
 
   it("forwards every filter the listing route knows", async () => {
@@ -215,6 +215,29 @@ describe("brands", () => {
 
     expect(calls[0].path).toBe("/api/v1/catalog/brands/north%20wind");
     expect(result.ok && result.data.name).toBe("Northwind");
+  });
+});
+
+describe("catalog cache tags (sf-061)", () => {
+  it("tags listings and PDP reads so one webhook drops both caches", async () => {
+    const list = stub({ data: [], nextCursor: null });
+    await createCatalogClient(list.perform).listProducts();
+    expect(list.calls[0].cache).toMatchObject({
+      tags: ["catalog:listings", "catalog:products"],
+      revalidate: 60,
+    });
+
+    const detail = stub({ product: DETAIL });
+    await createCatalogClient(detail.perform).getProduct("blue-shirt");
+    expect(detail.calls[0].cache).toMatchObject({
+      tags: ["catalog:product:blue-shirt", "catalog:products"],
+    });
+
+    const byId = stub({ product: DETAIL });
+    await createCatalogClient(byId.perform).getProductById(DETAIL.id);
+    expect(byId.calls[0].cache).toMatchObject({
+      tags: ["catalog:product:p1", "catalog:products"],
+    });
   });
 });
 

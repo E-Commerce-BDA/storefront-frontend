@@ -108,6 +108,17 @@ describe("POST /api/revalidate — the happy path", () => {
     expect(Number.isFinite(body.now)).toBe(true);
   });
 
+  it("purges catalog tags in one propagation (sf-061)", async () => {
+    const response = await POST(
+      request({ secret: SECRET, body: { tags: ["catalog:products", "catalog:product:linen-shirt"] } }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(nextCache.revalidateTag).toHaveBeenCalledTimes(2);
+    expect(nextCache.revalidateTag).toHaveBeenCalledWith("catalog:products", "max");
+    expect(nextCache.revalidateTag).toHaveBeenCalledWith("catalog:product:linen-shirt", "max");
+  });
+
   it("deduplicates repeats so one tag is not purged twice", async () => {
     const response = await POST(
       request({ secret: SECRET, body: { tags: ["cms:navigation", "cms:navigation"] } }),

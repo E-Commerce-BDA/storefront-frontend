@@ -54,7 +54,8 @@ export interface RequestOptions<T> {
   body?: unknown;
   headers?: Record<string, string>;
   schema?: ZodType<T>;
-  cache?: { revalidate: number } | "no-store";
+  /** `tags` are Next Data Cache tags (sf-061): a webhook can purge them by name. */
+  cache?: { revalidate: number; tags?: string[] } | "no-store";
   signal?: AbortSignal;
 }
 

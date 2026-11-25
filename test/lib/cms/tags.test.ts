@@ -5,7 +5,14 @@
  * cases (arbitrary strings, oversize keys, wrong prefix) are the test.
  */
 import { describe, expect, it } from "vitest";
-import { CMS_STATIC_TAGS, cmsTag, isAllowedTag, isPageKey } from "@/lib/cms/tags";
+import {
+  CATALOG_STATIC_TAGS,
+  CMS_STATIC_TAGS,
+  catalogTag,
+  cmsTag,
+  isAllowedTag,
+  isPageKey,
+} from "@/lib/cms/tags";
 
 describe("cmsTag", () => {
   it("builds the documented tags", () => {
@@ -22,6 +29,27 @@ describe("cmsTag", () => {
       "cms:footer",
       "cms:blogs",
     ]);
+  });
+});
+
+describe("catalogTag (sf-061)", () => {
+  it("builds the product, listing and per-product tags", () => {
+    expect(catalogTag.products).toBe("catalog:products");
+    expect(catalogTag.listings).toBe("catalog:listings");
+    expect(catalogTag.product("linen-shirt")).toBe("catalog:product:linen-shirt");
+    expect(catalogTag.product("018f0000-0000-7000-8000-000000000001")).toBe(
+      "catalog:product:018f0000-0000-7000-8000-000000000001",
+    );
+    expect(CATALOG_STATIC_TAGS).toEqual(["catalog:products", "catalog:listings"]);
+  });
+
+  it("accepts catalog tags and refuses malformed product keys", () => {
+    expect(isAllowedTag("catalog:products")).toBe(true);
+    expect(isAllowedTag("catalog:listings")).toBe(true);
+    expect(isAllowedTag("catalog:product:linen-shirt")).toBe(true);
+    expect(isAllowedTag("catalog:product:")).toBe(false);
+    expect(isAllowedTag("catalog:product:../admin")).toBe(false);
+    expect(isAllowedTag("catalog:unknown")).toBe(false);
   });
 });
 

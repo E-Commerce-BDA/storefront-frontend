@@ -1,10 +1,12 @@
 /**
- * POST /api/revalidate — sf-050
+ * POST /api/revalidate — sf-050, extended by sf-061
  * (1.Architecture.md §6.5: the CMS→UI invalidation arrow)
  *
- * cms-svc owns content; the storefront owns its cache. This is the one seam
- * that lets a commit in cms-svc reach the Next Data Cache, and it is the
- * hand-off `cms-007` will call after its own invalidation.
+ * cms-svc owns content and catalog-svc owns products; the storefront owns its
+ * cache. This is the one seam that lets a commit in either reach the Next Data
+ * Cache. Catalog sends `catalog:products` on product.updated/product.imported,
+ * which drops both the PDP and the listing tags in one propagation — no new
+ * endpoint and no shorter revalidate window.
  *
  * Contract (record verbatim in cms-007's task):
  *   POST /api/revalidate

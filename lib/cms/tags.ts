@@ -1,10 +1,11 @@
 /**
- * CMS cache tags — sf-050, extended by sf-060
+ * Cache tags — sf-050, extended by sf-060 (CMS) and sf-061 (catalog)
  *
- * One vocabulary shared by the readers (`lib/cms/client.ts`) and the writer
- * (`app/api/revalidate/route.ts`). If the tag strings lived in two places, a
- * rename would silently stop invalidating anything — the cache would keep
- * serving the old nav with no error anywhere.
+ * One vocabulary shared by the readers (`lib/cms/client.ts`,
+ * `lib/catalog/client.ts`) and the writer (`app/api/revalidate/route.ts`).
+ * If the tag strings lived in two places, a rename would silently stop
+ * invalidating anything — the cache would keep serving the old nav or the old
+ * PDP with no error anywhere.
  *
  * The page-key pattern is also the allowlist: `POST /api/revalidate` only
  * accepts tags this module can produce, so a caller cannot mint an arbitrary
@@ -32,6 +33,15 @@ export const CMS_STATIC_TAGS = [
   CMS_BLOGS_TAG,
 ] as const;
 
+export const CATALOG_PRODUCTS_TAG = "catalog:products";
+export const CATALOG_LISTINGS_TAG = "catalog:listings";
+export const CATALOG_PRODUCT_PREFIX = "catalog:product:";
+
+export const CATALOG_STATIC_TAGS = [CATALOG_PRODUCTS_TAG, CATALOG_LISTINGS_TAG] as const;
+
+/** Catalog ids are UUIDs and slugs are kebab-case; one key shape covers both. */
+const CATALOG_KEY_RE = /^[A-Za-z0-9_-]{1,80}$/;
+
 /** Page keys / slugs cms-svc accepts: lowercase slugs, deliberately short. */
 const PAGE_KEY_RE = /^[a-z0-9-]{1,80}$/;
 
@@ -51,6 +61,14 @@ export const cmsTag = {
   blogs: CMS_BLOGS_TAG,
 } as const;
 
+export const catalogTag = {
+  products: CATALOG_PRODUCTS_TAG,
+  listings: CATALOG_LISTINGS_TAG,
+  product(key: string): string {
+    return `${CATALOG_PRODUCT_PREFIX}${key}`;
+  },
+} as const;
+
 export function isPageKey(value: unknown): value is string {
   return typeof value === "string" && PAGE_KEY_RE.test(value);
 }
@@ -63,6 +81,10 @@ export function isPageKey(value: unknown): value is string {
 export function isAllowedTag(tag: unknown): tag is string {
   if (typeof tag !== "string") return false;
   if ((CMS_STATIC_TAGS as readonly string[]).includes(tag)) return true;
+  if ((CATALOG_STATIC_TAGS as readonly string[]).includes(tag)) return true;
+  if (tag.startsWith(CATALOG_PRODUCT_PREFIX)) {
+    return CATALOG_KEY_RE.test(tag.slice(CATALOG_PRODUCT_PREFIX.length));
+  }
   for (const prefix of [
     CMS_PAGE_SETTINGS_PREFIX,
     CMS_SECTIONS_PREFIX,

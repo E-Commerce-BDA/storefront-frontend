@@ -64,7 +64,7 @@ export function createServiceClient(
       ...request.headers,
     };
 
-    const init: RequestInit & { next?: { revalidate: number } } = {
+    const init: RequestInit & { next?: { revalidate: number; tags?: string[] } } = {
       method,
       headers,
       signal: request.signal ?? AbortSignal.timeout(timeoutMs),
@@ -78,7 +78,10 @@ export function createServiceClient(
     if (request.cache === "no-store") {
       init.cache = "no-store";
     } else if (request.cache) {
-      init.next = { revalidate: request.cache.revalidate };
+      init.next = {
+        revalidate: request.cache.revalidate,
+        ...(request.cache.tags?.length ? { tags: request.cache.tags } : {}),
+      };
     }
 
     let response: Response;

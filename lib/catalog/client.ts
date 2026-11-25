@@ -18,6 +18,7 @@
  *    decoration.
  */
 
+import { catalogTag } from "@/lib/cms/tags";
 import { createServiceClient } from "@/lib/http/client";
 import type { Perform, ServiceResult } from "@/lib/http/result";
 import {
@@ -81,6 +82,13 @@ const BASE = "/api/v1/catalog";
 
 export function createCatalogClient(perform: Perform): CatalogClient {
   const cache = { revalidate: CATALOG_REVALIDATE_SECONDS } as const;
+  /**
+   * sf-061: a product edit calls POST /api/revalidate with `catalog:products`
+   * (or a precise `catalog:product:<id>`). Tagging the reads is what makes that
+   * webhook drop the PDP and the listing in one propagation; without it the
+   * 60-second window would keep serving the old product.
+   */
+  const tagged = (tags: string[]) => ({ revalidate: CATALOG_REVALIDATE_SECONDS, tags });
 
   return {
     async listProducts(query = {}) {
@@ -101,7 +109,7 @@ export function createCatalogClient(perform: Perform): CatalogClient {
           ids: query.ids?.length ? query.ids.join(",") : undefined,
         },
         schema: productListResponseSchema,
-        cache,
+        cache: tagged([catalogTag.listings, catalogTag.products]),
       });
       if (!result.ok) return result;
       return {
@@ -121,7 +129,7 @@ export function createCatalogClient(perform: Perform): CatalogClient {
           brandId: filter.brandId,
         },
         schema: productFacetsSchema,
-        cache,
+        cache: tagged([catalogTag.listings, catalogTag.products]),
       });
       if (!result.ok) return result;
       return { ok: true, data: result.data };
@@ -131,7 +139,7 @@ export function createCatalogClient(perform: Perform): CatalogClient {
       const result = await perform({
         path: `${BASE}/products/${encodeURIComponent(slug)}`,
         schema: productResponseSchema,
-        cache,
+        cache: tagged([catalogTag.product(slug), catalogTag.products]),
       });
       if (!result.ok) return result;
       return { ok: true, data: result.data.product };
@@ -141,7 +149,7 @@ export function createCatalogClient(perform: Perform): CatalogClient {
       const result = await perform({
         path: `${BASE}/products/id/${encodeURIComponent(id)}`,
         schema: productResponseSchema,
-        cache,
+        cache: tagged([catalogTag.product(id), catalogTag.products]),
       });
       if (!result.ok) return result;
       return { ok: true, data: result.data.product };

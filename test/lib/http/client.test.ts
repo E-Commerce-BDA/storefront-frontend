@@ -104,6 +104,16 @@ describe("request assembly", () => {
     expect(callAt(fetchFn, 1)[1]).toMatchObject({ cache: "no-store" });
   });
 
+  it("forwards cache tags alongside revalidate (sf-061)", async () => {
+    const { perform, fetchFn } = client(async () => json({ ok: true }));
+
+    await perform({ path: "/a", cache: { revalidate: 60, tags: ["catalog:products"] } });
+
+    expect(callOf(fetchFn)[1]).toMatchObject({
+      next: { revalidate: 60, tags: ["catalog:products"] },
+    });
+  });
+
   it("always carries an abort signal, even without a caller one", async () => {
     const { perform, fetchFn } = client(async () => json({ ok: true }));
 
