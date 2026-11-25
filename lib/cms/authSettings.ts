@@ -16,6 +16,7 @@
  */
 
 import type { AuthSettings } from "@/lib/auth/settings";
+import { incrementMetric } from "@/lib/metrics/counters";
 import { CMS_REVALIDATE_SECONDS } from "./client";
 import { cmsTag } from "./tags";
 
@@ -70,8 +71,10 @@ export async function fetchAuthSettings(
   }
   const cached = deps.cache.get(pageKey);
   if (cached) {
+    incrementMetric("cms_stale_reads_total");
     return { settings: cached.settings, version: cached.version, stale: true };
   }
+  incrementMetric("cms_fallback_reads_total");
   return { settings: null, version: null, stale: false };
 }
 

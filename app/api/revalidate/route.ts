@@ -28,15 +28,18 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { revalidateTag } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 import { isAllowedTag } from "@/lib/cms/tags";
+import { incrementMetric } from "@/lib/metrics/counters";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!isAuthorised(request.headers.get("x-revalidate-secret"))) {
+    incrementMetric("revalidate_unauthorized_total");
     return NextResponse.json({ error: { code: "UNAUTHORIZED" } }, { status: 401 });
   }
 
   const body = await readJson(request);
   const tags = readTags(body);
   if (tags === null) {
+    incrementMetric("revalidate_invalid_tags_total");
     return NextResponse.json({ error: { code: "INVALID_TAGS" } }, { status: 400 });
   }
 

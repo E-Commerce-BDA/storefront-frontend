@@ -9,6 +9,7 @@
  * attached by `lib/cms/client.ts`; this map is only the within-process layer.
  */
 
+import { incrementMetric } from "@/lib/metrics/counters";
 import { createMemoryCache, type TtlCache } from "./cache";
 import { cmsBaseUrl, createCmsClient, type CmsClient } from "./client";
 import type { ThemeSettings } from "./themeSettings";
@@ -68,10 +69,14 @@ export async function fetchThemeSettings(deps: FetchThemeDeps = {}): Promise<The
 
   try {
     const cached = cache.get(THEME_CACHE_KEY);
-    if (cached) return { theme: cached, stale: true, fallback: false };
+    if (cached) {
+      incrementMetric("cms_stale_reads_total");
+      return { theme: cached, stale: true, fallback: false };
+    }
   } catch {
     // Ignore — the builtin theme is a better answer than a 500.
   }
 
+  incrementMetric("cms_fallback_reads_total");
   return { theme: null, stale: false, fallback: true };
 }

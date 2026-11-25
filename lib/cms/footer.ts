@@ -18,6 +18,7 @@
  */
 
 import type { Footer } from "@ecom/contracts";
+import { incrementMetric } from "@/lib/metrics/counters";
 import { createMemoryCache, type TtlCache } from "./cache";
 import { cmsBaseUrl, createCmsClient, type CmsClient } from "./client";
 
@@ -76,10 +77,14 @@ export async function fetchFooter(deps: FetchFooterDeps = {}): Promise<FooterRes
 
   try {
     const cached = cache.get(FOOTER_CACHE_KEY);
-    if (cached) return { footer: cached, stale: true, fallback: false };
+    if (cached) {
+      incrementMetric("cms_stale_reads_total");
+      return { footer: cached, stale: true, fallback: false };
+    }
   } catch {
     // Ignore — the minimal shell is a better answer than a 500.
   }
 
+  incrementMetric("cms_fallback_reads_total");
   return { footer: null, stale: false, fallback: true };
 }

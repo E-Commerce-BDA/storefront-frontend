@@ -12,6 +12,7 @@
  * outage story worse, not better.
  */
 
+import { incrementMetric } from "@/lib/metrics/counters";
 import { DEMO_NAV_INPUT } from "@/lib/shell/demoNavInput";
 import type { NavSettings } from "@/lib/shell/navSettings";
 import { createMemoryCache, type TtlCache } from "./cache";
@@ -74,8 +75,10 @@ export async function fetchNavSettings(
 
   const cached = cache.get(NAV_CACHE_KEY);
   if (cached) {
+    incrementMetric("cms_stale_reads_total");
     return { settings: cached.settings, version: cached.version, stale: true, fallback: false };
   }
 
+  incrementMetric("cms_fallback_reads_total");
   return { settings: DEMO_NAV_INPUT, version: null, stale: false, fallback: true };
 }

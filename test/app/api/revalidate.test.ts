@@ -8,6 +8,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { metricSnapshot, resetMetrics } from "@/lib/metrics/counters";
 
 const nextCache = vi.hoisted(() => ({ revalidateTag: vi.fn() }));
 
@@ -31,6 +32,7 @@ function request(init: { secret?: string | null; body?: unknown; raw?: string } 
 beforeEach(() => {
   vi.stubEnv("REVALIDATE_SECRET", SECRET);
   nextCache.revalidateTag.mockReset();
+  resetMetrics();
 });
 
 afterEach(() => {
@@ -46,11 +48,13 @@ describe("POST /api/revalidate — authorisation", () => {
     expect(nextCache.revalidateTag).not.toHaveBeenCalled();
   });
 
-  it("rejects a wrong secret and purges nothing", async () => {
+  it("rejects a wrong secret, purges nothing and counts the 401", async () => {
     const response = await POST(request({ secret: `${SECRET}!` }));
 
     expect(response.status).toBe(401);
     expect(nextCache.revalidateTag).not.toHaveBeenCalled();
+    expect(metricSnapshot().revalidate_unauthorized_total).toBe(1);
+    expect(metricSnapshot().revalidate_invalid_tags_total).toBe(0);
   });
 
   it("fails closed when the server has no secret configured", async () => {
