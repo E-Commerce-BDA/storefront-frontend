@@ -20,6 +20,7 @@ vi.mock("@/app/_components/CartProvider", () => ({
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
 
 const SHEET_SEARCH = {
@@ -57,6 +58,31 @@ describe("SearchMount", () => {
     expect(() => {
       fireEvent.change(input, { target: { value: "sweater" } });
     }).not.toThrow();
+  });
+
+  it("fills the palette trending region from the trending BFF (sf-066)", async () => {
+    const fetchFn = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          terms: ["Linen shirts"],
+          items: [{ id: "p1", type: "product", title: "Linen Shirt", slug: "linen-shirt", price: 42 }],
+          generatedAt: "2026-11-25T00:00:00Z",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchFn);
+    render(
+      <SearchMount
+        search={{ ...DEFAULT_NAV_SETTINGS.search, overlayVariant: "palette" }}
+        open
+        onClose={() => {}}
+      />,
+    );
+    expect(await screen.findByText("Linen shirts")).not.toBeNull();
+    expect(
+      fetchFn.mock.calls.some((call) => String((call as unknown as string[])[0]).includes("/api/search/trending")),
+    ).toBe(true);
   });
 
   it("renders the palette variant on open and allows typing a query", async () => {

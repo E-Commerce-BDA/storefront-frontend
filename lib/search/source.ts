@@ -8,6 +8,9 @@
  * Pure types + port. No React, no fetch.
  */
 
+/** The one category token for product rows (shared by suggest + trending). */
+export const SEARCH_PRODUCT_CATEGORY = "Products";
+
 export interface SearchResult {
   id: string;
   name: string;

@@ -2,7 +2,7 @@
 
 import { bff } from "@/lib/http/browser";
 import { searchSuggestResponseSchema, type SearchSuggestResponse } from "@ecom/contracts";
-import type { SearchResult, SearchSource } from "./source";
+import { SEARCH_PRODUCT_CATEGORY, type SearchResult, type SearchSource } from "./source";
 
 export function createHttpSearchSource(): SearchSource {
   return {
@@ -28,7 +28,7 @@ export function createHttpSearchSource(): SearchSource {
         name: p.name,
         price: p.effectivePrice ?? p.price ?? 0,
         image: typeof p.image === "string" ? p.image : (p.image as { url?: string } | undefined)?.url ?? "",
-        category: "Products",
+        category: SEARCH_PRODUCT_CATEGORY,
         url: `/products/${p.slug}`,
       }));
     },

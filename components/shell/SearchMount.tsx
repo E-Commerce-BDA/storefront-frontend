@@ -18,6 +18,7 @@ import { useRecentSearches } from "@/app/hooks/useRecentSearches";
 import { useQuickAdd } from "@/app/hooks/useQuickAdd";
 import { useCart } from "@/app/_components/CartProvider";
 import { createHttpSearchSource } from "@/lib/search/httpSource";
+import { fetchPaletteTrending } from "@/lib/search/trendingClient";
 import { createCartPort } from "@/lib/cart/port";
 import type { SearchResult } from "@/lib/search/source";
 import type { ResolvedNavSettings } from "@/lib/shell/navSettings";
@@ -78,6 +79,8 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
   const [activeIndex, setActiveIndex] = useState(0);
   const [closing, setClosing] = useState(false);
   const [toast, setToast] = useState<{ title: string; message: string } | null>(null);
+  const [trending, setTrending] = useState<string[]>([]);
+  const [curated, setCurated] = useState<SearchResult[]>([]);
   const addedCountRef = useRef(0);
 
   const variant = search.overlayVariant;
@@ -91,6 +94,20 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
   // Static v1 list, not CMS/settings-sourced — departments exist only because
   // the palette expects a filter vocabulary; sf-066 tracks the real endpoint.
   const departments = useMemo(() => ["All", "Products"], []);
+
+  // sf-066: trending/curated arrive from search-svc once an overlay opens —
+  // no network for a closed palette. Abort on close so a slow response cannot
+  // paint a region after the overlay is gone.
+  useEffect(() => {
+    if (!open || (variant !== "palette" && variant !== "editorial")) return;
+    const controller = new AbortController();
+    void fetchPaletteTrending(controller.signal).then((data) => {
+      if (controller.signal.aborted) return;
+      setTrending(data.terms);
+      setCurated(data.curated);
+    });
+    return () => controller.abort();
+  }, [open, variant]);
 
   // Two-phase close: closing flag plays the exit, unmount follows after
   // the resolved duration. Instant when motion is off.
@@ -136,8 +153,6 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
   const LazyOverlay = lazyFor(variant);
   if (!LazyOverlay) return null;
 
-  // Trending/curated are deliberately not passed here — sf-066 tracks the
-  // search-svc trending endpoint, and the overlays fail closed without them.
   const shared = {
     query: live.query,
     results: live.results,
@@ -171,6 +186,7 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
         {...shared}
         theme={search.editorial}
         motion={search.editorial.editorialAnimation}
+        curated={curated}
         activeIndex={activeIndex}
         onActive={setActiveIndex}
         onActiveChange={setActiveIndex}
@@ -184,6 +200,8 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
         theme={search.palette}
         settings={search.palette}
         motion={search.palette.paletteAnimation}
+        trending={trending}
+        curated={curated}
         recent={recents.recent}
         recents={recents.recent}
         onClearRecent={recents.clear}
