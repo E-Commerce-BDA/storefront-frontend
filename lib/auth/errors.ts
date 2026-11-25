@@ -4,6 +4,8 @@ export type AuthErrorCode =
   | "EMAIL_TAKEN"
   | "TOKEN_EXPIRED"
   | "TOKEN_REUSED"
+  | "RESET_TOKEN_INVALID"
+  | "RESET_TOKEN_EXPIRED"
   | "ACCOUNT_DISABLED"
   | "VALIDATION_FAILED"
   | "RATE_LIMITED"
@@ -36,6 +38,14 @@ const COPY: Record<AuthErrorCode, AuthErrorDisplay> = {
   ACCOUNT_DISABLED: {
     code: "ACCOUNT_DISABLED",
     message: "This account is disabled. Contact support for help.",
+  },
+  RESET_TOKEN_INVALID: {
+    code: "RESET_TOKEN_INVALID",
+    message: "This reset link is invalid. Request a new one.",
+  },
+  RESET_TOKEN_EXPIRED: {
+    code: "RESET_TOKEN_EXPIRED",
+    message: "This reset link has expired. Request a new one.",
   },
   VALIDATION_FAILED: {
     code: "VALIDATION_FAILED",

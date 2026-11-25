@@ -98,6 +98,9 @@ export interface AuthClient {
    * wants `firstName`/`email`, which no cookie carries) — sf-051.
    */
   me(accessToken: string): Promise<AuthResult<AuthUser>>;
+  /** au-007: forgot returns the same generic message for every address. */
+  forgotPassword(email: string): Promise<AuthResult<{ message: string }>>;
+  resetPassword(token: string, newPassword: string): Promise<AuthResult<null>>;
   updateProfile(accessToken: string, input: UpdateProfileInput): Promise<AuthResult<AuthUser>>;
   changePassword(accessToken: string, input: ChangePasswordInput): Promise<AuthResult<null>>;
   listAddresses(accessToken: string): Promise<AuthResult<AccountAddressDto[]>>;
@@ -112,6 +115,8 @@ type Operation =
   | "refresh"
   | "logout"
   | "me"
+  | "forgotPassword"
+  | "resetPassword"
   | "updateProfile"
   | "changePassword"
   | "addresses";
@@ -312,6 +317,28 @@ export function createAuthClient(options: {
       return { ok: true, data: user };
     },
 
+    async forgotPassword(email) {
+      const result = await post(
+        "/api/v1/auth/password/forgot",
+        { email },
+        "forgotPassword",
+      );
+      if (!result.ok) return result;
+      const message = isRecord(result.data) ? result.data.message : undefined;
+      return typeof message === "string"
+        ? { ok: true, data: { message } }
+        : { ok: false, code: "SERVICE_UNAVAILABLE", status: 200 };
+    },
+
+    async resetPassword(token, newPassword) {
+      const result = await post(
+        "/api/v1/auth/password/reset",
+        { token, newPassword },
+        "resetPassword",
+      );
+      return result.ok ? { ok: true, data: null } : result;
+    },
+
     async updateProfile(accessToken, input) {
       const result = await write("PATCH", "/api/v1/auth/me", accessToken, input, "updateProfile");
       if (!result.ok) return result;
@@ -407,7 +434,13 @@ function classify(
     if (operation === "login" || operation === "register") {
       return "INVALID_CREDENTIALS";
     }
-    if (isAuthErrorCode(code) && (code === "TOKEN_REUSED" || code === "ACCOUNT_DISABLED")) {
+    if (
+      isAuthErrorCode(code) &&
+      (code === "TOKEN_REUSED" ||
+        code === "ACCOUNT_DISABLED" ||
+        code === "RESET_TOKEN_INVALID" ||
+        code === "RESET_TOKEN_EXPIRED")
+    ) {
       return code;
     }
     return "TOKEN_EXPIRED";

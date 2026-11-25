@@ -162,20 +162,50 @@ describe("SignupForm", () => {
   });
 });
 
-describe("ForgotForm", () => {
-  it("answers identically and reveals the reset demo (no enumeration)", async () => {
+describe("ForgotForm (au-007)", () => {
+  it("posts the generic request and never invents or echoes a token", async () => {
+    const fetchFn = stubFetch(202, {
+      message: "If an account exists for that email, a password reset link has been sent.",
+    });
     const { container } = render(<ForgotForm title="Reset" submitLabel="Send reset link" />);
     fireEvent.change(screen.getByPlaceholderText("ana@example.com"), { target: { value: "nobody@x.com" } });
     submit(container as unknown as HTMLElement);
-    await waitFor(
-      () => expect(screen.getByRole("status").textContent).toContain("reset link is on its way"),
-      { timeout: 3000 },
-    );
-    expect(screen.getByPlaceholderText("Min. 8 chars")).not.toBeNull();
+
+    await waitFor(() => expect(screen.getByText(/Delivery is not wired yet/)).not.toBeNull());
+    const [url] = fetchFn.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("/api/auth/password/forgot");
+    expect(bodyOf(fetchFn)).toEqual({ email: "nobody@x.com" });
+    expect(screen.getByPlaceholderText("Paste the token here")).not.toBeNull();
+    expect(screen.queryByText(/tok_/)).toBeNull();
   });
 
-  it("renders the reset step directly with ?token=", () => {
-    render(<ForgotForm title="Reset" submitLabel="Send reset link" token="tok_123" />);
+  it("renders the reset step directly with ?token= and posts it to the BFF", async () => {
+    const fetchFn = vi.fn(async () => new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchFn);
+    const { container } = render(
+      <ForgotForm title="Reset" submitLabel="Send reset link" token="tok_123" />,
+    );
     expect(screen.getByText("Choose a new password")).not.toBeNull();
+    fireEvent.change(screen.getByPlaceholderText("Min. 8 chars, letter + number"), {
+      target: { value: "longer123" },
+    });
+    submit(container as unknown as HTMLElement);
+
+    await waitFor(() => expect(screen.getByText(/all other sessions signed out/)).not.toBeNull());
+    expect((fetchFn.mock.calls[0] as unknown as [string, RequestInit])[0]).toBe("/api/auth/password/reset");
+    expect(bodyOf(fetchFn)).toEqual({ token: "tok_123", newPassword: "longer123" });
+  });
+
+  it("shows the reset error code through displayFor", async () => {
+    stubFetch(401, { error: { code: "RESET_TOKEN_EXPIRED" } });
+    const { container } = render(
+      <ForgotForm title="Reset" submitLabel="Send reset link" token="tok_123" />,
+    );
+    fireEvent.change(screen.getByPlaceholderText("Min. 8 chars, letter + number"), {
+      target: { value: "longer123" },
+    });
+    submit(container as unknown as HTMLElement);
+
+    await waitFor(() => expect(screen.getByText(/reset link has expired/)).not.toBeNull());
   });
 });

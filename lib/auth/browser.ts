@@ -34,6 +34,33 @@ export async function submitAuth(
   return (await readCode(response)) ?? "SERVICE_UNAVAILABLE";
 }
 
+/**
+ * Same seam as submitAuth for the one flow that needs a success message:
+ * forgot-password's generic answer. Reading only `message` keeps the token
+ * (which auth-svc never returns anyway) out of the island's vocabulary.
+ */
+export async function submitAuthMessage(
+  path: string,
+  body: unknown,
+): Promise<{ code: AuthErrorCode | null; message: string | null }> {
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    return { code: "SERVICE_UNAVAILABLE", message: null };
+  }
+  if (!response.ok) return { code: await readCode(response), message: null };
+  const payload = (await response.json().catch(() => null)) as { message?: unknown } | null;
+  return {
+    code: null,
+    message: typeof payload?.message === "string" ? payload.message : null,
+  };
+}
+
 async function readCode(response: Response): Promise<AuthErrorCode | null> {
   try {
     const body = (await response.json()) as { error?: { code?: unknown } };

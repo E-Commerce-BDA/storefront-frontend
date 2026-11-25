@@ -4,22 +4,20 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import Input from "@/components/ui/Input";
 import { Icon } from "@/components/ui";
 import { AuthForm, PasswordMeter, type AuthFormError } from "@/components/auth";
+import { submitAuth, submitAuthMessage } from "@/lib/auth/browser";
+import { displayFor } from "@/lib/auth/errors";
 import type { ErrorStyle } from "@/lib/auth/settings";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const STRONG = /^(?=.*[a-zA-Z])(?=.*\d)/;
 
 /**
- * Route island: forgot-password request + post-link reset demo.
- * `token` present (from ?token=) renders the reset step directly.
- * Success copy is demo-grade — TODO(auth-copy): move to settings content
- * slots when a real reset flow exists.
+ * Route island: forgot-password request + post-link reset (au-007).
+ * `token` present (from ?token=) renders the reset step directly; the demo
+ * post-link state additionally asks for a real token because auth-svc does not
+ * deliver email yet and deliberately never returns the token. No token is
+ * invented here — a test/DB read must supply it.
  * Owned by app/(auth)/forgot only.
- *
- * TODO(auth-client): auth-svc has no reset endpoint (`auth.controller.ts`
- * exposes login/register/refresh/logout/me only), so both onSubmit handlers
- * below stay stubs. Deliberate, documented gap: the day auth-svc grows
- * `POST /auth/password/forgot` + `/auth/password/reset`, this island posts to
- * two new BFF routes in the same shape as `submitAuth` — nothing else moves.
  */
 export interface ForgotFormProps {
   title: string;
@@ -29,18 +27,28 @@ export interface ForgotFormProps {
   footer?: ReactNode;
 }
 
-export default function ForgotForm({ title, submitLabel, errorStyle = "banner", token = "", footer }: ForgotFormProps) {
+export default function ForgotForm({
+  title,
+  submitLabel,
+  errorStyle = "banner",
+  token = "",
+  footer,
+}: ForgotFormProps) {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [tokenInput, setTokenInput] = useState("");
   const [newPw, setNewPw] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
   const [touched, setTouched] = useState(false);
   const [error, setError] = useState<AuthFormError | null>(null);
+  const [genericMessage, setGenericMessage] = useState<string | null>(null);
 
   const emailBad = touched && !EMAIL_RE.test(email);
   const resetMode = token !== "" || sent;
+  const activeToken = token !== "" ? token : tokenInput;
+  const pwBad = touched && newPw !== "" && (newPw.length < 8 || !STRONG.test(newPw));
 
   const inputVars = {
     bg: "var(--auth-input-bg)",
@@ -54,17 +62,33 @@ export default function ForgotForm({ title, submitLabel, errorStyle = "banner", 
     setTouched(true);
     if (!EMAIL_RE.test(email)) return;
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 900));
+    const result = await submitAuthMessage("/api/auth/password/forgot", { email });
     setLoading(false);
-    setSent(true); // identical response whether the email exists (no enumeration)
+    if (result.code !== null) {
+      setError(displayFor(result.code));
+      return;
+    }
+    // Identical generic copy for existing/unknown/disabled accounts — no
+    // enumeration, and no token in the response or in this island.
+    setGenericMessage(result.message);
+    setSent(true);
   }
 
   async function onReset(e: FormEvent) {
     e.preventDefault();
-    if (newPw.length < 8) return;
+    setTouched(true);
+    if (activeToken === "" || newPw.length < 8 || !STRONG.test(newPw)) return;
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 900));
+    const code = await submitAuth("/api/auth/password/reset", {
+      token: activeToken,
+      newPassword: newPw,
+    });
     setLoading(false);
+    if (code !== null) {
+      setError(displayFor(code));
+      return;
+    }
+    setError(null);
     setDone(true);
   }
 
@@ -79,25 +103,40 @@ export default function ForgotForm({ title, submitLabel, errorStyle = "banner", 
         onSubmit={onReset}
         footer={footer}
       >
-        {sent && token === "" && (
-          <p role="status" className="sf-auth__ok">
-            If an account exists for that email, a reset link is on its way. Demo below shows the post-link state.
-          </p>
-        )}
         {done ? (
           <p role="status" className="sf-auth__ok">
             Password updated — all other sessions signed out.
           </p>
         ) : (
           <>
+            {sent && token === "" ? (
+              <p role="status" className="sf-auth__ok">
+                {genericMessage ?? "If an account exists for that email, a reset link has been sent."}{" "}
+                Delivery is not wired yet: the link is not emailed. Paste a test token below to try
+                the reset step; the storefront never invents one.
+              </p>
+            ) : null}
+            {token === "" ? (
+              <Input
+                label="Reset token (from a test/DB read)"
+                value={tokenInput}
+                onChange={(v) => {
+                  setTokenInput(v);
+                  setError(null);
+                }}
+                placeholder="Paste the token here"
+                required
+                {...inputVars}
+              />
+            ) : null}
             <Input
               label="New password"
               value={newPw}
               onChange={setNewPw}
-              placeholder="Min. 8 chars"
+              placeholder="Min. 8 chars, letter + number"
               required
               type={showPw ? "text" : "password"}
-              error={touched && newPw !== "" && newPw.length < 8 ? "Use at least 8 characters" : undefined}
+              error={pwBad ? "Use 8+ characters with a letter and a number" : undefined}
               {...inputVars}
               rightIconInteractive
               rightIcon={
