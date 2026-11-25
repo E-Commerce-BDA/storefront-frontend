@@ -24,6 +24,7 @@ const cart = vi.hoisted(() => ({
 const push = vi.hoisted(() => vi.fn());
 const replace = vi.hoisted(() => vi.fn());
 const bff = vi.hoisted(() => vi.fn());
+const search = vi.hoisted(() => ({ params: new URLSearchParams() }));
 
 vi.mock("@/app/_components/CartProvider", () => ({
   useCart: () => ({
@@ -36,7 +37,7 @@ vi.mock("@/app/_components/CartProvider", () => ({
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push, replace }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => search.params,
 }));
 vi.mock("@/lib/http/browser", () => ({ bff }));
 // The summary rows are CartLineItem's tested face; the island test only counts them.
@@ -90,6 +91,7 @@ beforeEach(() => {
   cart.clear.mockClear();
   push.mockClear();
   replace.mockClear();
+  search.params = new URLSearchParams();
   bff.mockReset();
 });
 
@@ -133,6 +135,22 @@ describe("CheckoutForm", () => {
     await waitFor(() => expect(bff).toHaveBeenCalledTimes(1));
     const [, opts] = bff.mock.calls[0];
     expect(opts.body.discountCode).toBe("SAVE10");
+  });
+
+  it("carries the cart's coupon into the summary as a discount line (A5.3)", async () => {
+    search.params = new URLSearchParams("coupon=SAVE10");
+    bff.mockImplementation((path: string) =>
+      Promise.resolve(
+        path === "/api/discount-codes/validate"
+          ? ok({ valid: true, code: "SAVE10", discountType: "percent", value: 10 })
+          : ok(confirmation),
+      ),
+    );
+    render(<CheckoutForm />);
+
+    await waitFor(() => expect(screen.getByText("Coupon (SAVE10)")).not.toBeNull());
+    expect(screen.getByText("-$1")).not.toBeNull();
+    expect(screen.getByText("$9")).not.toBeNull();
   });
 
   it("replays a retry of the same attempt with the SAME key (charged once)", async () => {

@@ -36,9 +36,12 @@ import { isPendingId } from "@/lib/cart/state";
 import type { ServiceFailure } from "@/lib/http/result";
 import {
   checkoutConfirmationSchema,
+  discountValidationResultSchema,
   type CheckoutConfirmationDto,
   type CheckoutInput,
+  type DiscountValidationResult,
 } from "@/lib/order/schemas";
+import { discountAmount, totalAfterDiscount } from "@/lib/order/discount";
 import { nextKey, type IdemPair } from "@/lib/checkout/idempotency";
 
 /** `describeFailure` input: a failure plus the status it arrived with. */
@@ -84,6 +87,9 @@ export function describeFailure(failure: ServiceFailure): CheckoutCopy {
   return { message: "Checkout is unavailable right now.", toCart: false, rotateKey: false, retryWithSameKey: false };
 }
 
+/** Quiet window before a typed coupon is re-validated (cart mirror). */
+export const CHECKOUT_COUPON_DEBOUNCE_MS = 250;
+
 /** IN_PROGRESS patience — the plan names the cadence, not a guess. */
 export const IN_PROGRESS_RETRY_MS = 1000;
 const IN_PROGRESS_MAX_RETRIES = 2;
@@ -118,6 +124,41 @@ export default function CheckoutForm() {
   const searchParams = useSearchParams();
   const initialCoupon = searchParams.get("coupon") ?? "";
   const [discountCode, setDiscountCode] = useState(initialCoupon);
+  const [discountResult, setDiscountResult] = useState<DiscountValidationResult | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+
+  // The cart previews a coupon and sends only its code here. Re-validate it
+  // against the same endpoint so the summary's discount line is the one the
+  // cart showed — never a dollar amount copied from an editable query string.
+  useEffect(() => {
+    const code = discountCode.trim();
+    if (code === "") return;
+    let alive = true;
+    const timer = setTimeout(() => {
+      void bff<DiscountValidationResult>("/api/discount-codes/validate", {
+        method: "POST",
+        body: { code, cartTotal: cart.subtotal },
+        schema: discountValidationResultSchema,
+      })
+        .then((res) => {
+          if (!alive) return;
+          if (res?.ok && res.data.valid) {
+            setDiscountResult(res.data);
+            setCouponError(null);
+          } else {
+            setDiscountResult(null);
+            setCouponError(res && !res.ok && res.message ? res.message : null);
+          }
+        })
+        .catch(() => {
+          if (alive) setDiscountResult(null);
+        });
+    }, CHECKOUT_COUPON_DEBOUNCE_MS);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [discountCode, cart.subtotal]);
 
   const [shipping, setShipping] = useState<AddressForm>(EMPTY_ADDRESS);
   const [sameBilling, setSameBilling] = useState(true);
@@ -203,6 +244,8 @@ export default function CheckoutForm() {
 
   const busy = cart.status === "loading";
   const hasPlaceholders = cart.items.some((line) => isPendingId(line.id));
+  const discount = discountAmount(discountResult, cart.subtotal);
+  const estimatedTotal = totalAfterDiscount(cart.subtotal, discount);
 
   return (
     <div className="grid gap-8 md:grid-cols-[1fr_360px]">
@@ -269,7 +312,21 @@ export default function CheckoutForm() {
         <fieldset className="grid gap-4 border-0 p-0 min-w-0" disabled={submitting}>
           <legend className="mb-2 p-0 text-base font-semibold text-[var(--color-ink)]">Payment</legend>
           <Select label="Provider" value="mock" onChange={() => {}} options={[{ value: "mock", label: "Mock card (no real charge)" }]} />
-          <Input label="Discount code (optional)" value={discountCode} onChange={(v) => setDiscountCode(v)} placeholder="e.g. SUMMER20" />
+          <Input
+            label="Discount code (optional)"
+            value={discountCode}
+            onChange={(v) => {
+              setDiscountCode(v);
+              // Clearing the field drops the preview synchronously in the
+              // event, so the effect never has to setState in its body.
+              if (v.trim() === "") {
+                setDiscountResult(null);
+                setCouponError(null);
+              }
+            }}
+            placeholder="e.g. SUMMER20"
+            error={couponError ?? undefined}
+          />
           <Textarea label="Order notes" value={notes} onChange={(v) => setNotes(v)} placeholder="Delivery instructions, gift message…" rows={3} />
         </fieldset>
 
@@ -291,9 +348,21 @@ export default function CheckoutForm() {
             />
           ))}
         </ul>
-        <div className="flex items-baseline justify-between border-t border-[var(--border)] pt-3">
+        <div className="flex items-baseline justify-between">
           <span className="text-sm text-[var(--text-muted)]">Subtotal</span>
-          <span className="text-lg font-semibold text-[var(--color-ink)]">${cart.subtotal}</span>
+          <span className="text-sm text-[var(--color-ink)]">${cart.subtotal}</span>
+        </div>
+        {discountResult && discount > 0 ? (
+          <div className="flex items-baseline justify-between text-[var(--color-success,#27ae60)]">
+            <span className="text-sm">
+              Coupon ({discountResult.code ?? discountCode.trim()})
+            </span>
+            <span className="text-sm font-medium">-${discount}</span>
+          </div>
+        ) : null}
+        <div className="flex items-baseline justify-between border-t border-[var(--border)] pt-3">
+          <span className="text-sm font-semibold text-[var(--color-ink)]">Estimated total</span>
+          <span className="text-lg font-semibold text-[var(--color-ink)]">${estimatedTotal}</span>
         </div>
         <p className="m-0 text-xs text-[var(--text-muted)]">
           Shipping and tax are calculated by the order service and shown on the confirmation.

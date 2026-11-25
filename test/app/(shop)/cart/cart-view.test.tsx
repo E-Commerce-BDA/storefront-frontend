@@ -9,7 +9,7 @@
  * an empty cart is an EmptyState rather than a blank page.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { CartItemDto } from "@/lib/cart/schemas";
 
 const cart = vi.hoisted(() => ({
@@ -22,6 +22,9 @@ const cart = vi.hoisted(() => ({
   clear: vi.fn(async () => true),
 }));
 const push = vi.fn();
+const bff = vi.hoisted(() => vi.fn());
+
+vi.mock("@/lib/http/browser", () => ({ bff }));
 
 vi.mock("@/app/_components/CartProvider", () => ({
   useCart: () => ({
@@ -59,6 +62,7 @@ beforeEach(() => {
   cart.remove.mockClear();
   cart.clear.mockClear();
   push.mockClear();
+  bff.mockReset();
   setCart([]);
 });
 
@@ -109,6 +113,29 @@ describe("CartView", () => {
     render(<CartView />);
     fireEvent.click(screen.getByLabelText("Remove Mug from cart"));
     expect(cart.remove).toHaveBeenCalledWith("i1");
+  });
+
+  it("previews, then cleanly removes an applied coupon (A4.5)", async () => {
+    bff.mockResolvedValue({
+      ok: true,
+      data: { valid: true, code: "SAVE10", discountType: "percent", value: 10 },
+    });
+    setCart([line({ qty: 2, unitPrice: 10 })], { subtotal: 20 });
+    render(<CartView />);
+
+    fireEvent.change(screen.getByPlaceholderText("Enter code"), { target: { value: "SAVE10" } });
+    fireEvent.click(screen.getByRole("button", { name: "Apply" }));
+
+    await waitFor(() => expect(screen.getByText(/Coupon \(SAVE10\)/)).not.toBeNull());
+    expect(screen.getByText("-$2")).not.toBeNull();
+    expect(screen.getByText("$18")).not.toBeNull();
+    // The code rides to checkout, not a client-computed dollar amount.
+    fireEvent.click(screen.getByRole("button", { name: "Checkout" }));
+    expect(push).toHaveBeenCalledWith("/checkout?coupon=SAVE10");
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove coupon" }));
+    expect(screen.queryByText(/Coupon \(SAVE10\)/)).toBeNull();
+    expect(screen.getAllByText("$20").length).toBeGreaterThan(0);
   });
 
   it("sends the shopper to checkout", () => {

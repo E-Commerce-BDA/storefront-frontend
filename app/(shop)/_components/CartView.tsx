@@ -24,6 +24,7 @@ import { Button, EmptyState, Icon, Input } from "@/components/ui";
 import CartTable from "@/components/shell/CartTable";
 import { useCart } from "@/app/_components/CartProvider";
 import { bff } from "@/lib/http/browser";
+import { discountAmount, totalAfterDiscount } from "@/lib/order/discount";
 import {
   discountValidationResultSchema,
   type DiscountValidationResult,
@@ -145,18 +146,10 @@ export default function CartView() {
     );
   }
 
-  // Calculate discount amount
-  let discountAmount = 0;
-  if (appliedCoupon && appliedCoupon.valid) {
-    if (typeof appliedCoupon.discount === "number") {
-      discountAmount = appliedCoupon.discount;
-    } else if (appliedCoupon.discountType === "percent" && typeof appliedCoupon.value === "number") {
-      discountAmount = Math.round(cart.subtotal * (appliedCoupon.value / 100) * 100) / 100;
-    } else if (appliedCoupon.discountType === "fixed" && typeof appliedCoupon.value === "number") {
-      discountAmount = Math.min(cart.subtotal, appliedCoupon.value);
-    }
-  }
-  const estimatedTotal = Math.max(0, Math.round((cart.subtotal - discountAmount) * 100) / 100);
+  // Preview arithmetic is shared with checkout so the two surfaces cannot
+  // disagree about what the same code is worth.
+  const discount = discountAmount(appliedCoupon, cart.subtotal);
+  const estimatedTotal = totalAfterDiscount(cart.subtotal, discount);
 
   const displayItems = cart.items.map((line) => ({
     ...line,
@@ -202,7 +195,7 @@ export default function CartView() {
                   Remove
                 </button>
               </span>
-              <span className="font-medium">-${discountAmount}</span>
+              <span className="font-medium">-${discount}</span>
             </div>
           ) : null}
 
