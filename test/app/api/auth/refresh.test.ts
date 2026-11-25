@@ -88,7 +88,7 @@ describe("POST /api/auth/refresh", () => {
   it("sends a browser to /signin and clears both cookies when the refresh is rejected", async () => {
     vi.stubEnv("AUTH_SVC_URL", "http://auth.test");
     stubAuthService(401, {
-      error: { code: "UNAUTHENTICATED", message: "Session terminated due to security violation" },
+      error: { code: "TOKEN_REUSED", message: "Session terminated due to security violation" },
     });
 
     const response = await POST(

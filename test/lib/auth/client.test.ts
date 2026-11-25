@@ -2,8 +2,8 @@
  * Thin auth client — the mapping table is the contract, so it is a test.
  *
  * Every case injects `fetchFn`: no network, no clock, no ports. The rule the
- * table encodes is "status first, message only to break a 401 tie on refresh",
- * because auth-svc emits no domain codes yet.
+ * table encodes is "status first, a known domain code refines a 401 on refresh";
+ * no case may depend on the message text.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -33,8 +33,8 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-function authError(status: number, message: string): Response {
-  return json({ error: { code: "UNAUTHENTICATED", message } }, status);
+function authError(status: number, code: string, message = code): Response {
+  return json({ error: { code, message } }, status);
 }
 
 function client(handler: () => Promise<Response>) {
@@ -66,7 +66,7 @@ describe("login / register", () => {
   });
 
   it("maps a 401 on login to INVALID_CREDENTIALS, whatever the message says", async () => {
-    const { auth } = client(async () => authError(401, "Account is disabled"));
+    const { auth } = client(async () => authError(401, "ACCOUNT_DISABLED", "Account is disabled"));
 
     const result = await auth.login({ email: "ana@x.com", password: "nope" });
 
@@ -75,7 +75,7 @@ describe("login / register", () => {
   });
 
   it("maps a 409 on register to EMAIL_TAKEN", async () => {
-    const { auth } = client(async () => authError(409, "Email already registered"));
+    const { auth } = client(async () => authError(409, "EMAIL_TAKEN", "Email already registered"));
 
     const result = await auth.register({
       email: "ana@x.com",
@@ -110,9 +110,9 @@ describe("refresh", () => {
     });
   });
 
-  it('maps "security violation" to TOKEN_REUSED', async () => {
+  it("maps a TOKEN_REUSED code from a 401 refresh to TOKEN_REUSED", async () => {
     const { auth } = client(async () =>
-      authError(401, "Session terminated due to security violation"),
+      authError(401, "TOKEN_REUSED", "Session terminated due to security violation"),
     );
 
     expect(await auth.refresh("rt_1")).toEqual({
@@ -122,8 +122,8 @@ describe("refresh", () => {
     });
   });
 
-  it('maps "disabled" to ACCOUNT_DISABLED', async () => {
-    const { auth } = client(async () => authError(401, "Account is disabled"));
+  it("maps an ACCOUNT_DISABLED code from a 401 refresh to ACCOUNT_DISABLED", async () => {
+    const { auth } = client(async () => authError(401, "ACCOUNT_DISABLED", "Account is disabled"));
 
     expect(await auth.refresh("rt_1")).toEqual({
       ok: false,
@@ -134,7 +134,7 @@ describe("refresh", () => {
 
   it("maps a plain 401 to TOKEN_EXPIRED (the common case)", async () => {
     const { auth } = client(async () =>
-      authError(401, "Invalid or expired refresh token"),
+      authError(401, "UNAUTHENTICATED", "Invalid or expired refresh token"),
     );
 
     expect(await auth.refresh("rt_1")).toEqual({
@@ -151,7 +151,7 @@ describe("status map", () => {
     [429, "RATE_LIMITED"],
     [502, "SERVICE_UNAVAILABLE"],
   ])("maps %i to %s", async (status, code) => {
-    const { auth } = client(async () => authError(status, "whatever"));
+    const { auth } = client(async () => authError(status, "UNAUTHENTICATED", "whatever"));
 
     const result = await auth.login({ email: "ana@x.com", password: "x" });
 

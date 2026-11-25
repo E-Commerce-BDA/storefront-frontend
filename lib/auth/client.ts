@@ -13,16 +13,14 @@
  * never throws, and every failure is a typed code the UI already has copy for.
  * That is what lets the tests run with zero network.
  *
- * WHY message-matching for refresh: auth-svc emits no domain codes yet
- * (`src/common/filters/http-exception.filter.ts` `defaultCode` returns
- * `UNAUTHENTICATED` for every 401), so "security violation" and "Account is
- * disabled" are only distinguishable by their message. The mapping is
- * deliberately narrow and is the one thing to delete when auth-svc grows
- * `TOKEN_REUSED`/`ACCOUNT_DISABLED` codes.
+ * Refresh failures carry a domain code from auth-svc (`TOKEN_REUSED`,
+ * `ACCOUNT_DISABLED`) in the shared error envelope. Status stays the stable
+ * half of the contract; a 401 with no known code is simply `TOKEN_EXPIRED`.
+ * No message is ever parsed — copy can change without breaking the mapping.
  */
 
 import { serviceUrl } from "@/lib/services/urls";
-import type { AuthErrorCode } from "./errors";
+import { isAuthErrorCode, type AuthErrorCode } from "./errors";
 
 export interface AuthUser {
   id: string;
@@ -116,7 +114,7 @@ export function createAuthClient(options: {
     if (!response.ok) {
       return {
         ok: false,
-        code: classify(response.status, await readMessage(response), operation),
+        code: classify(response.status, await readCode(response), operation),
         status: response.status,
       };
     }
@@ -154,7 +152,7 @@ export function createAuthClient(options: {
     if (!response.ok) {
       return {
         ok: false,
-        code: classify(response.status, await readMessage(response), operation),
+        code: classify(response.status, await readCode(response), operation),
         status: response.status,
       };
     }
@@ -231,11 +229,11 @@ export function createAuthClient(options: {
   };
 }
 
-async function readMessage(response: Response): Promise<string> {
+async function readCode(response: Response): Promise<string> {
   try {
-    const body = (await response.json()) as { error?: { message?: unknown } };
-    const message = body?.error?.message;
-    return typeof message === "string" ? message : "";
+    const body = (await response.json()) as { error?: { code?: unknown } };
+    const code = body?.error?.code;
+    return typeof code === "string" ? code : "";
   } catch {
     return "";
   }
@@ -243,11 +241,11 @@ async function readMessage(response: Response): Promise<string> {
 
 /**
  * Status first, because that is the stable half of auth-svc's contract.
- * Message only breaks the tie inside 401 on refresh.
+ * A known domain code refines a 401; no code means the ordinary expiry.
  */
 function classify(
   status: number,
-  message: string,
+  code: string,
   operation: Operation,
 ): AuthErrorCode {
   if (status === 409) return "EMAIL_TAKEN";
@@ -258,9 +256,9 @@ function classify(
     if (operation === "login" || operation === "register") {
       return "INVALID_CREDENTIALS";
     }
-    const lowered = message.toLowerCase();
-    if (lowered.includes("security violation")) return "TOKEN_REUSED";
-    if (lowered.includes("disabled")) return "ACCOUNT_DISABLED";
+    if (isAuthErrorCode(code) && (code === "TOKEN_REUSED" || code === "ACCOUNT_DISABLED")) {
+      return code;
+    }
     return "TOKEN_EXPIRED";
   }
   if (status >= 500) return "SERVICE_UNAVAILABLE";
