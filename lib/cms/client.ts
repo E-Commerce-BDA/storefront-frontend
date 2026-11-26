@@ -33,11 +33,14 @@ import {
   type BlogListResponse,
   footerResponseSchema,
   type FooterResponse,
+  navResponseSchema,
   pageSchema,
+  pageSettingsResponseSchema,
   type Page,
   sectionListEnvelopeSchema,
   sectionSchema,
   type SectionListResponse,
+  themeResponseSchema,
 } from "@ecom/contracts";
 import type { AuthSettings } from "@/lib/auth/settings";
 import type { ThemeSettings } from "@/lib/cms/themeSettings";
@@ -263,37 +266,32 @@ export function createCmsClient(options: CmsClientOptions): CmsClient {
   };
 }
 
-function asEnvelope(
-  body: unknown,
-  key: "settings" | "theme" | "navbar",
-): { payload: Record<string, unknown>; version: number; configured?: boolean } | null {
-  if (typeof body !== "object" || body === null || Array.isArray(body)) return null;
-  const record = body as Record<string, unknown>;
-  const payload = record[key];
-  const version = record.version;
-  if (typeof payload !== "object" || payload === null || Array.isArray(payload)) return null;
-  if (typeof version !== "number" || !Number.isFinite(version)) return null;
-  return {
-    payload: payload as Record<string, unknown>,
-    version,
-    ...(typeof record.configured === "boolean" ? { configured: record.configured } : {}),
-  };
-}
-
-/** Settings readers keep their historical envelope guard; carry status through. */
+/**
+ * I-01: validate theme/nav/page-settings through the versioned contracts
+ * response schemas instead of `as` casts. A wrong-typed admin value is a
+ * CONTRACT_MISMATCH, not a lie the resolver has to defend against.
+ */
 function parseSettings<T extends { version: number }>(
   read: CmsRead<unknown>,
   key: "settings" | "theme" | "navbar",
 ): CmsRead<T & { configured?: boolean }> {
   if (read.data === null) return cmsMissing(read.status, read.code);
-  const envelope = asEnvelope(read.data, key);
-  if (envelope === null) return cmsMissing(read.status, "CONTRACT_MISMATCH");
-  // Keep the historical shape { settings|theme|navbar, version } that every
-  // caller already destructures; `configured` rides alongside for I-01.
+  const schema =
+    key === "settings"
+      ? pageSettingsResponseSchema
+      : key === "theme"
+        ? themeResponseSchema
+        : navResponseSchema;
+  const parsed = schema.safeParse(read.data);
+  if (!parsed.success) return cmsMissing(read.status, "CONTRACT_MISMATCH");
+  const envelope = parsed.data as Record<string, unknown>;
+  const payloadKey = key === "settings" ? "settings" : key === "theme" ? "theme" : "navbar";
+  // Keep the historical shape every caller destructures; `configured` rides
+  // alongside. The payload schema already ran as part of the response schema.
   const data = {
-    [key]: envelope.payload,
+    [payloadKey]: envelope[payloadKey],
     version: envelope.version,
-    ...(envelope.configured === undefined ? {} : { configured: envelope.configured }),
+    ...(typeof envelope.configured === "boolean" ? { configured: envelope.configured } : {}),
   } as unknown as T & { configured?: boolean };
   return cmsFound(data);
 }

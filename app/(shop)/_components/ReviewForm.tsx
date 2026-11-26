@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { Button, Input, Textarea, Toast } from "@/components/ui";
 import { bff } from "@/lib/http/browser";
+import { createdReviewSchema } from "@/lib/reviews/schemas";
 import { useNotice } from "./useNotice";
 
 export interface ReviewFormProps {
@@ -28,6 +29,9 @@ export default function ReviewForm({ productId, productName }: ReviewFormProps) 
     if (busy || rating === 0 || body.trim() === "") return;
     setBusy(true);
     const result = await bff<{ id: string }>("/api/reviews", {
+      // I-18: explicit marker — the 201 body is {id,productId,status,createdAt}
+      // but this form only needs the id, so the contract is checked at the BFF.
+      schema: createdReviewSchema.pick({ id: true }),
       method: "POST",
       // catalog-svc strips undeclared keys, so orderId is not sent at all.
       // The required `body` is always present; limits match the service.

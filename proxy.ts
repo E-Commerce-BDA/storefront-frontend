@@ -45,8 +45,6 @@ import {
   type CookieSpec,
 } from "@/lib/auth/session";
 import { GUEST_COOKIE, guestCookie, mintGuestId } from "@/lib/session/guest";
-import {
-} from "@/lib/recently-viewed/cookie";
 
 const SESSION_PATH = "/api/auth/session";
 const REFRESH_ROUTE = "/api/auth/refresh";
