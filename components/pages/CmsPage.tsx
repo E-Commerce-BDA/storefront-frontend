@@ -30,7 +30,7 @@ export default function CmsPage({ page }: CmsPageProps) {
     <article className="sf-page">
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: page.title }]} />
       <header className="sf-page__head">
-        <h1 className="sf-page__title">{page.title}</h1>
+        <h1 className="sf-title sf-page__title">{page.title}</h1>
       </header>
       <PageBlocks blocks={page.blocks} />
     </article>

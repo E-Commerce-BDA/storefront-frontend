@@ -123,7 +123,7 @@ export default function PurchasePanel({
 
       <div className="flex flex-col gap-5">
         <div className="flex items-start justify-between gap-4">
-          <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--color-ink)] sm:text-3xl">
+          <h1 className="sf-title sf-pdp__title">
             {name}
           </h1>
           <WishlistButton productId={productId} />

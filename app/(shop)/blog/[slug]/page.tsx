@@ -104,7 +104,7 @@ export default async function BlogPostPage({
       />
 
       <header className="sf-post__head">
-        <h1 className="sf-post__title">{blog.title}</h1>
+        <h1 className="sf-title sf-post__title">{blog.title}</h1>
         {blog.excerpt !== undefined && blog.excerpt !== "" ? (
           <p className="sf-post__standfirst">{blog.excerpt}</p>
         ) : null}

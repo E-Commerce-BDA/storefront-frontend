@@ -3614,7 +3614,7 @@ body {
 .sf-section__title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(22px, 3vw, 32px);
+  font-size: var(--fs-display-3);
   line-height: 1.2;
   color: var(--section-title, var(--color-ink));
 }
@@ -3686,6 +3686,12 @@ body {
   display: grid;
   gap: var(--pdp-trust-copy-gap, 2px);
 }
+/* PDP product title (PurchasePanel) - the shared primitive with one admin
+   knob; it used to be Tailwind-only type outside the scale. */
+.sf-pdp__title {
+  font-size: var(--pdp-title-size, var(--fs-display-3));
+}
+
 .sf-pdp-trust__title {
   font-weight: 600;
   font-size: var(--pdp-text-size, 14px);
@@ -4145,10 +4151,23 @@ body {
    shell-cart.md §3, pages/routing.md §2). The crumb separator is *content*, so it
    lives in the stylesheet where the style contract can read it; the row/column
    layout is plain flex. Every colour resolves through a token. */
+/* sf-079 - one title primitive. Route selectors may retune their own size,
+   but the face, leading, ink and scale live here so a PDP, a post and a shop
+   header cannot drift into three different type systems. */
+.sf-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-display-3);
+  line-height: 1.15;
+  color: var(--color-ink);
+}
 .sf-page-header {
-  padding: var(--page-header-pad, 28px 0 20px);
+  /* The top gap lives on the first row, so standalone Breadcrumbs (CMS docs)
+     get the same spacing as a full header. */
+  padding: 0 0 var(--page-header-pad-bottom, 20px);
 }
 .sf-page-header__crumbs {
+  padding-top: var(--page-header-pad-top, 28px);
   margin-bottom: var(--page-header-crumb-gap, 12px);
 }
 .sf-page-header__crumb-list {
@@ -4159,7 +4178,7 @@ body {
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 13px;
+  font-size: var(--fs-caption);
 }
 .sf-page-header__crumb {
   display: inline-flex;
@@ -4194,9 +4213,12 @@ body {
   justify-content: space-between;
   gap: var(--page-header-row-gap, 16px);
 }
+.sf-page-header__row:first-child {
+  padding-top: var(--page-header-pad-top, 28px);
+}
 .sf-page-header__eyebrow {
   margin: 0 0 6px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -4205,7 +4227,7 @@ body {
 .sf-page-header__title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--page-header-title-size, 30px);
+  font-size: var(--page-header-title-size, var(--fs-display-3));
   line-height: 1.15;
   color: var(--page-header-title, var(--color-ink));
 }
@@ -4406,7 +4428,9 @@ body {
   display: grid;
   gap: var(--footer-gap, 32px);
   margin-inline: auto;
-  max-width: var(--footer-measure, 1400px);
+  /* sf-079: the old 1400px cap stopped the links short of the page grid on
+     wide screens. The shared --sf-page-pad is now the only horizontal edge. */
+  max-width: var(--footer-measure, none);
 }
 .sf-footer a {
   color: var(--footer-link, #ffffff);
@@ -4608,7 +4632,7 @@ body {
   margin: 0;
   max-width: var(--doc-title-measure, 24ch);
   font-family: var(--font-display);
-  font-size: var(--doc-title-size, 34px);
+  font-size: var(--doc-title-size, var(--fs-display-3));
   line-height: 1.15;
   color: var(--doc-title, var(--color-ink));
 }

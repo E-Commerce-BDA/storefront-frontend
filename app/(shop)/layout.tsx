@@ -11,8 +11,21 @@
  * `(auth)` routes keep a clean conversion surface. Both CMS reads never reject
  * (stale cache → demo nav / minimal footer), and they are awaited together as
  * one service budget.
+ *
+ * sf-079: the chrome sits OUTSIDE `.sf-shop`. The page container owns the
+ * horizontal gutter; the navbar and footer each own theirs, so nesting them
+ * inset the bars twice (~100px vs the page's ~50px). Rejected alternative:
+ * strip the chrome's padding — that would leave the bars' own backgrounds
+ * flush to the viewport edge and break their documented gutter contract.
+ *
+ * `connection()` keeps the shell config request-fresh. Prerendering this layout
+ * froze nav/announcement/footer into each route's HTML at build time, so
+ * /about kept the old wordmark while /shop showed the resolved config. The
+ * rejected alternative was a global revalidate change: too broad, and it
+ * would still let two routes read two different build-time snapshots.
  */
 
+import { connection } from "next/server";
 import CartProvider from "../_components/CartProvider";
 import { WishlistProvider } from "../_components/WishlistProvider";
 import { CompareProvider } from "../_components/CompareProvider";
@@ -24,6 +37,7 @@ import { fetchNavSettings } from "@/lib/cms/navigation";
 import { resolveNavSettings } from "@/lib/shell/resolveNav";
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
+  await connection();
   const [navResult, footerResult] = await Promise.all([fetchNavSettings(), fetchFooter()]);
   const nav = resolveNavSettings({ settings: navResult.settings, global: null });
 
@@ -31,11 +45,9 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
     <CartProvider drawerActions={nav.cart.drawerActions}>
       <WishlistProvider>
         <CompareProvider>
-          <div className="sf-shop">
-            <NavbarMount nav={nav} />
-            {children}
-            <FooterMount footer={footerResult.footer} />
-          </div>
+          <NavbarMount nav={nav} />
+          <div className="sf-shop">{children}</div>
+          <FooterMount footer={footerResult.footer} />
           <PageViewTracker />
         </CompareProvider>
       </WishlistProvider>
