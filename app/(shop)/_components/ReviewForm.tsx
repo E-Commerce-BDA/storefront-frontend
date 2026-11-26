@@ -54,7 +54,7 @@ export default function ReviewForm({ productId, productName }: ReviewFormProps) 
 
   if (queued) {
     return (
-      <p className="m-0 text-sm text-[var(--color-success,#27ae60)]" role="status">
+      <p className="m-0 text-sm text-[var(--color-success)]" role="status">
         Thanks — your review of {productName} is awaiting moderation.
       </p>
     );

@@ -25,7 +25,7 @@ export default function WishlistButton({
       type="button"
       className={`sf-wishlist-btn inline-flex items-center justify-center rounded-full p-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-navy)] ${
         saved
-          ? "text-[var(--color-terracotta)] hover:bg-[var(--color-terracotta-tint)]"
+          ? "text-[var(--color-sale-text)] hover:bg-[var(--color-sale-soft)]"
           : "text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--color-ink)]"
       } ${className}`}
       aria-label={buttonLabel}
@@ -42,7 +42,7 @@ export default function WishlistButton({
       <Icon
         name="heart"
         size={20}
-        className={saved ? "fill-current text-[var(--color-terracotta)]" : "text-current"}
+        className={saved ? "fill-current text-[var(--color-sale-text)]" : "text-current"}
       />
     </button>
   );

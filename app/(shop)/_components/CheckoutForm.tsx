@@ -327,7 +327,7 @@ export default function CheckoutForm() {
           </p>
         ) : null}
         {cart.status === "error" ? (
-          <div className="flex items-center gap-3 rounded-[var(--radius-md,10px)] border border-[var(--color-danger,#c0392b)] px-4 py-3" role="alert">
+          <div className="flex items-center gap-3 rounded-[var(--radius-md,10px)] border border-[var(--color-error)] px-4 py-3" role="alert">
             <p className="m-0 text-sm text-[var(--color-ink)]">
               We could not load your bag. Please try again.
             </p>
@@ -339,7 +339,7 @@ export default function CheckoutForm() {
         {banner ? (
           <div
             role="alert"
-            className="flex items-start gap-3 rounded-[var(--radius-md,10px)] border border-[var(--color-danger,#c0392b)] bg-[rgba(192,57,43,0.06)] px-4 py-3"
+            className="flex items-start gap-3 rounded-[var(--radius-md,10px)] border border-[var(--color-error)] bg-[var(--color-error-bg)] px-4 py-3"
           >
             <div className="grid gap-2">
               <p className="m-0 text-sm text-[var(--color-ink)]">{banner.message}</p>
@@ -478,7 +478,7 @@ export default function CheckoutForm() {
           <span className="text-sm text-[var(--color-ink)]">${cart.subtotal}</span>
         </div>
         {discountResult && discount > 0 ? (
-          <div className="flex items-baseline justify-between text-[var(--color-success,#27ae60)]">
+          <div className="flex items-baseline justify-between text-[var(--color-success)]">
             <span className="text-sm">
               Coupon ({discountResult.code ?? discountCode.trim()})
             </span>

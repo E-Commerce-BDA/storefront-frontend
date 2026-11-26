@@ -134,7 +134,7 @@ export default function PurchasePanel({
             href="#reviews"
             className="inline-flex items-center gap-1.5 text-sm text-[var(--text-muted)] transition-colors hover:text-[var(--color-ink)]"
           >
-            <span className="flex items-center text-[var(--color-terracotta)]" aria-hidden="true">
+            <span className="flex items-center text-[var(--color-sale-text)]" aria-hidden="true">
               ★
             </span>
             <span className="font-semibold text-[var(--color-ink)]">

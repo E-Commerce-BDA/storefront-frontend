@@ -277,13 +277,13 @@ export default function CartView() {
           </div>
 
           {appliedCoupon ? (
-            <div className="flex items-center justify-between text-[var(--color-success,#27ae60)]">
+            <div className="flex items-center justify-between text-[var(--color-success)]">
               <span className="flex items-center gap-1.5">
                 <span>Coupon ({appliedCoupon.code})</span>
                 <button
                   type="button"
                   onClick={removeCoupon}
-                  className="text-xs text-[var(--text-muted)] hover:text-[var(--color-danger,#e74c3c)] underline"
+                  className="text-xs text-[var(--text-muted)] hover:text-[var(--color-error)] underline"
                   aria-label="Remove coupon"
                 >
                   Remove
@@ -328,12 +328,12 @@ export default function CartView() {
             </Button>
           </div>
           {couponError ? (
-            <p className="mt-1.5 text-xs text-[var(--color-danger,#c0392b)]" role="alert">
+            <p className="mt-1.5 text-xs text-[var(--color-error)]" role="alert">
               {couponError}
             </p>
           ) : null}
           {appliedCoupon ? (
-            <p className="mt-1.5 text-xs text-[var(--color-success,#27ae60)]">
+            <p className="mt-1.5 text-xs text-[var(--color-success)]">
               Coupon {appliedCoupon.code} applied!
             </p>
           ) : null}

@@ -101,6 +101,8 @@ export default function SearchSheet({
 
   // Motion vars ride inline (presentation via props — no new lib module);
   // disabled motion renders no vars (CSS fallbacks stay instant-safe).
+  // Backdrop and stacking read the shared scrim/z tokens rather than a local
+  // rgba/z-50 pair, so the sheet follows the same theme as the other overlays.
   const motionVars = motion.enabled
     ? {
         "--searchsheet-duration": `${motion.durationMs}ms`,
@@ -114,7 +116,7 @@ export default function SearchSheet({
       data-trap="true"
       data-motion={motion.enabled ? "on" : "off"}
       data-closing={closing}
-      className="fixed inset-0 z-50"
+      className="fixed inset-0 z-[var(--z-overlay)]"
       style={motionVars}
       role="dialog"
       aria-modal="true"
@@ -122,7 +124,7 @@ export default function SearchSheet({
     >
       <div
         className="absolute inset-0"
-        style={{ background: "rgba(10,37,64,0.5)", backdropFilter: "blur(6px)" }}
+        style={{ background: "var(--scrim)", backdropFilter: "blur(6px)" }}
         onClick={onClose}
         aria-hidden="true"
       />

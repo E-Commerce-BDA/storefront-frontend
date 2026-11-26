@@ -58,7 +58,7 @@ function Review({ item, ariaHidden }: { item: TestimonialModel; ariaHidden: bool
           {item.role !== undefined ? <span className="sf-quote__role">{item.role}</span> : null}
         </span>
         <span className="sf-quote__meta">
-          {item.verified === true ? <span className="sf-pill">Verified</span> : null}
+          {item.verified === true ? <span className="sf-pill sf-testimonial__badge">Verified</span> : null}
           {date !== undefined ? (
             <time className="sf-quote__date" dateTime={item.date}>
               {date}

@@ -126,7 +126,7 @@ export default function QuickViewDialog({
               </div>
             )}
             {discountPercent ? (
-              <span className="absolute top-3 left-3 rounded-full bg-[var(--color-terracotta,#e74c3c)] px-2.5 py-1 text-xs font-semibold text-white shadow-sm">
+              <span className="absolute top-3 left-3 rounded-full bg-[var(--color-sale-text)] px-2.5 py-1 text-xs font-semibold text-white shadow-sm">
                 Sale {discountPercent}%
               </span>
             ) : null}
@@ -139,11 +139,14 @@ export default function QuickViewDialog({
                   key={img.url || idx}
                   type="button"
                   onClick={() => setSelectedImageIndex(idx)}
-                  className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-[var(--radius-sm,6px)] border-2 transition-all ${
-                    selectedImageIndex === idx
-                      ? "border-[var(--color-navy,#1a202c)] opacity-100"
-                      : "border-transparent opacity-60 hover:opacity-100"
-                  }`}
+                  data-selected={selectedImageIndex === idx}
+                  className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[var(--radius-sm,6px)] border-2"
+                  style={{
+                    // Selection is a solid var-backed face, not an opacity
+                    // dimmer: fading the unselected image loses its detail.
+                    borderColor: selectedImageIndex === idx ? "var(--color-navy)" : "var(--border)",
+                    background: selectedImageIndex === idx ? "var(--surface-raised)" : "var(--surface-muted)",
+                  }}
                   aria-label={`View image ${idx + 1}`}
                 >
                   <img
