@@ -9,6 +9,7 @@ import { useWishlist } from "./WishlistProvider";
 import { resolveAccountMenu } from "@/lib/shell/accountMenu";
 import type { ResolvedNavSettings } from "@/lib/shell/navSettings";
 import { initialNavbarMachine, navbarMachine } from "@/lib/navbar/machine";
+import { initialOverlayMachine, overlayMachine } from "@/lib/overlay/machine";
 
 const COLLAPSE_MS = 220;
 const ACCOUNT_MENU = resolveAccountMenu();
@@ -36,17 +37,45 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
     initialNavbarMachine(pathname),
   );
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  // The search overlay's open/close lifecycle is machine state too — a stale
+  // boolean could otherwise reopen the sheet with the previous query's face.
+  const [overlay, dispatchOverlay] = useReducer(overlayMachine, undefined, initialOverlayMachine);
+  const searchOpen = overlay.open;
   const [dismissed, setDismissed] = useState(false);
   const [closing, setClosing] = useState(false);
   const [active, setActive] = useState(0);
-  const { hidden: barHidden } = shell;
+  const {
+    hidden: barHidden,
+    badgeCount,
+    badgeCap,
+    destination,
+    currentHref,
+    status,
+  } = shell;
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   // A14: a route change restores the bar before any scroll event can re-hide it.
+  // sf-080: the resolved knobs are machine state, not parallel locals.
   useEffect(() => {
-    dispatch({ type: "navigate", pathname });
+    dispatch({ type: "navigate", pathname, currentHref: pathname });
   }, [pathname]);
+  useEffect(() => {
+    dispatch({ type: "sticky/set", sticky: nav.bar.sticky !== "static" });
+  }, [nav.bar.sticky]);
+  useEffect(() => {
+    dispatch({
+      type: "cart/count",
+      count: cart.count,
+      cap: nav.cart.badgeCap,
+      visible: nav.regions.badge !== false,
+    });
+  }, [cart.count, nav.cart.badgeCap, nav.regions.badge]);
+  useEffect(() => {
+    dispatch({ type: "cart/destination", destination: nav.cart.destination });
+  }, [nav.cart.destination]);
+  useEffect(() => {
+    dispatch({ type: "load/ready" });
+  }, []);
 
   const query = `(max-width: ${nav.mobile.breakpoint - 1}px)`;
   const subscribe = useCallback(
@@ -149,14 +178,14 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
         mobileOpen={mobileOpen}
         mobileSide={nav.mobile.drawerSide}
         cart={{
-          count: cart.count,
-          badgeCap: nav.cart.badgeCap,
-          // A16: the resolved destination knob decides drawer vs page.
+          // A16: the machine caps the badge and owns the resolved destination.
+          count: badgeCount,
+          badgeCap,
           onOpen:
-            nav.cart.destination === "page"
-              ? () => router.push("/cart")
-              : cart.openDrawer,
+            destination === "page" ? () => router.push("/cart") : cart.openDrawer,
         }}
+        currentHref={currentHref}
+        status={status}
         account={{ onOpen: () => setAccountMenuOpen((open) => !open) }}
         accountMenu={{
           model: ACCOUNT_MENU,
@@ -166,10 +195,14 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
         wishlist={{ count: wishlist.count, onOpen: () => router.push("/wishlist") }}
         onMenuOpen={() => setMobileOpen(true)}
         onMenuClose={() => setMobileOpen(false)}
-        onSearchOpen={() => setSearchOpen(true)}
+        onSearchOpen={() => dispatchOverlay({ type: "open" })}
         onSearchPreload={preload}
       />
-      <SearchMount search={nav.search} open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <SearchMount
+        search={nav.search}
+        open={searchOpen}
+        onClose={() => dispatchOverlay({ type: "close/finish" })}
+      />
     </>
   );
 }

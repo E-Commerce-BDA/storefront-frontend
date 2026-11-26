@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import ProductGridIsland from "@/components/commerce/ProductGridIsland";
 import Button from "@/components/ui/Button";
+import ErrorState from "@/components/ui/ErrorState";
 import { bff } from "@/lib/http/browser";
 import type { ProductCardData } from "@/lib/commerce/productCard";
 import { initialListingMachine, listingMachine } from "@/lib/listing/machine";
@@ -113,9 +114,11 @@ export default function ListingGridIsland({
       />
 
       {status === "error" ? (
-        <p className="sf-listing-grid__error" role="alert">
-          The next products could not be loaded. Please try again.
-        </p>
+        <ErrorState
+          className="sf-listing-grid__error"
+          title="The next products could not be loaded. Please try again."
+          size="compact"
+        />
       ) : null}
 
       {cursor !== null ? (

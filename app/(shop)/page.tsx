@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import SectionRenderer from "@/components/sections/SectionRenderer";
+import DegradedState from "@/components/ui/DegradedState";
 import { cmsBaseUrl, createCmsClient } from "@/lib/cms/client";
 import { fetchThemeSettings } from "@/lib/cms/theme";
 import { resolveThemeSettings, toBadgeTones } from "@/lib/cms/themeSettings";
@@ -53,16 +54,15 @@ export default async function HomePage() {
   if (list === null) {
     content = (
       <section className="sf-section sf-degraded" aria-label="Storefront unavailable">
-        <h1 className="sf-section__title">The shop is up, the content service is not</h1>
-        <p className="sf-degraded__body">
-          This page builds itself from the CMS, and the CMS could not be reached just now. The
-          catalog has its own service, so the product listing may already be fine.
-        </p>
-        <p>
-          <Link className="sf-degraded__link" href="/products">
-            Browse products
-          </Link>
-        </p>
+        <DegradedState
+          title="The shop is up, the content service is not"
+          body="This page builds itself from the CMS, and the CMS could not be reached just now. The catalog has its own service, so the product listing may already be fine."
+          action={
+            <Link className="sf-degraded__link" href="/products">
+              Browse products
+            </Link>
+          }
+        />
       </section>
     );
   } else {
@@ -83,20 +83,19 @@ export default async function HomePage() {
           data-cms-state={state}
           data-skipped={resolution.skipped.map((s) => s.key).join(",") || undefined}
         >
-          <h1 className="sf-section__title">
-            {state === "missing"
-              ? "The home page has not been configured yet"
-              : "Nothing is published on the home page yet"}
-          </h1>
-          <p className="sf-degraded__body">
-            Home sections are content, and the CMS has none enabled for this page. Products are
-            still reachable through the catalog.
-          </p>
-          <p>
-            <Link className="sf-degraded__link" href="/products">
-              Browse products
-            </Link>
-          </p>
+          <DegradedState
+            title={
+              state === "missing"
+                ? "The home page has not been configured yet"
+                : "Nothing is published on the home page yet"
+            }
+            body="Home sections are content, and the CMS has none enabled for this page. Products are still reachable through the catalog."
+            action={
+              <Link className="sf-degraded__link" href="/products">
+                Browse products
+              </Link>
+            }
+          />
         </section>
       ) : (
         <SectionRenderer

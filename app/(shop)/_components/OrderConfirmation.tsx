@@ -17,7 +17,7 @@
  */
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Badge, Button, EmptyState, Icon } from "@/components/ui";
+import { Badge, Button, ErrorState, LoadingState } from "@/components/ui";
 import { bff } from "@/lib/http/browser";
 import { orderSchema, type OrderDto } from "@/lib/order/schemas";
 import type { ServiceResult } from "@/lib/http/result";
@@ -55,11 +55,7 @@ export default function OrderConfirmation({
   }, [orderId]);
 
   if (result === null) {
-    return (
-      <p className="text-sm text-[var(--text-muted)]" role="status">
-        Loading your order…
-      </p>
-    );
+    return <LoadingState label="Loading your order…" />;
   }
 
   if (!result.ok) {
@@ -72,8 +68,7 @@ export default function OrderConfirmation({
       return null;
     }
     return (
-      <EmptyState
-        icon={<Icon name="shopping-bag" size={22} />}
+      <ErrorState
         title={result.kind === "not-found" ? "We can't find this order on your account" : "Order details unavailable"}
         body={
           result.kind === "not-found"
@@ -81,7 +76,7 @@ export default function OrderConfirmation({
             : "Your order may still have been placed — check your account history."
         }
         action={
-          <Button variant="light" onClick={() => router.push("/account")}>
+          <Button variant="primary" onClick={() => router.push("/account")}>
             View order history
           </Button>
         }

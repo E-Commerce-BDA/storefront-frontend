@@ -4,13 +4,23 @@
  * bounce to /cart. Loading shows the loading face; error shows the error face.
  */
 import { isSettled, type Status } from "@/lib/machine/status";
+import type { DiscountValidationResult, StockShortfall } from "@/lib/order/schemas";
 
 export interface CheckoutMachineState {
   status: Status;
   submitting: boolean;
-  banner: { message: string; toCart: boolean; rotateKey: boolean; retryWithSameKey: boolean } | null;
+  banner: {
+    message: string;
+    toCart: boolean;
+    rotateKey: boolean;
+    retryWithSameKey: boolean;
+    shortfall: StockShortfall | null;
+  } | null;
   discountCode: string;
   couponValid: boolean;
+  /** The coupon's resolved answer and its honest error copy (A9). */
+  couponResult: DiscountValidationResult | null;
+  couponError: string | null;
 }
 
 export type CheckoutMachineEvent =
@@ -19,10 +29,12 @@ export type CheckoutMachineEvent =
   | { type: "load/error" }
   | { type: "submit/start" }
   | { type: "submit/success" }
+  | { type: "submit/finish" }
   | { type: "submit/failure"; banner: NonNullable<CheckoutMachineState["banner"]> }
   | { type: "coupon/typed"; code: string }
-  | { type: "coupon/valid" }
-  | { type: "coupon/invalid" };
+  | { type: "coupon/valid"; result?: DiscountValidationResult }
+  | { type: "coupon/invalid"; message: string }
+  | { type: "coupon/clear" };
 
 export function initialCheckoutMachine(): CheckoutMachineState {
   return {
@@ -31,6 +43,8 @@ export function initialCheckoutMachine(): CheckoutMachineState {
     banner: null,
     discountCode: "",
     couponValid: false,
+    couponResult: null,
+    couponError: null,
   };
 }
 
@@ -56,14 +70,19 @@ export function checkoutMachine(
       return { ...state, submitting: true, banner: null };
     case "submit/success":
       return { ...state, submitting: false, status: "success" };
+    case "submit/finish":
+      // The attempt ended; only the in-flight flag changes, never the face.
+      return { ...state, submitting: false };
     case "submit/failure":
       return { ...state, submitting: false, banner: event.banner };
     case "coupon/typed":
-      return { ...state, discountCode: event.code, couponValid: false };
+      return { ...state, discountCode: event.code, couponValid: false, couponError: null };
     case "coupon/valid":
-      return { ...state, couponValid: true };
+      return { ...state, couponValid: true, couponResult: event.result ?? null, couponError: null };
     case "coupon/invalid":
-      return { ...state, couponValid: false };
+      return { ...state, couponValid: false, couponResult: null, couponError: event.message };
+    case "coupon/clear":
+      return { ...state, couponValid: false, couponResult: null, couponError: null };
   }
 }
 

@@ -22,6 +22,7 @@ export type SearchMachineEvent<T = unknown> =
   | { type: "request/success"; seq: number; results: T[] }
   | { type: "request/error"; seq: number }
   | { type: "request/abort"; seq: number }
+  | { type: "results/clear" }
   | { type: "active/set"; index: number };
 
 export function initialSearchMachine<T>(): SearchMachineState<T> {
@@ -52,6 +53,10 @@ export function searchMachine<T>(
       return { ...state, status: "error" };
     case "request/abort":
       return { ...state, aborted: true, status: "idle" };
+    case "results/clear":
+      // Below the min-chars gate the last query's rows must go. The hook owns
+      // no result state of its own, so the machine owns this reset too.
+      return { ...state, results: [], status: "idle", activeIndex: 0, aborted: false };
     case "active/set":
       return { ...state, activeIndex: Math.max(0, event.index) };
   }

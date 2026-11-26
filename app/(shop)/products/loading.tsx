@@ -1,4 +1,5 @@
 import PageHeader from "@/components/shell/PageHeader";
+import LoadingState from "@/components/ui/LoadingState";
 
 /**
  * `/products` loading UI (plan §8). The grid is a client island that fills once
@@ -9,9 +10,7 @@ export default function ProductsLoading() {
   return (
     <>
       <PageHeader title="Products" />
-      <p className="mt-4 text-sm text-[var(--text-muted)]" role="status">
-        Loading products…
-      </p>
+      <LoadingState label="Loading products…" />
     </>
   );
 }

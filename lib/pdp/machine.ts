@@ -17,7 +17,8 @@ export type PdpMachineEvent =
   | { type: "product/change"; productId: string; minQty?: number }
   | { type: "qty/set"; qty: number; minQty: number; maxQty: number }
   | { type: "gallery/set"; index: number; count: number }
-  | { type: "load/error" };
+  | { type: "load/error" }
+  | { type: "load/ready" };
 
 export function initialPdpMachine(productId: string, minQty = 1): PdpMachineState {
   return { productId, qty: Math.max(1, minQty), galleryIndex: 0, status: "ready" };
@@ -38,5 +39,7 @@ export function pdpMachine(state: PdpMachineState, event: PdpMachineEvent): PdpM
       };
     case "load/error":
       return { ...state, status: "error" };
+    case "load/ready":
+      return { ...state, status: "ready" };
   }
 }

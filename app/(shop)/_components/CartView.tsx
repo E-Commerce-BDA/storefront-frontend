@@ -20,7 +20,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, EmptyState, Icon, Input } from "@/components/ui";
+import { Button, EmptyState, ErrorState, Icon, Input, LoadingState } from "@/components/ui";
 import CartTable from "@/components/shell/CartTable";
 import { useCart } from "@/app/_components/CartProvider";
 import { useWishlist } from "@/app/_components/WishlistProvider";
@@ -176,24 +176,20 @@ export default function CartView() {
   const selectedLines = cart.items.filter((line) => selected.includes(line.id));
 
   if (cart.status === "loading" && cart.items.length === 0) {
-    return (
-      <p className="text-sm text-[var(--text-muted)]" role="status">
-        Loading your cart…
-      </p>
-    );
+    return <LoadingState label="Loading your cart…" />;
   }
 
   // A10: a failed load is not evidence of an empty cart. Show the retry face.
   if (cart.status === "error" && cart.items.length === 0) {
     return (
-      <div className="py-12 text-center" role="alert">
-        <p className="m-0 text-sm text-[var(--color-ink)]">
-          We could not load your cart right now.
-        </p>
-        <Button variant="light" size="sm" onClick={() => void cart.refresh()}>
-          Try again
-        </Button>
-      </div>
+      <ErrorState
+        title="We could not load your cart right now."
+        action={
+          <Button variant="primary" size="sm" onClick={() => void cart.refresh()}>
+            Try again
+          </Button>
+        }
+      />
     );
   }
 
@@ -204,7 +200,7 @@ export default function CartView() {
         title="Your cart is empty"
         body="Nothing here yet — the products page is a good place to start."
         action={
-          <Button variant="light" onClick={() => router.push("/products")}>
+          <Button variant="primary" onClick={() => router.push("/products")}>
             Continue shopping
           </Button>
         }

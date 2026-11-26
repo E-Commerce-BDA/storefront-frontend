@@ -51,6 +51,9 @@ export interface ProductGridIslandProps {
   /** Empty state the owner resolved in the RSC. */
   empty?: React.ReactNode;
   label?: string;
+  /** Wishlist toggles in flight, from the store — they mark the same cell face
+   *  as a quick-add so a pending heart cannot be read as a finished save. */
+  wishlistPendingIds?: readonly string[];
 }
 
 export default function ProductGridIsland({
@@ -60,6 +63,7 @@ export default function ProductGridIsland({
   tones,
   empty,
   label,
+  wishlistPendingIds = [],
 }: ProductGridIslandProps) {
   const router = useRouter();
   const cart = useCart();
@@ -128,7 +132,7 @@ export default function ProductGridIsland({
         tones={tones}
         empty={empty}
         label={label}
-        pendingIds={toCellKeys(pendingIds)}
+        pendingIds={toCellKeys([...pendingIds, ...wishlistPendingIds])}
         addedIds={toCellKeys(flashIds)}
         wishlistedIds={wishlist.ids}
         onOpen={(product) => {

@@ -7,7 +7,7 @@ export default function BlogPostNotFound() {
     <EmptyState
       title="This post could not be found"
       body="It may have been unpublished, or the address may be mistyped. The rest of the journal is still here."
-      action={<Button variant="light" href="/blog">Back to the journal</Button>}
+      action={<Button variant="primary" href="/blog">Back to the journal</Button>}
     />
   );
 }

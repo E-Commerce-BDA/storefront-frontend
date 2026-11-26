@@ -19,7 +19,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
-import { Badge, Button, EmptyState, Icon } from "@/components/ui";
+import { Badge, Button, DegradedState, EmptyState, ErrorState, Icon, LoadingState } from "@/components/ui";
 import PageHeader from "@/components/shell/PageHeader";
 import { useCart } from "@/app/_components/CartProvider";
 import { useWishlist } from "@/app/_components/WishlistProvider";
@@ -81,12 +81,11 @@ export default function AccountView() {
 
   if (failure !== null) {
     return (
-      <EmptyState
-        icon={<Icon name="user" size={22} />}
+      <ErrorState
         title="Account unavailable"
         body={failure}
         action={
-          <Button variant="light" onClick={() => router.push("/products")}>
+          <Button variant="primary" onClick={() => router.push("/products")}>
             Continue shopping
           </Button>
         }
@@ -95,11 +94,7 @@ export default function AccountView() {
   }
 
   if (data === null) {
-    return (
-      <p className="text-sm text-[var(--text-muted)]" role="status">
-        Loading your account…
-      </p>
-    );
+    return <LoadingState label="Loading your account…" />;
   }
 
   const fullName = [data.user.firstName, data.user.lastName].filter(Boolean).join(" ");
@@ -186,16 +181,14 @@ export default function AccountView() {
         <h2 className="m-0 text-base font-semibold text-[var(--color-ink)]">Recent orders</h2>
 
         {data.ordersError ? (
-          <p role="status" className="m-0 rounded-[var(--radius-md,10px)] border border-[var(--border)] px-4 py-3 text-sm text-[var(--text-muted)]">
-            Your orders are unavailable right now — the profile above is still yours.
-          </p>
+          <DegradedState title="Your orders are unavailable right now — the profile above is still yours." />
         ) : data.orders.length === 0 ? (
           <EmptyState
             icon={<Icon name="shopping-bag" size={22} />}
             title="No orders yet"
             body="When you place an order it will show up here."
             action={
-              <Button variant="light" onClick={() => router.push("/products")}>
+              <Button variant="primary" onClick={() => router.push("/products")}>
                 Start shopping
               </Button>
             }

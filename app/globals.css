@@ -4134,8 +4134,79 @@ body {
   color: var(--blog-excerpt, var(--text-muted));
 }
 
+/* Shared state faces (components/ui/{LoadingState,ErrorState,DegradedState}).
+   Paint and geometry resolve through --state-* vars; size reaches CSS only
+   through data-size. No opacity face: a dimmed message loses its contrast.
+   The spinner is the only motion and it is killed under reduced-motion. */
+@keyframes sf-state-spin {
+  to { transform: rotate(360deg); }
+}
+.sf-state {
+  display: grid;
+  gap: var(--state-gap, 12px);
+  justify-items: center;
+  text-align: center;
+  padding: var(--state-pad, 48px 20px);
+  color: var(--state-text, var(--color-ink));
+}
+.sf-state[data-size="compact"] {
+  gap: var(--state-compact-gap, 6px);
+  padding: var(--state-compact-pad, 16px 12px);
+}
+.sf-state__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--state-title-size, var(--fs-display-3));
+  line-height: 1.2;
+  color: var(--state-title, var(--color-ink));
+}
+.sf-state[data-size="compact"] .sf-state__title {
+  font-size: var(--state-compact-title-size, var(--fs-body));
+}
+.sf-state__body {
+  margin: 0;
+  max-width: var(--state-measure, 46ch);
+  font-size: var(--state-body-size, var(--fs-body));
+  line-height: 1.6;
+  color: var(--state-body, var(--text-muted));
+}
+.sf-state__action {
+  display: flex;
+  justify-content: center;
+}
+.sf-state__spinner {
+  width: var(--state-spinner-size, 28px);
+  height: var(--state-spinner-size, 28px);
+  border: 2px solid var(--state-spinner-track, var(--border));
+  border-top-color: var(--state-spinner-fill, var(--color-accent));
+  border-radius: 999px;
+  animation: sf-state-spin var(--state-spinner-duration, 800ms) linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sf-state__spinner { animation: none; }
+}
+.sf-state--error .sf-state__title {
+  color: var(--state-error-title, var(--color-error));
+}
+.sf-state--degraded .sf-state__title {
+  color: var(--state-degraded-title, var(--color-ink));
+}
+
 /* The home page's honest degraded face: a real message and a real route, not a
-   scaffold. Two states, one shape (CMS unreachable / nothing published). */
+   scaffold. Two states, one shape (CMS unreachable / nothing published).
+   sf-080: the section used to inherit the section title's 32px and no layout,
+   leaving a heading and blank space. It now has a compact, centred column. */
+.sf-degraded {
+  display: grid;
+  gap: var(--degraded-gap, 12px);
+  justify-items: start;
+  align-content: center;
+  min-height: var(--degraded-min-height, 240px);
+  padding: var(--degraded-pad, 32px 0);
+}
+.sf-degraded .sf-section__title {
+  font-size: var(--degraded-title-size, var(--fs-display-3));
+}
 .sf-degraded__body {
   margin: 0;
   max-width: 60ch;

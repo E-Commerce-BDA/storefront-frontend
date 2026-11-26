@@ -19,6 +19,7 @@ import VariantSelector from "@/components/commerce/VariantSelector";
 import WishlistButton from "@/components/commerce/WishlistButton";
 import QuantityStepper from "@/components/ui/QuantityStepper";
 import Button from "@/components/ui/Button";
+import ErrorState from "@/components/ui/ErrorState";
 import { useCart } from "@/app/_components/CartProvider";
 import { clampQty, QTY_LIMITS } from "@/lib/commerce/quantity";
 import { resolveVariant, selectionOptions } from "@/lib/commerce/variants";
@@ -65,7 +66,7 @@ export default function PurchasePanel({
   const [pdp, dispatch] = useReducer(pdpMachine, undefined, () =>
     initialPdpMachine(productId),
   );
-  const { qty, galleryIndex: activeIndex } = pdp;
+  const { qty, galleryIndex: activeIndex, status } = pdp;
   const setActiveIndex = (index: number) =>
     dispatch({ type: "gallery/set", index, count: images.length });
   // A22: Next reuses this component across [slug] navigations; qty and gallery
@@ -100,7 +101,12 @@ export default function PurchasePanel({
       variantId: variant?.id,
       qty: effQty,
     });
-    if (ok) cart.openDrawer();
+    if (ok) {
+      dispatch({ type: "load/ready" });
+      cart.openDrawer();
+    } else {
+      dispatch({ type: "load/error" });
+    }
   }
 
   return (
@@ -155,6 +161,18 @@ export default function PurchasePanel({
           <p className="text-sm text-[var(--text-muted)]" role="status">
             We picked the closest available option for you.
           </p>
+        ) : null}
+
+        {status === "error" ? (
+          <ErrorState
+            title="We could not add this item to your bag."
+            size="compact"
+            action={
+              <Button variant="primary" size="sm" onClick={() => void addToCart()}>
+                Retry
+              </Button>
+            }
+          />
         ) : null}
 
         {options.length > 0 ? (

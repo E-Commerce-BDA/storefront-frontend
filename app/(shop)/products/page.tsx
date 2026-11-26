@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import PageHeader from "@/components/shell/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
+import ErrorState from "@/components/ui/ErrorState";
 import Button from "@/components/ui/Button";
 import { fetchThemeSettings } from "@/lib/cms/theme";
 import { resolveThemeSettings, toBadgeTones } from "@/lib/cms/themeSettings";
@@ -35,7 +36,7 @@ function deadFilter(kind: "category" | "brand", slug: string) {
         title={`No ${kind} “${slug}”.`}
         body={`That link points at a ${kind} that does not exist.`}
         action={
-          <Button variant="light" href="/products">
+          <Button variant="primary" href="/products">
             Browse all products
           </Button>
         }
@@ -48,11 +49,11 @@ function unavailable(title: string, retry: string) {
   return (
     <>
       <PageHeader title={title} />
-      <EmptyState
+      <ErrorState
         title="Products are temporarily unavailable"
         body="The catalog could not be reached. Please try again shortly."
         action={
-          <Button variant="light" href={`/products${retry}`}>
+          <Button variant="primary" href={`/products${retry}`}>
             Retry
           </Button>
         }
@@ -106,7 +107,7 @@ export default async function ProductsPage({
             : "The catalog has no products yet."
       }
       action={
-        <Button variant="light" href="/products">
+        <Button variant="primary" href="/products">
           Browse all products
         </Button>
       }

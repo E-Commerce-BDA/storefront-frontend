@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import PageHeader from "@/components/shell/PageHeader";
+import DegradedState from "@/components/ui/DegradedState";
 import EmptyState from "@/components/ui/EmptyState";
 import BlogCard from "@/components/sections/BlogCard";
 import { blogToCardModels } from "@/lib/blog/present";
@@ -39,7 +40,7 @@ export default async function BlogListPage() {
     return (
       <>
         <PageHeader eyebrow="Journal" title="The journal is resting" />
-        <EmptyState
+        <DegradedState
           title="Posts are temporarily unavailable"
           body="The content service could not be reached just now. Published posts will appear here as soon as it answers."
         />

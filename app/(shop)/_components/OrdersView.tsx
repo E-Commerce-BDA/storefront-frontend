@@ -4,7 +4,7 @@ import { useEffect, useReducer } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/shell/PageHeader";
-import { Badge, Button, EmptyState, Icon } from "@/components/ui";
+import { Badge, Button, EmptyState, ErrorState, Icon, LoadingState } from "@/components/ui";
 import { bff } from "@/lib/http/browser";
 import { orderListResponseSchema, type OrderDto } from "@/lib/order/schemas";
 import { initialOrdersMachine, ordersMachine } from "@/lib/orders/machine";
@@ -70,20 +70,16 @@ export default function OrdersView() {
       />
 
       {status === "loading" || status === "idle" ? (
-        <p className="py-12 text-center text-sm text-[var(--text-muted)]" role="status">
-          Loading your orders…
-        </p>
+        <LoadingState label="Loading your orders…" />
       ) : status === "error" ? (
-        <p className="rounded-[var(--radius-md,10px)] border border-[var(--border)] p-4 text-sm text-[var(--text-muted)]" role="alert">
-          Unable to load orders right now.
-        </p>
+        <ErrorState title="Unable to load orders right now." />
       ) : orders.length === 0 ? (
         <EmptyState
           icon={<Icon name="shopping-bag" size={24} />}
           title="No orders found"
           body="You haven't placed any orders yet."
           action={
-            <Button variant="light" onClick={() => router.push("/products")}>
+            <Button variant="primary" onClick={() => router.push("/products")}>
               Start shopping
             </Button>
           }
@@ -136,11 +132,7 @@ export default function OrdersView() {
             ))}
           </ul>
 
-          {moreError ? (
-            <p className="mt-4 text-center text-sm text-[var(--color-ink)]" role="alert">
-              {moreError}
-            </p>
-          ) : null}
+          {moreError ? <ErrorState title={moreError} size="compact" /> : null}
 
           {nextCursor ? (
             <div className="mt-4 flex justify-center">

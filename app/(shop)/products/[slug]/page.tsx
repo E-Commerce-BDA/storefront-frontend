@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/shell/PageHeader";
-import EmptyState from "@/components/ui/EmptyState";
+import ErrorState from "@/components/ui/ErrorState";
 import SectionRenderer from "@/components/sections/SectionRenderer";
 import { catalogClient } from "@/lib/catalog/client";
 import { cmsBaseUrl, createCmsClient } from "@/lib/cms/client";
@@ -69,7 +69,7 @@ export default async function ProductPage({
     return (
       <>
         <PageHeader title="Product" />
-        <EmptyState
+        <ErrorState
           title="This product is temporarily unavailable"
           body="We could not reach the catalog. Please try again shortly."
         />

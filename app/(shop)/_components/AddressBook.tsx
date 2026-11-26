@@ -2,7 +2,7 @@
 
 /** `/account` address book — sf-059 (A6.2). One form for add and edit; writes go through the BFF port. */
 import { useEffect, useReducer } from "react";
-import { Button, Input, Toast } from "@/components/ui";
+import { Button, EmptyState, ErrorState, Input, LoadingState, Toast } from "@/components/ui";
 import { deleteAddress, fetchAddresses, patchAddress, postAddress } from "@/lib/account/port";
 import type { AddressDto } from "@/lib/account/schemas";
 import { addressBookMachine, initialAddressBookMachine } from "@/lib/address-book/machine";
@@ -10,7 +10,7 @@ import { useNotice } from "./useNotice";
 
 export default function AddressBook() {
   const [machine, dispatch] = useReducer(addressBookMachine, undefined, initialAddressBookMachine);
-  const { addresses, draft, editing, formOpen, busy } = machine;
+  const { addresses, draft, editing, formOpen, busy, status, error } = machine;
   const { notice, notify, close } = useNotice();
 
   useEffect(() => {
@@ -69,9 +69,13 @@ export default function AddressBook() {
 
   return (
     <>
-      {addresses.length === 0 ? (
-        <p className="m-0 text-sm text-[var(--text-muted)]">No saved addresses yet.</p>
-      ) : (
+      {status === "loading" ? <LoadingState label="Loading your addresses…" size="compact" /> : null}
+      {status === "error" ? <ErrorState title={error ?? "We could not load your addresses."} size="compact" /> : null}
+      {status === "ready" && error !== null ? <ErrorState title={error} size="compact" /> : null}
+      {status !== "loading" && status !== "error" ? (
+        addresses.length === 0 ? (
+          <EmptyState title="No saved addresses yet." />
+        ) : (
         <ul className="m-0 grid list-none gap-3 p-0" role="list">
           {addresses.map((address) => (
             <li
@@ -95,7 +99,8 @@ export default function AddressBook() {
             </li>
           ))}
         </ul>
-      )}
+        )
+      ) : null}
 
       <Button variant="light" size="sm" onClick={startAdd}>
         Add address

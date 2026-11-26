@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import CmsPage from "@/components/pages/CmsPage";
+import DegradedState from "@/components/ui/DegradedState";
 import { loadPage } from "@/lib/cms/loadDocuments";
 
 /**
@@ -42,10 +43,10 @@ export function createCmsPageRoute({
     if (result.data === null) {
       return (
         <section className="sf-section sf-degraded" aria-label="Content unavailable">
-          <h1 className="sf-section__title">This page is temporarily unavailable</h1>
-          <p className="sf-degraded__body">
-            The content service could not be reached. Please try again shortly.
-          </p>
+          <DegradedState
+            title="This page is temporarily unavailable"
+            body="The content service could not be reached. Please try again shortly."
+          />
         </section>
       );
     }

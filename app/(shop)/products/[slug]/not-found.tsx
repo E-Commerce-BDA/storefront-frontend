@@ -15,7 +15,7 @@ export default function ProductNotFound() {
         title="We couldn't find that product."
         body="The link may be old, or the product was removed from the catalog."
         action={
-          <Button variant="light" href="/products">
+          <Button variant="primary" href="/products">
             Browse all products
           </Button>
         }

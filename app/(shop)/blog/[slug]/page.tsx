@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Breadcrumbs from "@/components/shell/Breadcrumbs";
+import DegradedState from "@/components/ui/DegradedState";
 import PostBlocks from "@/components/blog/PostBlocks";
 import { blogStaticParams, loadBlog } from "@/lib/cms/loadDocuments";
 import { notFound } from "next/navigation";
@@ -84,10 +85,10 @@ export default async function BlogPostPage({
   if (result.data === null) {
     return (
       <section className="sf-section sf-degraded" aria-label="Post unavailable">
-        <h1 className="sf-section__title">This post is temporarily unavailable</h1>
-        <p className="sf-degraded__body">
-          The content service could not be reached. Please try again shortly.
-        </p>
+        <DegradedState
+          title="This post is temporarily unavailable"
+          body="The content service could not be reached. Please try again shortly."
+        />
       </section>
     );
   }

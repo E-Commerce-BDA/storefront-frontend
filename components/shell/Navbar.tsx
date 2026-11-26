@@ -71,6 +71,10 @@ export interface NavbarProps {
   onMenuClose: () => void;
   onSearchOpen: () => void;
   onSearchPreload: () => void;
+  /** Machine-owned navigation/status hooks (sf-080). State reaches CSS through
+   *  data attrs, never a class swap; both are optional for standalone use. */
+  currentHref?: string | null;
+  status?: "idle" | "loading" | "ready" | "empty" | "error" | "success";
   className?: string;
 }
 
@@ -92,6 +96,8 @@ export default function Navbar({
   onMenuClose,
   onSearchOpen,
   onSearchPreload,
+  currentHref,
+  status,
   className = "",
 }: NavbarProps) {
   // Bar vars ride inline (presentation via props — the resolver owns
@@ -128,6 +134,8 @@ export default function Navbar({
         data-sticky={bar.sticky}
         data-shadow={bar.shadow}
         data-hidden={bar.hidden}
+        data-current={currentHref ?? undefined}
+        data-status={status}
       >
         {isMobile && (
           <IconButton label="Open menu" onClick={onMenuOpen}>

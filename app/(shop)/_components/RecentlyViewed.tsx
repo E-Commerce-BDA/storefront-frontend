@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import ProductGridIsland from "@/components/commerce/ProductGridIsland";
+import { DegradedState } from "@/components/ui";
 import type { ProductCardData } from "@/lib/commerce/productCard";
 
 export interface RecentlyViewedProps {
@@ -50,9 +51,7 @@ export default function RecentlyViewed({ excludeSlug }: RecentlyViewedProps) {
     return failed ? (
       <section className="mt-12" aria-label="Recently viewed products">
         <h2 className="mb-4 font-display text-lg text-[var(--color-ink)]">Recently viewed</h2>
-        <p className="m-0 text-sm text-[var(--text-muted)]" role="status">
-          Your recently viewed items are unavailable right now.
-        </p>
+        <DegradedState title="Your recently viewed items are unavailable right now." />
       </section>
     ) : null;
   }

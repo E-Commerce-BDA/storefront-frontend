@@ -25,6 +25,7 @@ export type NavbarMachineEvent =
   | { type: "scroll/show" }
   | { type: "cart/count"; count: number; cap: number; visible: boolean }
   | { type: "cart/destination"; destination: "drawer" | "page" }
+  | { type: "sticky/set"; sticky: boolean }
   | { type: "load/ready" };
 
 export function initialNavbarMachine(pathname = "/"): NavbarMachineState {
@@ -67,6 +68,10 @@ export function navbarMachine(
       };
     case "cart/destination":
       return { ...state, destination: event.destination };
+    case "sticky/set":
+      // Only a sticky bar may hide on scroll; the mode is resolved config, so
+      // the mount translates it into state rather than reading it twice.
+      return { ...state, sticky: event.sticky };
     case "load/ready":
       return { ...state, status: "ready" };
   }

@@ -28,3 +28,31 @@ and the `done|active|upcoming` decision. The component has no defaults.
 ### 5. Tests
 Contract (rendered order + `aria-current`), resolver-unit (defaults/clamps),
 style-contract (paint through vars, no hex outside fallbacks, data-state hooks).
+
+## State faces (`ui/LoadingState.tsx`, `ui/ErrorState.tsx`, `ui/DegradedState.tsx`) — sf-080
+
+### 1. Look per state
+- `loading`: solid spinner plus a status sentence; `role="status"`, `aria-busy`.
+- `error`: error-coloured title, optional body and one primary action; `role="alert"`.
+- `degraded`: compact neutral note plus optional action — the page is still usable.
+- `data-size="compact|regular"` is the only size hook; no opacity anywhere.
+
+### 2. Customizable fields
+`title`/`label`, `body`, an `action` slot (the caller passes a real
+`variant="primary"` `Button`), `size`, `options.size`, `className` (merged) and
+`style` (merged after internal).
+
+### 3. Where a value lives
+`lib/ui/stateFaces.ts` owns the copy defaults, the size list and the resolver;
+flat `size` beats `options.size`, absent clamps to the documented fallback
+(`regular`, or `compact` for a degraded face). Components hold no defaults.
+
+### 4. Global rules
+`props → JSX`; no fetch/store/CMS import. The spinner is decorative
+(`aria-hidden`) and its animation is killed under `prefers-reduced-motion`.
+A11y roles are fixed, not customizable.
+
+### 5. Tests
+Contract (roles, optional slots, aria-hidden spinner), resolver-unit
+(defaults, clamp, flat-over-object), style-contract (paint through `--state-*`,
+no hex outside fallbacks, `data-size` hooks, reduced-motion guard).

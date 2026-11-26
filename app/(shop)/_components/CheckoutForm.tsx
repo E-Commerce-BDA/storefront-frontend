@@ -28,7 +28,7 @@
  */
 import { useEffect, useReducer, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button, Checkbox, Input, Select, Textarea } from "@/components/ui";
+import { Button, Checkbox, ErrorState, Input, LoadingState, Select, Textarea } from "@/components/ui";
 import CartLineItem from "@/components/shell/CartLineItem";
 import CheckoutSteps from "@/components/shell/CheckoutSteps";
 import { fetchAddresses } from "@/lib/account/port";
@@ -138,9 +138,13 @@ export default function CheckoutForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialCoupon = searchParams.get("coupon") ?? "";
-  const [discountCode, setDiscountCode] = useState(initialCoupon);
-  const [discountResult, setDiscountResult] = useState<DiscountValidationResult | null>(null);
-  const [couponError, setCouponError] = useState<string | null>(null);
+  // sf-080: coupon, banner and submit state are one machine, not five locals
+  // that can disagree about whether a write is still in flight.
+  const [machine, dispatch] = useReducer(checkoutMachine, undefined, () => ({
+    ...initialCheckoutMachine(),
+    discountCode: initialCoupon,
+  }));
+  const { discountCode, couponResult: discountResult, couponError, banner, submitting } = machine;
 
   // The cart previews a coupon and sends only its code here. Re-validate it
   // against the same endpoint so the summary's discount line is the one the
@@ -158,19 +162,16 @@ export default function CheckoutForm() {
         .then((res) => {
           if (!alive) return;
           if (res?.ok && res.data.valid) {
-            setDiscountResult(res.data);
-            setCouponError(null);
+            dispatch({ type: "coupon/valid", result: res.data });
           } else if (res?.ok) {
             // A9: a 200 with valid:false is an answer, not silence — say so.
-            setDiscountResult(null);
-            setCouponError("That code is not valid for this order.");
+            dispatch({ type: "coupon/invalid", message: "That code is not valid for this order." });
           } else {
-            setDiscountResult(null);
-            setCouponError(res.message ?? "We could not check that code.");
+            dispatch({ type: "coupon/invalid", message: res.message ?? "We could not check that code." });
           }
         })
         .catch(() => {
-          if (alive) setDiscountResult(null);
+          if (alive) dispatch({ type: "coupon/invalid", message: "We could not check that code." });
         });
     }, CHECKOUT_COUPON_DEBOUNCE_MS);
     return () => {
@@ -216,16 +217,12 @@ export default function CheckoutForm() {
     });
   }
 
-  const [banner, setBanner] = useState<CheckoutCopy | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-
   /** The one key per logical attempt — a ref because a re-render must never reset it. */
   const attempt = useRef<IdemPair | null>(null);
 
   // A1: the cart's status is mirrored into the island machine so only a
   // settled `ready` answer can bounce to /cart. A cold load ("idle") and a
   // failed load ("error") keep the checkout face and show their own state.
-  const [machine, dispatch] = useReducer(checkoutMachine, undefined, initialCheckoutMachine);
   useEffect(() => {
     if (cart.status === "loading") dispatch({ type: "load/start" });
     else if (cart.status === "error") dispatch({ type: "load/error" });
@@ -261,8 +258,7 @@ export default function CheckoutForm() {
     const body = buildBody();
     if (body === null) return;
 
-    setSubmitting(true);
-    setBanner(null);
+    dispatch({ type: "submit/start" });
     // Same body across retries → same key; edited basket → fresh key. `nextKey`
     // is both decisions in one call.
     attempt.current = nextKey(attempt.current, body, () => crypto.randomUUID());
@@ -296,10 +292,11 @@ export default function CheckoutForm() {
       } else {
         const copy = describeFailure(result);
         if (copy.rotateKey) attempt.current = null;
-        setBanner(copy);
+        dispatch({ type: "submit/failure", banner: copy });
       }
     } finally {
-      setSubmitting(false);
+      // Every exit clears the in-flight flag; the banner (if any) is untouched.
+      dispatch({ type: "submit/finish" });
     }
   }
 
@@ -321,20 +318,17 @@ export default function CheckoutForm() {
         }}
       >
         <CheckoutSteps steps={steps} />
-        {cart.status === "loading" ? (
-          <p className="m-0 text-sm text-[var(--text-muted)]" role="status">
-            Checking your bag…
-          </p>
-        ) : null}
+        {cart.status === "loading" ? <LoadingState label="Checking your bag…" size="compact" /> : null}
         {cart.status === "error" ? (
-          <div className="flex items-center gap-3 rounded-[var(--radius-md,10px)] border border-[var(--color-error)] px-4 py-3" role="alert">
-            <p className="m-0 text-sm text-[var(--color-ink)]">
-              We could not load your bag. Please try again.
-            </p>
-            <Button variant="light" size="sm" onClick={() => void cart.refresh()}>
-              Retry
-            </Button>
-          </div>
+          <ErrorState
+            title="We could not load your bag. Please try again."
+            size="compact"
+            action={
+              <Button variant="primary" size="sm" onClick={() => void cart.refresh()}>
+                Retry
+              </Button>
+            }
+          />
         ) : null}
         {banner ? (
           <div
@@ -441,13 +435,10 @@ export default function CheckoutForm() {
             label="Discount code (optional)"
             value={discountCode}
             onChange={(v) => {
-              setDiscountCode(v);
-              // Clearing the field drops the preview synchronously in the
-              // event, so the effect never has to setState in its body.
-              if (v.trim() === "") {
-                setDiscountResult(null);
-                setCouponError(null);
-              }
+              // Clearing the field drops the preview in the same event, so the
+              // effect never has to dispatch from its body.
+              if (v.trim() === "") dispatch({ type: "coupon/clear" });
+              else dispatch({ type: "coupon/typed", code: v });
             }}
             placeholder="e.g. SUMMER20"
             error={couponError ?? undefined}

@@ -34,7 +34,7 @@ export default async function ComparePage({
         <EmptyState
           title="Nothing to compare yet"
           body="Add products from a listing or product page to see them side by side."
-          action={<Button variant="light" href="/products">Browse products</Button>}
+          action={<Button variant="primary" href="/products">Browse products</Button>}
         />
       </>
     );
@@ -61,13 +61,13 @@ export default async function ComparePage({
         <EmptyState
           title="We could not load these products"
           body="The catalogue is unavailable right now. Please try again shortly."
-          action={<Button variant="light" href="/compare">Try again</Button>}
+          action={<Button variant="primary" href="/compare">Try again</Button>}
         />
       ) : items.length === 0 ? (
         <EmptyState
           title="Those products are no longer available"
           body="They may have been removed or unpublished since you added them."
-          action={<Button variant="light" href="/products">Browse products</Button>}
+          action={<Button variant="primary" href="/products">Browse products</Button>}
         />
       ) : (
         <ProductGridIsland

@@ -126,7 +126,7 @@ export default function MiniCartDrawer({
             <EmptyState
               icon={<Icon name="shopping-bag" size={22} />}
               title="Your cart is empty"
-              action={<Button variant="light" onClick={onClose}>Continue shopping</Button>}
+              action={<Button variant="primary" onClick={onClose}>Continue shopping</Button>}
             />
           ) : (
             <ul className="sf-minicart__lines" role="list">
