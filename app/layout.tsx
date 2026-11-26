@@ -4,7 +4,7 @@ import "./globals.css";
 import { resolveNavSettings } from "@/lib/shell/resolveNav";
 import { fetchNavSettings } from "@/lib/cms/navigation";
 import { fetchFooter } from "@/lib/cms/footer";
-import { SITE_NAME } from "@/lib/site";
+import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/lib/site";
 import { fetchThemeSettings } from "@/lib/cms/theme";
 import { resolveThemeSettings } from "@/lib/cms/themeSettings";
 import { themeToCssVars } from "@/lib/cms/themeVars";
@@ -30,8 +30,11 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
+  // One base for every absolute URL below this segment (canonical, OG, sitemap).
+  // Without it a relative canonical in a child route fails the build.
+  metadataBase: new URL(siteUrl()),
   title: SITE_NAME,
-  description: "Everyday clothes built to last: linen, merino, denim.",
+  description: SITE_DESCRIPTION,
 };
 
 /**

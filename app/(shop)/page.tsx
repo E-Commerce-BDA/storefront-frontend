@@ -5,6 +5,7 @@ import { cmsBaseUrl, createCmsClient } from "@/lib/cms/client";
 import { fetchThemeSettings } from "@/lib/cms/theme";
 import { resolveThemeSettings, toBadgeTones } from "@/lib/cms/themeSettings";
 import { HOME_PAGE_KEY, resolveSections } from "@/lib/sections/resolveSections";
+import { buildHomeJsonLd, serializeJsonLd, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 
 /**
  * `/` — the CMS-composed home page — sf-060
@@ -31,15 +32,25 @@ export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "foreafcbeta — everything for every day",
+  description: SITE_DESCRIPTION,
   alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    title: "foreafcbeta — everything for every day",
+    description: SITE_DESCRIPTION,
+    url: "/",
+    siteName: SITE_NAME,
+    locale: "en_US",
+  },
 };
 
 export default async function HomePage() {
   const cms = createCmsClient({ baseUrl: cmsBaseUrl() });
   const list = await cms.getSections(HOME_PAGE_KEY);
+  let content: React.ReactNode;
 
   if (list === null) {
-    return (
+    content = (
       <section className="sf-section sf-degraded" aria-label="Storefront unavailable">
         <h1 className="sf-section__title">The shop is up, the content service is not</h1>
         <p className="sf-degraded__body">
@@ -53,40 +64,49 @@ export default async function HomePage() {
         </p>
       </section>
     );
-  }
+  } else {
+    const models = await resolveSections(list.sections);
+    const themeResult = await fetchThemeSettings();
+    const theme = resolveThemeSettings({ settings: themeResult.theme });
+    const cardTheme = theme.productCard;
 
-  const models = await resolveSections(list.sections);
-  const themeResult = await fetchThemeSettings();
-  const theme = resolveThemeSettings({ settings: themeResult.theme });
-  const cardTheme = theme.productCard;
-
-  if (models.length === 0) {
-    return (
-      <section className="sf-section sf-degraded" aria-label="Home not published yet">
-        <h1 className="sf-section__title">Nothing is published on the home page yet</h1>
-        <p className="sf-degraded__body">
-          Home sections are content, and the CMS has none enabled for this page. Products are
-          still reachable through the catalog.
-        </p>
-        <p>
-          <Link className="sf-degraded__link" href="/products">
-            Browse products
-          </Link>
-        </p>
-      </section>
-    );
+    content =
+      models.length === 0 ? (
+        <section className="sf-section sf-degraded" aria-label="Home not published yet">
+          <h1 className="sf-section__title">Nothing is published on the home page yet</h1>
+          <p className="sf-degraded__body">
+            Home sections are content, and the CMS has none enabled for this page. Products are
+            still reachable through the catalog.
+          </p>
+          <p>
+            <Link className="sf-degraded__link" href="/products">
+              Browse products
+            </Link>
+          </p>
+        </section>
+      ) : (
+        <SectionRenderer
+          models={models}
+          columns={{
+            desktop: cardTheme.colsDesktop,
+            tablet: cardTheme.colsTablet,
+            phone: cardTheme.colsPhone,
+          }}
+          themeFallback={cardTheme}
+          tones={toBadgeTones(theme)}
+        />
+      );
   }
 
   return (
-    <SectionRenderer
-      models={models}
-      columns={{
-        desktop: cardTheme.colsDesktop,
-        tablet: cardTheme.colsTablet,
-        phone: cardTheme.colsPhone,
-      }}
-      themeFallback={cardTheme}
-      tones={toBadgeTones(theme)}
-    />
+    <>
+      {content}
+      {/* A native script is right for inert structured data; the payload is
+          escaped by serializeJsonLd so no CMS string can close the tag. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildHomeJsonLd()) }}
+      />
+    </>
   );
 }

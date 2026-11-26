@@ -31,6 +31,7 @@ vi.mock("@/components/sections/ProductGridIsland", () => ({
 }));
 
 import * as homeRoute from "@/app/(shop)/page";
+import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 
 afterEach(() => {
   cleanup();
@@ -48,6 +49,35 @@ const heroModel = {
 describe("home page", () => {
   it("revalidates on a ceiling, not a poll", () => {
     expect(homeRoute.revalidate).toBe(300);
+  });
+
+  it("declares a description, canonical and Open Graph face for sharing", () => {
+    const meta = homeRoute.metadata;
+    expect(meta.description).toBe(SITE_DESCRIPTION);
+    expect(meta.alternates?.canonical).toBe("/");
+    expect(meta.openGraph).toMatchObject({
+      type: "website",
+      title: "foreafcbeta — everything for every day",
+      description: SITE_DESCRIPTION,
+      url: "/",
+      siteName: SITE_NAME,
+      locale: "en_US",
+    });
+  });
+
+  it("renders one escaped WebSite JSON-LD script alongside the sections", async () => {
+    harness.sections = { sections: [heroModel], version: 2 };
+    harness.models = [heroModel];
+    const { container } = render(await homeRoute.default());
+    const scripts = container.querySelectorAll('script[type="application/ld+json"]');
+    expect(scripts).toHaveLength(1);
+    const html = scripts[0]!.innerHTML;
+    expect(html).not.toContain("<");
+    expect(JSON.parse(html)).toMatchObject({
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: SITE_NAME,
+    });
   });
 
   it("renders the resolved sections, not a hard-coded face", async () => {

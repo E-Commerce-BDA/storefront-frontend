@@ -16,6 +16,9 @@
   --color-image-bg: #caf0f8;
   --color-sale: #ff6b4a;
   --color-sale-soft: #ffede6;
+  /* Sale on light chrome is text, not a surface: coral is only 2.82:1 on white
+     (axe color-contrast); this dark counterpart reaches 5.76:1 and keeps the cue. */
+  --color-sale-text: #b9381c;
   --color-success: #0e9f6e;
   --color-success-bg: #ecfdf3;
   --color-success-border: #abefc6;
@@ -493,11 +496,11 @@ body {
   text-underline-offset: 4px;
 }
 .sf-navlinks a[data-highlight="sale"] {
-  color: var(--color-sale);
+  color: var(--color-sale-text);
   font-weight: 700;
 }
 .sf-navlinks a[data-highlight="sale"]:hover {
-  color: var(--color-sale);
+  color: var(--color-sale-text);
 }
 .sf-navlinks a[data-highlight="bold"] {
   font-weight: 700;
