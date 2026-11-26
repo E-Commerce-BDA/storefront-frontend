@@ -45,6 +45,10 @@ export type AuthFailure = {
   ok: false;
   code: AuthErrorCode;
   status: number;
+  /** I-03: service message/details survive so a BFF can surface them honestly. */
+  message?: string;
+  details?: unknown;
+  retryAfter?: number;
 };
 
 export type AuthResult<T> = { ok: true; data: T } | AuthFailure;
@@ -160,11 +164,7 @@ export function createAuthClient(options: {
     }
 
     if (!response.ok) {
-      return {
-        ok: false,
-        code: classify(response.status, await readCode(response), operation),
-        status: response.status,
-      };
+      return authFailure(response, operation);
     }
 
     if (response.status === 204) return { ok: true, data: null };
@@ -198,11 +198,7 @@ export function createAuthClient(options: {
     }
 
     if (!response.ok) {
-      return {
-        ok: false,
-        code: classify(response.status, await readCode(response), operation),
-        status: response.status,
-      };
+      return authFailure(response, operation);
     }
 
     try {
@@ -240,11 +236,7 @@ export function createAuthClient(options: {
       return { ok: false, code: "SERVICE_UNAVAILABLE", status: 0 };
     }
     if (!response.ok) {
-      return {
-        ok: false,
-        code: classify(response.status, await readCode(response), operation),
-        status: response.status,
-      };
+      return authFailure(response, operation);
     }
     if (response.status === 204) return { ok: true, data: null };
     try {
@@ -407,46 +399,77 @@ export function createAuthClient(options: {
   };
 }
 
-async function readCode(response: Response): Promise<string> {
+/** I-03/I-05: read the full error envelope, not just the code. */
+async function authFailure(response: Response, operation: Operation): Promise<AuthFailure> {
+  let code = "";
+  let message: string | undefined;
+  let details: unknown;
   try {
-    const body = (await response.json()) as { error?: { code?: unknown } };
-    const code = body?.error?.code;
-    return typeof code === "string" ? code : "";
+    const body: unknown = await response.json();
+    if (typeof body === "object" && body !== null && "error" in body) {
+      const envelope = (body as { error: unknown }).error;
+      if (typeof envelope === "object" && envelope !== null) {
+        const error = envelope as Record<string, unknown>;
+        if (typeof error.code === "string") code = error.code;
+        if (typeof error.message === "string") message = error.message;
+        if ("details" in error) details = error.details;
+      }
+    }
   } catch {
-    return "";
+    // A body that is not JSON still has a status; copy can fall back to code.
   }
+  return {
+    ok: false,
+    code: classify(response.status, code, operation),
+    status: response.status,
+    ...(message === undefined ? {} : { message }),
+    ...(details === undefined ? {} : { details }),
+    ...(response.status === 429 || response.status === 503
+      ? { retryAfter: readRetryAfter(response.headers.get("retry-after")) }
+      : {}),
+  };
 }
 
 /**
- * Status first, because that is the stable half of auth-svc's contract.
- * A known domain code refines a 401; no code means the ordinary expiry.
+ * I-04: a known domain code wins over the status class — status alone rewrote
+ * `RESET_TOKEN_EXPIRED` (a 401) into generic `TOKEN_EXPIRED`. Login/register
+ * stay generic on purpose: distinguishing "disabled" there is a user
+ * enumeration oracle (errors.ts pins the same rule).
  */
 function classify(
   status: number,
   code: string,
   operation: Operation,
 ): AuthErrorCode {
-  if (status === 409) return "EMAIL_TAKEN";
-  if (status === 429) return "RATE_LIMITED";
-  if (status === 401) {
-    // Login stays generic on purpose: "account is disabled" is a user
-    // enumeration oracle if the copy differs (errors.ts pins the same rule).
-    if (operation === "login" || operation === "register") {
-      return "INVALID_CREDENTIALS";
-    }
+  const generic = operation === "login" || operation === "register";
+  if (!generic && isAuthErrorCode(code)) {
+    // Codes whose meaning already names the failure are never reclassified by
+    // the status bucket they arrived in.
     if (
-      isAuthErrorCode(code) &&
-      (code === "TOKEN_REUSED" ||
-        code === "ACCOUNT_DISABLED" ||
-        code === "RESET_TOKEN_INVALID" ||
-        code === "RESET_TOKEN_EXPIRED")
+      code === "TOKEN_REUSED" ||
+      code === "ACCOUNT_DISABLED" ||
+      code === "RESET_TOKEN_INVALID" ||
+      code === "RESET_TOKEN_EXPIRED" ||
+      code === "EMAIL_TAKEN" ||
+      code === "RATE_LIMITED"
     ) {
       return code;
     }
+  }
+  if (status === 409) return "EMAIL_TAKEN";
+  if (status === 429) return "RATE_LIMITED";
+  if (status === 401) {
+    if (generic) return "INVALID_CREDENTIALS";
     return "TOKEN_EXPIRED";
   }
   if (status >= 500) return "SERVICE_UNAVAILABLE";
   return "VALIDATION_FAILED";
+}
+
+function readRetryAfter(value: string | null): number | undefined {
+  if (value === null || value.trim() === "") return undefined;
+  const seconds = Number(value.trim());
+  return Number.isFinite(seconds) && seconds >= 0 ? Math.floor(seconds) : undefined;
 }
 
 function asSession(value: unknown): AuthSession | null {

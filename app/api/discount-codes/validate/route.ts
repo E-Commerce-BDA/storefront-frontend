@@ -19,5 +19,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const result = await orderClient().validateDiscountCode(parsed.data);
+  // A9: valid:false is a *successful* validation answer ("that code is not
+  // valid"), never a transport failure. Pass the body through verbatim so the
+  // checkout form can show its honest invalid-coupon face.
   return toResponse(result, { status: 200 });
 }

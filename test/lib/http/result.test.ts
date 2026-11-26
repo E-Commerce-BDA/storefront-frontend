@@ -1,5 +1,5 @@
 /**
- * Result vocabulary — the status→kind table and the two readers.
+ * Result vocabulary â€” the statusâ†’kind table and the two readers.
  *
  * This table *is* the retry policy: a page that sees `unavailable` offers a
  * retry link, one that sees `conflict` does not. A wrong row here produces UI
@@ -39,7 +39,7 @@ describe("kindForStatus", () => {
     expect(kindForStatus(503)).toBe("unavailable");
   });
 
-  it("keeps 502 terminal and 503 retryable — they are different decisions", () => {
+  it("keeps 502 terminal and 503 retryable â€” they are different decisions", () => {
     expect(kindForStatus(502)).not.toBe(kindForStatus(503));
   });
 });

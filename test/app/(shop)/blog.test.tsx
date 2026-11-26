@@ -27,7 +27,12 @@ vi.mock("next/navigation", () => nav);
 
 vi.mock("@/lib/cms/loadDocuments", () => ({
   loadPublishedBlogs: async () => harness.list,
-  loadBlog: async () => harness.detail,
+  loadBlog: async () => ({
+    data: harness.detail,
+    missing: harness.detail === null,
+    status: harness.detail === null ? 404 : 200,
+    code: null,
+  }),
   blogStaticParams: async () => [],
 }));
 

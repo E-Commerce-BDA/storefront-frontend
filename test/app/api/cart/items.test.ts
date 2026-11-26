@@ -1,5 +1,5 @@
 /**
- * POST / DELETE /api/cart/items — the two writes that can create a line.
+ * POST / DELETE /api/cart/items â€” the two writes that can create a line.
  *
  * Beyond the forwarding assertions, this file pins the **guest minting
  * fallback**: a POST that arrives with no `sf_cid` must still put the item in a

@@ -47,6 +47,7 @@ export default async function ComparePage({
   const theme = resolveThemeSettings({ settings: themeResult.theme });
   const cardTheme = theme.productCard;
 
+  // I-13: an outage is not "removed products". Keep the two faces distinct.
   const items = page.ok
     ? fromCatalogList(page.data.items).sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id))
     : [];
@@ -55,7 +56,14 @@ export default async function ComparePage({
     <>
       <PageHeader title="Compare products" />
       <CompareTray />
-      {items.length === 0 ? (
+      {!page.ok ? (
+        // The catalogue could not answer; we do not know if these products exist.
+        <EmptyState
+          title="We could not load these products"
+          body="The catalogue is unavailable right now. Please try again shortly."
+          action={<Button variant="light" href="/compare">Try again</Button>}
+        />
+      ) : items.length === 0 ? (
         <EmptyState
           title="Those products are no longer available"
           body="They may have been removed or unpublished since you added them."

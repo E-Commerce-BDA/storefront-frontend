@@ -159,7 +159,6 @@ export default function OrderConfirmation({
           {order.items.map((item) => (
             <ReviewForm
               key={item.id}
-              orderId={order.id}
               productId={item.product_id}
               productName={item.product_name}
             />

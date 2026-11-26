@@ -294,7 +294,8 @@ function messageFor(code: string | null, status: number): string {
     return "That item just sold out. It is still in your cart.";
   }
   if (status === 401 || status === 403) {
-    return "Please sign in again to update your cart.";
+    // I-08: an expired session is actionable, not a generic "try again".
+    return "Your session expired — sign in again to update your cart.";
   }
   if (status === 0 || status >= 500) {
     return "The shop is not responding. Please try again.";

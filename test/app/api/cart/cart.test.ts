@@ -1,5 +1,5 @@
 /**
- * GET / DELETE /api/cart — the pre-identity answer and the cookie-authenticated
+ * GET / DELETE /api/cart â€” the pre-identity answer and the cookie-authenticated
  * clear.
  *
  * The interesting assertions are the two "no identity" branches: a first visit
@@ -34,7 +34,7 @@ function request(method: string, headers: Record<string, string> = {}): NextRequ
 
 function stubCart(status: number, body: unknown) {
   const fetchFn = vi.fn(async () =>
-    // A 204 must not carry a body — `new Response("null", {status: 204})` throws.
+    // A 204 must not carry a body â€” `new Response("null", {status: 204})` throws.
     new Response(status === 204 ? null : JSON.stringify(body), {
       status,
       headers: { "content-type": "application/json" },
@@ -127,7 +127,7 @@ describe("GET /api/cart", () => {
     expect(callOf(fetchFn)[1].headers).toMatchObject({ authorization: "Bearer at_1" });
   });
 
-  it("is never cached — a cached cart is a wrong cart", async () => {
+  it("is never cached â€” a cached cart is a wrong cart", async () => {
     vi.stubEnv("CART_SVC_URL", "http://cart.test");
     stubCart(200, CART);
 

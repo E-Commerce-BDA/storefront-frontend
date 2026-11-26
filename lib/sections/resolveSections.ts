@@ -86,7 +86,7 @@ export function defaultSectionDeps(): SectionResolveDeps {
     },
     async blogs() {
       const list = await cms.listBlogs({ limit: 12 });
-      return list ? list.data : null;
+      return list.data ? list.data.data : null;
     },
   };
 }
@@ -105,19 +105,34 @@ export interface SectionResolveContext {
   product?: ProductDetailDto;
 }
 
-export async function resolveSections(
+export interface SectionSkip {
+  key: string;
+  reason: string;
+}
+
+export interface SectionResolveResult {
+  models: SectionViewModel[];
+  /** I-17: why a section produced no model — silent skips are an outage in disguise. */
+  skipped: SectionSkip[];
+}
+
+export async function resolveSectionsWithDiagnostics(
   sections: readonly Section[],
   deps: SectionResolveDeps = defaultSectionDeps(),
   context: SectionResolveContext = {},
-): Promise<SectionViewModel[]> {
+): Promise<SectionResolveResult> {
   const ordered = [...sections].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
   const out: SectionViewModel[] = [];
+  const skipped: SectionSkip[] = [];
   let seenReviews = false;
   for (const section of ordered) {
     if (section.isActive === false) continue;
     try {
       const model = await buildViewModel(section, deps, context);
-      if (model === null) continue;
+      if (model === null) {
+        skipped.push({ key: section.key, reason: "empty-or-unavailable" });
+        continue;
+      }
       // The `#reviews` anchor exists exactly once: the first active reviews
       // section. Later reviews sections still paint.
       if (model.type === "pdp_reviews") {
@@ -131,10 +146,22 @@ export async function resolveSections(
         out.push(model);
       }
     } catch (error) {
-      console.error(`[sections] skipped "${section.key}"`, error);
+      skipped.push({
+        key: section.key,
+        reason: error instanceof Error ? error.message : "threw",
+      });
     }
   }
-  return out;
+  return { models: out, skipped };
+}
+
+/** Back-compat wrapper for callers that only need the view models. */
+export async function resolveSections(
+  sections: readonly Section[],
+  deps: SectionResolveDeps = defaultSectionDeps(),
+  context: SectionResolveContext = {},
+): Promise<SectionViewModel[]> {
+  return (await resolveSectionsWithDiagnostics(sections, deps, context)).models;
 }
 
 async function buildViewModel(

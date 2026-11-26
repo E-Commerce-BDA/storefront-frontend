@@ -4,7 +4,7 @@ import SectionRenderer from "@/components/sections/SectionRenderer";
 import { cmsBaseUrl, createCmsClient } from "@/lib/cms/client";
 import { fetchThemeSettings } from "@/lib/cms/theme";
 import { resolveThemeSettings, toBadgeTones } from "@/lib/cms/themeSettings";
-import { HOME_PAGE_KEY, resolveSections } from "@/lib/sections/resolveSections";
+import { HOME_PAGE_KEY, resolveSectionsWithDiagnostics } from "@/lib/sections/resolveSections";
 import { buildHomeJsonLd, serializeJsonLd, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 
 /**
@@ -46,7 +46,8 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   const cms = createCmsClient({ baseUrl: cmsBaseUrl() });
-  const list = await cms.getSections(HOME_PAGE_KEY);
+  const read = await cms.getSections(HOME_PAGE_KEY);
+  const list = read.data;
   let content: React.ReactNode;
 
   if (list === null) {
@@ -65,15 +66,28 @@ export default async function HomePage() {
       </section>
     );
   } else {
-    const models = await resolveSections(list.sections);
+    const resolution = await resolveSectionsWithDiagnostics(list.sections);
+    const models = resolution.models;
     const themeResult = await fetchThemeSettings();
     const theme = resolveThemeSettings({ settings: themeResult.theme });
     const cardTheme = theme.productCard;
 
+    // I-02/I-17: the CMS state is authoritative; older responses fall back to
+    // the resolved count. Diagnostics make a silent skip visible in the DOM.
+    const state = list.state ?? (models.length === 0 ? "empty" : "published");
     content =
       models.length === 0 ? (
-        <section className="sf-section sf-degraded" aria-label="Home not published yet">
-          <h1 className="sf-section__title">Nothing is published on the home page yet</h1>
+        <section
+          className="sf-section sf-degraded"
+          aria-label={state === "missing" ? "Home not configured" : "Home not published yet"}
+          data-cms-state={state}
+          data-skipped={resolution.skipped.map((s) => s.key).join(",") || undefined}
+        >
+          <h1 className="sf-section__title">
+            {state === "missing"
+              ? "The home page has not been configured yet"
+              : "Nothing is published on the home page yet"}
+          </h1>
           <p className="sf-degraded__body">
             Home sections are content, and the CMS has none enabled for this page. Products are
             still reachable through the catalog.

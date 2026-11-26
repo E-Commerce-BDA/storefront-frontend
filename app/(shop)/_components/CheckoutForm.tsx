@@ -160,9 +160,13 @@ export default function CheckoutForm() {
           if (res?.ok && res.data.valid) {
             setDiscountResult(res.data);
             setCouponError(null);
+          } else if (res?.ok) {
+            // A9: a 200 with valid:false is an answer, not silence — say so.
+            setDiscountResult(null);
+            setCouponError("That code is not valid for this order.");
           } else {
             setDiscountResult(null);
-            setCouponError(res && !res.ok && res.message ? res.message : null);
+            setCouponError(res.message ?? "We could not check that code.");
           }
         })
         .catch(() => {

@@ -103,12 +103,13 @@ export default async function ProductPage({
   // `pdp-default` blueprint is materialized into this page by the admin
   // clone endpoint; it is never read here.
   const pageKey = pdpPageKey(product.id);
-  const [cmsSectionsResponse, themeResult] = await Promise.all([
+  const [cmsRead, themeResult] = await Promise.all([
     pageKey
       ? createCmsClient({ baseUrl: cmsBaseUrl() }).getSections(pageKey)
       : Promise.resolve(null),
     fetchThemeSettings(),
   ]);
+  const cmsSectionsResponse = cmsRead?.data ?? null;
 
   let resolvedSections: SectionViewModel[];
   if (!pageKey) {

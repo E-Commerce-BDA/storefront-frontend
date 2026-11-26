@@ -183,6 +183,20 @@ export default function CartView() {
     );
   }
 
+  // A10: a failed load is not evidence of an empty cart. Show the retry face.
+  if (cart.status === "error" && cart.items.length === 0) {
+    return (
+      <div className="py-12 text-center" role="alert">
+        <p className="m-0 text-sm text-[var(--color-ink)]">
+          We could not load your cart right now.
+        </p>
+        <Button variant="light" size="sm" onClick={() => void cart.refresh()}>
+          Try again
+        </Button>
+      </div>
+    );
+  }
+
   if (cart.items.length === 0) {
     return (
       <EmptyState

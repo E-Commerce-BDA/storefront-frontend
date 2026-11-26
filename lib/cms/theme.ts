@@ -42,7 +42,7 @@ export function createCmsThemeSource(
   return {
     async fetchTheme(): Promise<ThemeSettings | null> {
       const response = await client.getGlobalSettings();
-      return response === null ? null : response.theme;
+      return response.data === null ? null : response.data.theme;
     },
   };
 }

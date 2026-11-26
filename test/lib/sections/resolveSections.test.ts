@@ -14,6 +14,7 @@ import {
   DEFAULT_TEASER_COUNT,
   HOME_PAGE_KEY,
   resolveSections,
+  resolveSectionsWithDiagnostics,
   type SectionResolveDeps,
 } from "@/lib/sections/resolveSections";
 import type { ProductListItemDto } from "@/lib/catalog/schemas";
@@ -216,16 +217,16 @@ describe("resolveSections", () => {
   });
 
   it("survives content shaped differently than this renderer knows", async () => {
-    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const broken = heroSection({ content: {} as never });
-    const models = await resolveSections(
+    // I-17: the skip is reported as data, not only logged and forgotten.
+    const result = await resolveSectionsWithDiagnostics(
       [broken, featuredSection()],
       deps({ products: async () => [productRow()] }),
     );
-    // The unknown section is logged and lost; the page keeps everything else.
-    expect(models.map((m) => m.key)).toEqual(["new-arrivals"]);
-    expect(spy).toHaveBeenCalledWith('[sections] skipped "hero-home"', expect.anything());
-    spy.mockRestore();
+    expect(result.models.map((m) => m.key)).toEqual(["new-arrivals"]);
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0]?.key).toBe(broken.key);
+    expect(result.skipped[0]?.reason).toBeTruthy();
   });
 });
 

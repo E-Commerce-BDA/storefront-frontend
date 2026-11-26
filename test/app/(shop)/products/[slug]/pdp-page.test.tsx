@@ -58,7 +58,11 @@ vi.mock("@/lib/cms/client", () => ({
   createCmsClient: () => ({
     getSections: async (pageKey: string) => {
       harness.requestedPageKeys.push(pageKey);
-      return harness.sections;
+      return {
+        data: harness.sections,
+        status: harness.sections === null ? 503 : 200,
+        code: null,
+      };
     },
   }),
 }));

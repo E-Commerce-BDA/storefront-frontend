@@ -14,7 +14,8 @@ function request(body: unknown, cookie = "sf_at=at_1"): NextRequest {
   });
 }
 
-const VALID = { orderId: "o1", productId: "p1", rating: 5, title: "Great" };
+// catalog-svc 303628b requires a body and strips undeclared keys (orderId).
+const VALID = { productId: "p1", rating: 5, title: "Great", body: "Really good." };
 
 beforeEach(() => {
   reviews.create.mockClear();

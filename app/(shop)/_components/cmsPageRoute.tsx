@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import CmsPage from "@/components/pages/CmsPage";
 import { loadPage } from "@/lib/cms/loadDocuments";
 
@@ -35,11 +36,25 @@ export function createCmsPageRoute({
   const path = `/${slug}`;
 
   async function Page() {
-    return <CmsPage page={await loadPage(slug)} />;
+    const result = await loadPage(slug);
+    // I-16: only a real 404 is absence; a CMS outage is not "no such page".
+    if (result.data === null && result.missing) notFound();
+    if (result.data === null) {
+      return (
+        <section className="sf-section sf-degraded" aria-label="Content unavailable">
+          <h1 className="sf-section__title">This page is temporarily unavailable</h1>
+          <p className="sf-degraded__body">
+            The content service could not be reached. Please try again shortly.
+          </p>
+        </section>
+      );
+    }
+    return <CmsPage page={result.data} />;
   }
 
   async function generateMetadata(): Promise<Metadata> {
-    const page = await loadPage(slug);
+    const result = await loadPage(slug);
+    const page = result.data;
     if (page === null) return { title, alternates: { canonical: path } };
     return {
       title: page.seo?.title ?? title,

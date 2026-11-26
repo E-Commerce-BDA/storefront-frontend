@@ -45,18 +45,37 @@ export interface BlogListResult {
 }
 
 export async function loadPublishedBlogs(query?: CmsBlogListQuery): Promise<BlogListResult | null> {
-  const list = await client().listBlogs(query);
-  // A well-formed but empty list is a fact; `null` is the outage. Both are
-  // returned as-is and the route distinguishes them.
-  return list === null ? null : { blogs: list.data, nextCursor: list.nextCursor };
+  const read = await client().listBlogs(query);
+  // A well-formed but empty list is a fact; a failed read is the outage.
+  return read.data === null ? null : { blogs: read.data.data, nextCursor: read.data.nextCursor };
 }
 
-export async function loadBlog(slug: string): Promise<Blog | null> {
-  return client().getBlog(slug);
+/** I-02: a genuine 404 is `missing`; any other failure is an outage. */
+export interface CmsDocumentResult<T> {
+  data: T | null;
+  missing: boolean;
+  status: number;
+  code: string | null;
 }
 
-export async function loadPage(slug: string): Promise<Page | null> {
-  return client().getPage(slug);
+export async function loadBlog(slug: string): Promise<CmsDocumentResult<Blog>> {
+  const read = await client().getBlog(slug);
+  return {
+    data: read.data,
+    missing: read.status === 404,
+    status: read.status,
+    code: read.code,
+  };
+}
+
+export async function loadPage(slug: string): Promise<CmsDocumentResult<Page>> {
+  const read = await client().getPage(slug);
+  return {
+    data: read.data,
+    missing: read.status === 404,
+    status: read.status,
+    code: read.code,
+  };
 }
 
 export async function blogStaticParams(): Promise<Array<{ slug: string }>> {

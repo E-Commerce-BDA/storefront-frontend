@@ -11,12 +11,11 @@ import { bff } from "@/lib/http/browser";
 import { useNotice } from "./useNotice";
 
 export interface ReviewFormProps {
-  orderId: string;
   productId: string;
   productName: string;
 }
 
-export default function ReviewForm({ orderId, productId, productName }: ReviewFormProps) {
+export default function ReviewForm({ productId, productName }: ReviewFormProps) {
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState(0);
   const [title, setTitle] = useState("");
@@ -26,16 +25,17 @@ export default function ReviewForm({ orderId, productId, productName }: ReviewFo
   const { notice, notify, close } = useNotice();
 
   async function submit() {
-    if (busy || rating === 0) return;
+    if (busy || rating === 0 || body.trim() === "") return;
     setBusy(true);
     const result = await bff<{ id: string }>("/api/reviews", {
       method: "POST",
+      // catalog-svc strips undeclared keys, so orderId is not sent at all.
+      // The required `body` is always present; limits match the service.
       body: {
-        orderId,
         productId,
         rating,
-        ...(title.trim() === "" ? {} : { title: title.trim() }),
-        ...(body.trim() === "" ? {} : { body: body.trim() }),
+        ...(title.trim() === "" ? {} : { title: title.trim().slice(0, 120) }),
+        body: body.trim().slice(0, 2000),
       },
     });
     setBusy(false);
@@ -86,10 +86,10 @@ export default function ReviewForm({ orderId, productId, productName }: ReviewFo
               ))}
             </div>
           </fieldset>
-          <Input label="Review title" value={title} onChange={setTitle} maxLength={255} />
-          <Textarea label="Your review" value={body} onChange={setBody} rows={3} />
+          <Input label="Review title" value={title} onChange={setTitle} maxLength={120} />
+          <Textarea label="Your review" value={body} onChange={setBody} rows={3} maxLength={2000} />
           <div>
-            <Button type="submit" size="sm" disabled={busy || rating === 0}>
+            <Button type="submit" size="sm" disabled={busy || rating === 0 || body.trim() === ""}>
               {busy ? "Submitting…" : "Submit review"}
             </Button>
           </div>

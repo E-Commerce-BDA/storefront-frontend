@@ -1,26 +1,26 @@
 /**
- * Review write seam — sf-059 (A3.10)
+ * Review write seam — sf-059 (A3.10), tightened to catalog-svc 303628b.
  *
  * Server-only. The storefront holds no JWT; the BFF forwards the caller's
- * identity headers to catalog-svc, which owns moderation (`is_approved`).
+ * identity headers to catalog-svc, which owns moderation (`status: pending`).
  * The storefront never shows a submitted review as published — success means
  * "queued for moderation", nothing more.
+ *
+ * No client idempotency key is invented: catalog-svc's POST has none, and a
+ * made-up key would suggest replay protection that does not exist.
  */
 
-import { z } from "zod";
 import type { IdentityHeaders } from "@/lib/cart/client";
 import { createServiceClient } from "@/lib/http/client";
 import type { ServiceResult } from "@/lib/http/result";
-import type { CreateReviewInput } from "./schemas";
+import { createdReviewSchema, type CreatedReview, type CreateReviewInput } from "./schemas";
 
 export interface ReviewClient {
   create(
     identity: IdentityHeaders,
     input: CreateReviewInput,
-  ): Promise<ServiceResult<{ id: string }>>;
+  ): Promise<ServiceResult<CreatedReview>>;
 }
-
-const createdSchema = z.object({ id: z.string() }).loose();
 
 export function reviewClient(): ReviewClient {
   return {
@@ -30,12 +30,11 @@ export function reviewClient(): ReviewClient {
         path: `/api/v1/catalog/products/${encodeURIComponent(input.productId)}/reviews`,
         headers: identity,
         body: {
-          orderId: input.orderId,
           rating: input.rating,
           ...(input.title ? { title: input.title } : {}),
-          ...(input.body ? { body: input.body } : {}),
+          body: input.body,
         },
-        schema: createdSchema,
+        schema: createdReviewSchema,
         cache: "no-store",
       });
     },

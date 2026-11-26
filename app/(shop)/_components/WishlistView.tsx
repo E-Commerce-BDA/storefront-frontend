@@ -10,7 +10,7 @@ import { fromCatalogList } from "@/lib/commerce/fromCatalog";
 
 export default function WishlistView() {
   const router = useRouter();
-  const { items, status } = useWishlist();
+  const { items, status, refresh } = useWishlist();
 
   const cardItems = useMemo(() => {
     const products = items.map((it) => it.product);
@@ -28,6 +28,16 @@ export default function WishlistView() {
         <p className="py-12 text-center text-sm text-[var(--text-muted)]" role="status">
           Loading your wishlist…
         </p>
+      ) : status === "error" ? (
+        // I-14: an outage is not an empty wishlist. Say so, with a retry.
+        <div className="py-12 text-center" role="alert">
+          <p className="m-0 text-sm text-[var(--color-ink)]">
+            We could not load your wishlist right now.
+          </p>
+          <Button variant="light" size="sm" onClick={() => void refresh()}>
+            Try again
+          </Button>
+        </div>
       ) : items.length === 0 ? (
         <EmptyState
           icon={<Icon name="heart" size={24} />}

@@ -46,6 +46,8 @@ export interface ServiceFailure {
    * this transport owns no domain schemas; the consuming island parses it.
    */
   details?: unknown;
+  /** Seconds until a retry is allowed (429 / 503 Retry-After). */
+  retryAfter?: number;
 }
 
 export type ServiceResult<T> = { ok: true; data: T } | ServiceFailure;
@@ -81,6 +83,7 @@ export function failure(
   code: string | null,
   message: string | null,
   details?: unknown,
+  retryAfter?: number,
 ): ServiceFailure {
   return {
     ok: false,
@@ -89,6 +92,7 @@ export function failure(
     code,
     message,
     ...(details === undefined ? {} : { details }),
+    ...(retryAfter === undefined ? {} : { retryAfter }),
   };
 }
 
@@ -112,6 +116,9 @@ export async function readFailure(response: Response): Promise<ServiceFailure> {
   let code: string | null = null;
   let message: string | null = null;
   let details: unknown;
+  // I-05: Retry-After is honoured from either the header or the envelope, so
+  // a rate-limited island can show a countdown instead of a blind retry.
+  const retryAfter = readRetryAfter(response.headers.get("retry-after"));
 
   try {
     const body: unknown = await response.json();
@@ -120,6 +127,12 @@ export async function readFailure(response: Response): Promise<ServiceFailure> {
       if (typeof envelope.code === "string") code = envelope.code;
       if (typeof envelope.message === "string") message = envelope.message;
       if ("details" in envelope) details = envelope.details;
+      if (retryAfter === undefined) {
+        const fromBody = readRetryAfter(String(envelope.retryAfter ?? ""));
+        if (fromBody !== undefined) {
+          return failure(status, code, message, details, fromBody);
+        }
+      }
     }
   } catch {
   }
@@ -127,7 +140,14 @@ export async function readFailure(response: Response): Promise<ServiceFailure> {
   if (message === null || message.length === 0) {
     message = response.statusText || `service returned ${status}`;
   }
-  return failure(status, code, message, details);
+  return failure(status, code, message, details, retryAfter);
+}
+
+/** Accepts delta-seconds (the common form) and ignores HTTP-date Retry-After. */
+export function readRetryAfter(value: string | null): number | undefined {
+  if (value === null || value.trim() === "") return undefined;
+  const seconds = Number(value.trim());
+  return Number.isFinite(seconds) && seconds >= 0 ? Math.floor(seconds) : undefined;
 }
 
 /**

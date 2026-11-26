@@ -52,7 +52,7 @@ export function createCmsNavSource(
   return {
     async fetchNavigation(): Promise<NavSettingsEntry | null> {
       const nav = await client.getNavigation();
-      return nav === null ? null : { settings: nav.navbar, version: nav.version };
+      return nav.data === null ? null : { settings: nav.data.navbar, version: nav.data.version };
     },
   };
 }

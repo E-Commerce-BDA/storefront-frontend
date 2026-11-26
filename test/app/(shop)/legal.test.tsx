@@ -19,7 +19,12 @@ vi.mock("next/navigation", () => ({
   },
 }));
 vi.mock("@/lib/cms/loadDocuments", () => ({
-  loadPage: async () => harness.page,
+  loadPage: async () => ({
+    data: harness.page,
+    missing: harness.page === null,
+    status: harness.page === null ? 404 : 200,
+    code: null,
+  }),
   CMS_PAGE_ROUTES: { "/about": "about", "/privacy": "privacy", "/terms": "terms" },
 }));
 
@@ -63,11 +68,11 @@ describe("legal/company routes share one renderer", () => {
     expect(container.querySelector(".sf-page-header__crumbs a")?.getAttribute("href")).toBe("/");
   });
 
-  it("a null document is notFound, not an error page", async () => {
+  it("a missing document is notFound, not an error page", async () => {
     harness.page = null;
-    const element = await privacy.default();
-    // notFound lives in CmsPage, so it fires during render, not during Page().
-    expect(() => render(element)).toThrow("NEXT_NOT_FOUND");
+    // I-02/I-16: a real 404 throws notFound in the route itself; the page
+    // component is never asked to render an invented error document.
+    await expect(privacy.default()).rejects.toThrow("NEXT_NOT_FOUND");
   });
 
   it("the sanitizer runs on rich_text before it hits the DOM", async () => {

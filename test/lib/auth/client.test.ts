@@ -1,5 +1,5 @@
 /**
- * Thin auth client — the mapping table is the contract, so it is a test.
+ * Thin auth client ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the mapping table is the contract, so it is a test.
  *
  * Every case injects `fetchFn`: no network, no clock, no ports. The rule the
  * table encodes is "status first, a known domain code refines a 401 on refresh";
@@ -71,7 +71,7 @@ describe("login / register", () => {
     const result = await auth.login({ email: "ana@x.com", password: "nope" });
 
     // Generic on purpose: "disabled" must not be distinguishable at sign-in.
-    expect(result).toEqual({ ok: false, code: "INVALID_CREDENTIALS", status: 401 });
+    expect(result).toMatchObject({ ok: false, code: "INVALID_CREDENTIALS", status: 401 });
   });
 
   it("maps a 409 on register to EMAIL_TAKEN", async () => {
@@ -84,7 +84,7 @@ describe("login / register", () => {
       lastName: "Silva",
     });
 
-    expect(result).toEqual({ ok: false, code: "EMAIL_TAKEN", status: 409 });
+    expect(result).toMatchObject({ ok: false, code: "EMAIL_TAKEN", status: 409 });
   });
 
   it("treats a 200 without tokens as SERVICE_UNAVAILABLE (never a partial session)", async () => {
@@ -115,7 +115,7 @@ describe("refresh", () => {
       authError(401, "TOKEN_REUSED", "Session terminated due to security violation"),
     );
 
-    expect(await auth.refresh("rt_1")).toEqual({
+    expect(await auth.refresh("rt_1")).toMatchObject({
       ok: false,
       code: "TOKEN_REUSED",
       status: 401,
@@ -125,7 +125,7 @@ describe("refresh", () => {
   it("maps an ACCOUNT_DISABLED code from a 401 refresh to ACCOUNT_DISABLED", async () => {
     const { auth } = client(async () => authError(401, "ACCOUNT_DISABLED", "Account is disabled"));
 
-    expect(await auth.refresh("rt_1")).toEqual({
+    expect(await auth.refresh("rt_1")).toMatchObject({
       ok: false,
       code: "ACCOUNT_DISABLED",
       status: 401,
@@ -137,7 +137,7 @@ describe("refresh", () => {
       authError(401, "UNAUTHENTICATED", "Invalid or expired refresh token"),
     );
 
-    expect(await auth.refresh("rt_1")).toEqual({
+    expect(await auth.refresh("rt_1")).toMatchObject({
       ok: false,
       code: "TOKEN_EXPIRED",
       status: 401,
@@ -198,7 +198,7 @@ describe("configuration", () => {
     expect(authServiceUrl()).toBe("http://auth.internal:9000");
   });
 
-  it("exposes a 3 s budget — shorter than a shopper's patience, longer than auth-svc's p99", () => {
+  it("exposes a 3 s budget ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â shorter than a shopper's patience, longer than auth-svc's p99", () => {
     expect(AUTH_SERVICE_TIMEOUT_MS).toBe(3000);
   });
 });

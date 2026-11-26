@@ -17,13 +17,19 @@ const harness = vi.hoisted(() => ({
 
 vi.mock("@/lib/cms/client", () => ({
   cmsBaseUrl: () => "http://cms.test",
-  createCmsClient: () => ({ getSections: async () => harness.sections }),
+  createCmsClient: () => ({
+    getSections: async () => ({
+      data: harness.sections,
+      status: harness.sections === null ? 503 : 200,
+      code: null,
+    }),
+  }),
 }));
 vi.mock("@/lib/sections/resolveSections", async () => {
   const actual = await import("@/lib/sections/resolveSections");
   return {
     ...actual,
-    resolveSections: async () => harness.models,
+    resolveSectionsWithDiagnostics: async () => ({ models: harness.models, skipped: [] }),
   };
 });
 vi.mock("@/components/sections/ProductGridIsland", () => ({

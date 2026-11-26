@@ -24,8 +24,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const promises = filteredSlugs.map((slug) => catalogClient().getProduct(slug));
   const results = await Promise.all(promises);
-  const activeProducts = results.flatMap((res) =>
-    res.ok && res.data.status === "active" ? [res.data] : [],
+  // I-15: a failed catalog read is skipped (not silently painted as empty),
+  // and the response's own slug must match the one we asked for so a stale or
+  // mistyped cookie entry cannot show an unrelated product.
+  const activeProducts = results.flatMap((res, index) =>
+    res.ok && res.data.status === "active" && res.data.slug === filteredSlugs[index]
+      ? [res.data]
+      : [],
   );
 
   const cards = fromCatalogList(activeProducts);

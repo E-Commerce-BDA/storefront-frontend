@@ -50,7 +50,7 @@ export function createCmsFooterSource(
   return {
     async fetchFooter(): Promise<Footer | null> {
       const response = await client.getFooter();
-      return response === null ? null : response.footer;
+      return response.data === null ? null : response.data.footer;
     },
   };
 }

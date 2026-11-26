@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import Breadcrumbs from "@/components/shell/Breadcrumbs";
 import PostBlocks from "@/components/blog/PostBlocks";
 import { blogStaticParams, loadBlog } from "@/lib/cms/loadDocuments";
+import { notFound } from "next/navigation";
 import { formatFullDate, readingMinutes } from "@/lib/blog/present";
 import { SITE_NAME } from "@/lib/site";
 import type { Blog } from "@ecom/contracts";
@@ -33,8 +33,11 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const blog = await loadBlog(slug);
-  if (blog === null) return { title: "Post not found" };
+  const result = await loadBlog(slug);
+  if (result.data === null) {
+    return { title: result.missing ? "Post not found" : "Post temporarily unavailable" };
+  }
+  const blog = result.data;
 
   return {
     title: blog.seo?.title ?? blog.title,
@@ -75,8 +78,20 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const blog = await loadBlog(slug);
-  if (blog === null) notFound();
+  const result = await loadBlog(slug);
+  // I-16: a 404 means the post genuinely does not exist; an outage does not.
+  if (result.data === null && result.missing) notFound();
+  if (result.data === null) {
+    return (
+      <section className="sf-section sf-degraded" aria-label="Post unavailable">
+        <h1 className="sf-section__title">This post is temporarily unavailable</h1>
+        <p className="sf-degraded__body">
+          The content service could not be reached. Please try again shortly.
+        </p>
+      </section>
+    );
+  }
+  const blog = result.data;
 
   const date = formatFullDate(blog.publishedAt);
   const minutes = readingMinutes(blog.content);

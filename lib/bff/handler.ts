@@ -38,13 +38,22 @@ export function apiError(
   code: string,
   message?: string,
   details?: unknown,
+  retryAfter?: number,
 ): NextResponse {
-  const error: { code: string; message?: string; details?: unknown } = { code };
+  const error: {
+    code: string;
+    message?: string;
+    details?: unknown;
+    retryAfter?: number;
+  } = { code };
   if (message !== undefined) error.message = message;
   // ord-013: pass structured stock shortfall through untouched. It is data
   // from our own order service, never a string parsed out of the message.
   if (details !== undefined) error.details = details;
-  return NextResponse.json({ error }, { status, headers: NO_STORE });
+  if (retryAfter !== undefined) error.retryAfter = retryAfter;
+  const headers: Record<string, string> = { ...NO_STORE };
+  if (retryAfter !== undefined) headers["retry-after"] = String(retryAfter);
+  return NextResponse.json({ error }, { status, headers });
 }
 
 export function badRequest(code = "VALIDATION_FAILED"): NextResponse {
@@ -78,6 +87,7 @@ export function toResponse<T>(
       result.code ?? "SERVICE_UNAVAILABLE",
       result.message ?? undefined,
       result.details,
+      result.retryAfter,
     );
   }
   return jsonNoStore(result.data ?? null, init.status ?? 200);

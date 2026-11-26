@@ -10,6 +10,9 @@ export interface RecentlyViewedProps {
 
 export default function RecentlyViewed({ excludeSlug }: RecentlyViewedProps) {
   const [items, setItems] = useState<ProductCardData[]>([]);
+  // I-15: a failed fetch is not an empty list. Keep the failure distinct so
+  // the section can say "unavailable" instead of pretending nothing was viewed.
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -18,19 +21,41 @@ export default function RecentlyViewed({ excludeSlug }: RecentlyViewedProps) {
       : "/api/recently-viewed";
 
     void fetch(url, { credentials: "same-origin" })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!alive || !data || !Array.isArray(data.products)) return;
-        setItems(data.products);
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("recently-viewed failed"))))
+      .then((data: unknown) => {
+        if (!alive) return;
+        const products =
+          typeof data === "object" && data !== null && "products" in data
+            ? (data as { products: unknown }).products
+            : null;
+        if (!Array.isArray(products)) {
+          setFailed(true);
+          return;
+        }
+        setFailed(false);
+        setItems(products.filter((p): p is ProductCardData =>
+          typeof p === "object" && p !== null && "id" in p && "name" in p,
+        ));
       })
-      .catch(() => {});
+      .catch(() => {
+        if (alive) setFailed(true);
+      });
 
     return () => {
       alive = false;
     };
   }, [excludeSlug]);
 
-  if (items.length === 0) return null;
+  if (items.length === 0) {
+    return failed ? (
+      <section className="mt-12" aria-label="Recently viewed products">
+        <h2 className="mb-4 font-display text-lg text-[var(--color-ink)]">Recently viewed</h2>
+        <p className="m-0 text-sm text-[var(--text-muted)]" role="status">
+          Your recently viewed items are unavailable right now.
+        </p>
+      </section>
+    ) : null;
+  }
 
   return (
     <section className="mt-12" aria-label="Recently viewed products">

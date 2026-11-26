@@ -1,7 +1,7 @@
 /**
- * POST /api/auth/login — the G3 proof, executed rather than grepped.
+ * POST /api/auth/login â€” the G3 proof, executed rather than grepped.
  *
- * The handler's whole job is: tokens → cookies, everything else → `{ user }`.
+ * The handler's whole job is: tokens â†’ cookies, everything else â†’ `{ user }`.
  * So the assertions are (a) the body's key set is exactly `['user']`, (b) the
  * serialised body contains no token value, (c) the Set-Cookie pair carries
  * HttpOnly/SameSite/path, (d) a failure sets no cookie at all, and (e) a guest
@@ -136,7 +136,10 @@ describe("POST /api/auth/login", () => {
     const response = await POST(request({ email: "ana@x.com", password: "wrong" }));
 
     expect(response.status).toBe(401);
-    expect(await response.json()).toEqual({ error: { code: "INVALID_CREDENTIALS" } });
+    // I-03: the service message is carried through, not dropped at the BFF.
+    expect(await response.json()).toMatchObject({
+      error: { code: "INVALID_CREDENTIALS", message: "Invalid email or password" },
+    });
     expect(response.headers.getSetCookie()).toEqual([]);
   });
 
@@ -153,7 +156,7 @@ describe("POST /api/auth/login", () => {
   });
 });
 
-describe("POST /api/auth/login — guest cart merge (A4.6)", () => {
+describe("POST /api/auth/login â€” guest cart merge (A4.6)", () => {
   it("absorbs sf_cid into the new session and rotates it", async () => {
     vi.stubEnv("AUTH_SVC_URL", "http://auth.test");
     vi.stubEnv("CART_SVC_URL", "http://cart.test");

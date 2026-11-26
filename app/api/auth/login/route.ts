@@ -15,6 +15,7 @@ import { z } from "zod";
 import { authServiceUrl, createAuthClient } from "@/lib/auth/client";
 import { isSecureCookie, sessionCookies } from "@/lib/auth/session";
 import { absorbGuestCart } from "@/lib/cart/absorb";
+import { apiError } from "@/lib/bff/handler";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -38,9 +39,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   });
 
   if (!result.ok) {
-    return NextResponse.json(
-      { error: { code: result.code } },
-      { status: result.status === 0 ? 503 : result.status },
+    // I-03: carry the service message/details so the form can show the real
+    // reason where it is safe to (login copy stays generic in the client).
+    return apiError(
+      result.status === 0 ? 503 : result.status,
+      result.code,
+      result.message,
+      result.details,
+      result.retryAfter,
     );
   }
 
