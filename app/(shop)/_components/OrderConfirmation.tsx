@@ -34,6 +34,13 @@ export default function OrderConfirmation({
 }: OrderConfirmationProps) {
   const router = useRouter();
   const [result, setResult] = useState<ServiceResult<OrderDto> | null>(null);
+  // A26: navigation is an effect, never a render-time side effect. React may
+  // re-render a component before committing it; pushing during render can
+  // redirect twice or disrupt an in-flight tree.
+  const [signinTarget, setSigninTarget] = useState<string | null>(null);
+  useEffect(() => {
+    if (signinTarget !== null) router.push(signinTarget);
+  }, [signinTarget, router]);
 
   useEffect(() => {
     let alive = true;
@@ -57,7 +64,7 @@ export default function OrderConfirmation({
 
   if (!result.ok) {
     if (result.kind === "unauthorized") {
-      router.push(
+      setSigninTarget(
         `/signin?next=${encodeURIComponent(
           signinNextPath ?? `/checkout/confirmation/${orderId}`,
         )}`,

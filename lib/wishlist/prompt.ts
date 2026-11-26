@@ -21,7 +21,13 @@ export function resolveWishlistGuestPrompt(
   currentPath: string,
   options: { productName?: string } = {},
 ): WishlistGuestPrompt {
-  const next = currentPath.startsWith("/") && !currentPath.startsWith("//") ? currentPath : "/products";
+  // A17: /account and /checkout are proxy-guarded; returning a signed-out
+  // shopper there would bounce straight back to sign-in in a loop.
+  const safePath =
+    currentPath.startsWith("/") &&
+    !currentPath.startsWith("//") &&
+    !/^\/(account|checkout)(\/|$|\?)/.test(currentPath);
+  const next = safePath ? currentPath : "/products";
   return {
     title: "Sign in to save this item",
     body: "We'll keep your pick ready and add it to your wishlist as soon as you sign in.",

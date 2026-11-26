@@ -1,19 +1,10 @@
 import type { Metadata } from "next";
 import { Fraunces, Outfit } from "next/font/google";
 import "./globals.css";
-import { resolveNavSettings } from "@/lib/shell/resolveNav";
-import { fetchNavSettings } from "@/lib/cms/navigation";
-import { fetchFooter } from "@/lib/cms/footer";
 import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/lib/site";
 import { fetchThemeSettings } from "@/lib/cms/theme";
 import { resolveThemeSettings } from "@/lib/cms/themeSettings";
 import { themeToCssVars } from "@/lib/cms/themeVars";
-import NavbarMount from "./_components/NavbarMount";
-import FooterMount from "./_components/FooterMount";
-import CartProvider from "./_components/CartProvider";
-import { WishlistProvider } from "./_components/WishlistProvider";
-import { CompareProvider } from "./_components/CompareProvider";
-import PageViewTracker from "./_components/PageViewTracker";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -38,51 +29,24 @@ export const metadata: Metadata = {
 };
 
 /**
- * Root layout — server resolves nav once per request (admin values flow
- * as concrete props; client never sees knob names), NavbarMount owns
- * interaction state below.
+ * Root layout — providers + theme only.
  *
- * `fetchNavSettings` never rejects: cms-svc down → stale cache → demo nav.
- * That ordering matters here more than anywhere else, because a throw in the
- * root layout blanks every route in the app.
+ * A15: navbar and footer moved to the `(shop)` group so sign-in/sign-up get a
+ * conversion surface without storefront chrome. The providers stay at the root
+ * because a route may need the cart before it renders its own chrome.
  *
- * `fetchFooter` follows the same rule with a different fallback: the footer has
- * no builtin document to invent, so an outage yields `null` and the shell draws
- * its minimal face (four real routes). The two reads are issued together and
- * awaited together — they are one service and one budget, and serialising them
- * would double the worst-case added latency of a slow CMS.
- *
- * Mount order is navbar → page → footer. Plan §7 wrote "directly after
- * `NavbarMount`", which is right about *the layout owning the shell* and wrong
- * about *position*: a footer has to follow `{children}` to be at the bottom of
- * the document. Same owner, same props, DOM order corrected.
- *
- * `CartProvider` wraps the chrome *and* the page: the navbar badge, the drawer
- * and whatever route is rendering must all read one cart. It fetches once on
- * mount and holds no server data of its own, so the layout stays static.
+ * `fetchThemeSettings` never rejects: cms-svc down → stale cache → demo theme.
+ * A throw in the root layout would blank every route, so this one read is the
+ * only CMS dependency here.
  */
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [navResult, footerResult, themeResult] = await Promise.all([
-    fetchNavSettings(),
-    fetchFooter(),
-    fetchThemeSettings(),
-  ]);
-  const nav = resolveNavSettings({ settings: navResult.settings, global: null });
+  // A15: shop chrome belongs to the (shop) group, not the root — auth routes
+  // get a conversion surface, not a storefront header and footer.
+  const themeResult = await fetchThemeSettings();
   const theme = resolveThemeSettings({ settings: themeResult.theme });
   return (
     <html lang="en" className={`${fraunces.variable} ${outfit.variable}`}>
-      <body style={themeToCssVars(theme)}>
-        <CartProvider drawerActions={nav.cart.drawerActions}>
-          <WishlistProvider>
-            <CompareProvider>
-              <NavbarMount nav={nav} />
-              {children}
-              <FooterMount footer={footerResult.footer} />
-              <PageViewTracker />
-            </CompareProvider>
-          </WishlistProvider>
-        </CartProvider>
-      </body>
+      <body style={themeToCssVars(theme)}>{children}</body>
     </html>
   );
 }

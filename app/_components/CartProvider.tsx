@@ -35,6 +35,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useReducer,
   useRef,
   useState,
 } from "react";
@@ -62,8 +63,14 @@ import {
   toView,
   type CartState,
 } from "@/lib/cart/state";
+import {
+  cartMachine,
+  initialCartMachine,
+  rollbackDelta,
+} from "@/lib/cart/machine";
+import type { Status } from "@/lib/machine/status";
 
-export type CartStatus = "idle" | "loading" | "ready" | "error";
+export type CartStatus = Status;
 
 export interface AddOptions {
   qty?: number;
@@ -107,10 +114,9 @@ export interface CartProviderProps {
 
 export default function CartProvider({ children, drawerActions }: CartProviderProps) {
   const router = useRouter();
-  const [state, setState] = useState<CartState>(emptyCart);
-  const [status, setStatus] = useState<CartStatus>("idle");
+  const [machine, dispatch] = useReducer(cartMachine, undefined, initialCartMachine);
+  const { cart: state, status, notice } = machine;
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
 
   /**
    * A synchronous mirror of `state`. React batches renders, so an `await` that
@@ -118,21 +124,17 @@ export default function CartProvider({ children, drawerActions }: CartProviderPr
    */
   const latest = useRef<CartState>(state);
 
-  const commit = useCallback((next: CartState) => {
-    latest.current = next;
-    setState(next);
-  }, []);
-
   const refresh = useCallback(async () => {
-    setStatus((current) => (current === "idle" ? "loading" : current));
+    dispatch({ type: "load/start" });
     const result = await getCart();
     if (!result.ok) {
-      setStatus("error");
+      dispatch({ type: "load/error" });
       return;
     }
-    commit(reconcile(result.data));
-    setStatus("ready");
-  }, [commit]);
+    const next = reconcile(result.data);
+    latest.current = next;
+    dispatch({ type: "load/success", snapshot: result.data });
+  }, []);
 
   // One read on mount; a signed-out visitor gets the BFF's empty 200, so this
   // never surfaces an error state on a first visit.
@@ -140,88 +142,97 @@ export default function CartProvider({ children, drawerActions }: CartProviderPr
     void refresh();
   }, [refresh]);
 
-  const add = useCallback(
-    async (productId: string, options: AddOptions = {}) => {
-      const qty = options.qty ?? 1;
-      const variantId = options.variantId;
-      const before = latest.current;
+  // A3: each write gets an op id and records its own delta. A failure undoes
+  // only that delta against the *current* cart, so a concurrent write that
+  // landed while this one was in flight is never clobbered.
+  const opId = () => crypto.randomUUID();
 
-      const optimistic: CartItemDto = {
-        id: pendingItemId(lineKey({ productId, variantId })),
-        productId,
-        variantId: variantId ?? null,
-        qty,
-        unitPrice: 0,
-        productName: "",
-      };
-      commit(applyAdd(before, optimistic));
+  const add = useCallback(async (productId: string, options: AddOptions = {}) => {
+    const qty = options.qty ?? 1;
+    const variantId = options.variantId;
+    const before = latest.current;
+    const optimistic: CartItemDto = {
+      id: pendingItemId(lineKey({ productId, variantId })),
+      productId,
+      variantId: variantId ?? null,
+      qty,
+      unitPrice: 0,
+      productName: "",
+    };
+    const optimisticCart = applyAdd(before, optimistic);
+    const id = opId();
+    latest.current = optimisticCart;
+    dispatch({ type: "op/start", opId: id, optimistic: optimisticCart });
 
-      const result = await postCartItem({ productId, variantId, qty });
-      if (result.ok) {
-        commit(applyItem(latest.current, result.data.item));
-        setStatus("ready");
-        return true;
-      }
+    const result = await postCartItem({ productId, variantId, qty });
+    if (result.ok) {
+      const next = applyItem(latest.current, result.data.item);
+      latest.current = next;
+      dispatch({ type: "op/success", opId: id, item: result.data.item });
+      return true;
+    }
+    latest.current = rollbackDelta(latest.current, before, optimisticCart);
+    dispatch({ type: "op/failure", opId: id, message: messageFor(result.code, result.status) });
+    return false;
+  }, []);
 
-      commit(before);
-      setNotice(messageFor(result.code, result.status));
-      return false;
-    },
-    [commit],
-  );
+  const setQty = useCallback(async (itemId: string, qty: number) => {
+    const next = Math.max(1, Math.trunc(qty));
+    if (isPendingId(itemId)) return false;
 
-  const setQty = useCallback(
-    async (itemId: string, qty: number) => {
-      const next = Math.max(1, Math.trunc(qty));
-      if (isPendingId(itemId)) return false;
+    const before = latest.current;
+    const optimisticCart = applyQty(before, itemId, next);
+    const id = opId();
+    latest.current = optimisticCart;
+    dispatch({ type: "op/start", opId: id, optimistic: optimisticCart });
 
-      const before = latest.current;
-      commit(applyQty(before, itemId, next));
+    const result = await patchCartQty(itemId, next);
+    if (result.ok) {
+      const applied = applyItem(latest.current, result.data.item);
+      latest.current = applied;
+      dispatch({ type: "op/success", opId: id, item: result.data.item });
+      return true;
+    }
+    latest.current = rollbackDelta(latest.current, before, optimisticCart);
+    dispatch({ type: "op/failure", opId: id, message: messageFor(result.code, result.status) });
+    return false;
+  }, []);
 
-      const result = await patchCartQty(itemId, next);
-      if (result.ok) {
-        commit(applyItem(latest.current, result.data.item));
-        return true;
-      }
+  const remove = useCallback(async (itemId: string) => {
+    if (isPendingId(itemId)) return false;
 
-      commit(before);
-      setNotice(messageFor(result.code, result.status));
-      return false;
-    },
-    [commit],
-  );
+    const before = latest.current;
+    const optimisticCart = applyRemove(before, itemId);
+    const id = opId();
+    latest.current = optimisticCart;
+    dispatch({ type: "op/start", opId: id, optimistic: optimisticCart });
 
-  const remove = useCallback(
-    async (itemId: string) => {
-      if (isPendingId(itemId)) return false;
-
-      const before = latest.current;
-      commit(applyRemove(before, itemId));
-
-      const result = await deleteCartItem(itemId);
-      if (result.ok) return true;
-
-      commit(before);
-      setNotice(messageFor(result.code, result.status));
-      return false;
-    },
-    [commit],
-  );
+    const result = await deleteCartItem(itemId);
+    if (result.ok) {
+      dispatch({ type: "op/success", opId: id });
+      return true;
+    }
+    latest.current = rollbackDelta(latest.current, before, optimisticCart);
+    dispatch({ type: "op/failure", opId: id, message: messageFor(result.code, result.status) });
+    return false;
+  }, []);
 
   const clear = useCallback(async () => {
     const before = latest.current;
-    commit(emptyCart());
+    const optimisticCart = emptyCart();
+    const id = opId();
+    latest.current = optimisticCart;
+    dispatch({ type: "op/start", opId: id, optimistic: optimisticCart });
 
     const result = await clearCart();
     if (result.ok) {
-      setStatus("ready");
+      dispatch({ type: "op/success", opId: id });
       return true;
     }
-
-    commit(before);
-    setNotice(messageFor(result.code, result.status));
+    latest.current = rollbackDelta(latest.current, before, optimisticCart);
+    dispatch({ type: "op/failure", opId: id, message: messageFor(result.code, result.status) });
     return false;
-  }, [commit]);
+  }, []);
 
   const value = useMemo<CartContextValue>(() => {
     const view = toView(state);
@@ -250,7 +261,7 @@ export default function CartProvider({ children, drawerActions }: CartProviderPr
         onClose={value.closeDrawer}
         items={value.items}
         totals={{ subtotal: value.subtotal, itemCount: value.count }}
-        status={value.status}
+        status={value.status === "empty" || value.status === "success" ? "ready" : value.status}
         onQty={value.setQty}
         onRemove={value.remove}
         onViewCart={() => {
@@ -267,7 +278,7 @@ export default function CartProvider({ children, drawerActions }: CartProviderPr
       <Toast
         open={notice !== null}
         title={notice ?? ""}
-        onClose={() => setNotice(null)}
+        onClose={() => dispatch({ type: "notice/dismiss" })}
       />
     </CartContext.Provider>
   );

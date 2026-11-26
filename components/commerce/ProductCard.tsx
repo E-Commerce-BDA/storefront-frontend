@@ -285,6 +285,7 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
           const pressed = isWishlist ? (p.wishlisted ?? false) : undefined;
           const isIconOnly = styles.ctaStyle === "icon";
 
+          // A23: wishlist/compare stay available when purchase CTAs are stock-gated.
           return (
             <Button
               key={c}
@@ -295,7 +296,7 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(function ProductCa
               borderColor={styles.ctaBorderColor || "var(--pc-cta-border, var(--border))"}
               borderRadius={isIconOnly ? 999 : styles.borderRadius}
               className="sf-productcard__cta"
-              disabled={out}
+              disabled={isWishlist ? false : out}
               aria-label={meta.label(p.name)}
               aria-pressed={pressed}
               onClick={(e) => {

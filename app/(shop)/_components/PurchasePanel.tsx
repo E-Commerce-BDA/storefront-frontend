@@ -12,7 +12,7 @@
  *
  * Product title (h1) lives in the right column above ratings, price and buy box.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useReducer } from "react";
 import { useVariantFromURL } from "@/app/hooks/useVariantFromURL";
 import Gallery from "@/components/commerce/Gallery";
 import VariantSelector from "@/components/commerce/VariantSelector";
@@ -25,6 +25,7 @@ import { resolveVariant, selectionOptions } from "@/lib/commerce/variants";
 import type { GalleryImage } from "@/lib/commerce/gallery";
 import type { ResolvedPhotoSettings } from "@/lib/commerce/photoSettings";
 import type { ProductOptionDto, ProductVariantDto } from "@/lib/catalog/schemas";
+import { initialPdpMachine, pdpMachine } from "@/lib/pdp/machine";
 
 // Trust now renders as a `pdp_trust` CMS section below the buy box; the
 // static list survives only as the outage fallback in `lib/sections/pdp.ts`.
@@ -61,9 +62,18 @@ export default function PurchasePanel({
   photoSettings,
 }: PurchasePanelProps) {
   const cart = useCart();
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [pdp, dispatch] = useReducer(pdpMachine, undefined, () =>
+    initialPdpMachine(productId),
+  );
+  const { qty, galleryIndex: activeIndex } = pdp;
+  const setActiveIndex = (index: number) =>
+    dispatch({ type: "gallery/set", index, count: images.length });
+  // A22: Next reuses this component across [slug] navigations; qty and gallery
+  // are product-scoped and must reset when the product id changes.
+  useEffect(() => {
+    dispatch({ type: "product/change", productId });
+  }, [productId]);
   const { selection, notice, select } = useVariantFromURL(options, variants);
-  const [qty, setQty] = useState(1);
 
   const variant = useMemo(
     () => (variants.length > 0 ? resolveVariant(variants, selection) : null),
@@ -163,7 +173,14 @@ export default function PurchasePanel({
             value={effQty}
             min={QTY_LIMITS.min}
             max={available}
-            onChange={setQty}
+            onChange={(next) =>
+              dispatch({
+                type: "qty/set",
+                qty: next,
+                minQty: QTY_LIMITS.min,
+                maxQty: Math.max(available, QTY_LIMITS.min),
+              })
+            }
             label={`${name} quantity`}
           />
         )}

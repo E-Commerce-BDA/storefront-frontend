@@ -54,7 +54,7 @@ const Toggle = forwardRef<HTMLButtonElement, ToggleProps>(function Toggle(
       onClick={() => onChange?.(!checked)}
       data-checked={checked}
       data-disabled={disabled}
-      className="relative cursor-pointer border-0 p-0 focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-60"
+      className="relative cursor-pointer border-0 p-0 focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] disabled:cursor-not-allowed disabled:border-[var(--border)] disabled:bg-[var(--surface-disabled)] disabled:text-[var(--text-disabled)]"
       style={{
         width: trackWidth,
         height: trackHeight,

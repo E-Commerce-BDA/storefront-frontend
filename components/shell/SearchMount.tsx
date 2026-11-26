@@ -77,6 +77,10 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
   const recents = useRecentSearches();
   const quickAdd = useQuickAdd(quickAddPort);
   const [activeIndex, setActiveIndex] = useState(0);
+  // A21: a new query invalidates the previous highlighted row.
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [live.query]);
   const [closing, setClosing] = useState(false);
   const [toast, setToast] = useState<{ title: string; message: string } | null>(null);
   const [trending, setTrending] = useState<string[]>([]);

@@ -53,6 +53,15 @@ export default function CartView() {
   const [couponError, setCouponError] = useState<string | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<DiscountValidationResult | null>(null);
 
+  // A11: selection ids are scoped to the current cart snapshot. After a GET
+  // or a concurrent write, an id that no longer exists must not stay selected.
+  useEffect(() => {
+    const live = new Set(cart.items.map((line) => line.id));
+    setSelected((prev) =>
+      prev.every((id) => live.has(id)) ? prev : prev.filter((id) => live.has(id)),
+    );
+  }, [cart.items]);
+
   // A navigation away must not strand a timer that PATCHes into a dead tree.
   useEffect(() => {
     const pending = timers.current;
@@ -151,8 +160,17 @@ export default function CartView() {
   async function moveSelected() {
     const lines = cart.items.filter((line) => selected.includes(line.id));
     setSelected([]);
-    await Promise.all(lines.map((line) => wishlist.toggle(line.productId)));
-    await Promise.all(lines.map((line) => cart.remove(line.id)));
+    // A5: a line is removed only when its own wishlist write succeeded. A
+    // failed toggle (out of stock, auth, network) must leave the cart intact.
+    const moved = await Promise.all(
+      lines.map(async (line) => ({
+        line,
+        ok: await wishlist.toggle(line.productId),
+      })),
+    );
+    await Promise.all(
+      moved.filter((entry) => entry.ok).map((entry) => cart.remove(entry.line.id)),
+    );
   }
 
   const selectedLines = cart.items.filter((line) => selected.includes(line.id));

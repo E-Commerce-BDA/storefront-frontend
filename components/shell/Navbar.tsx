@@ -43,6 +43,7 @@ export interface NavbarProps {
     account: boolean;
     wishlist: boolean;
     cart: boolean;
+    badge?: boolean;
   };
   logo: { imageUrl: string; height: number; wordmark: string };
   bar: { height: number; sticky: StickyMode; shadow: BarShadow; hidden: boolean };
@@ -58,7 +59,7 @@ export interface NavbarProps {
   links: ResolvedNavLink[];
   announcement: NavbarAnnouncement;
   /** Live cart region (sf-051): count from the store, onOpen raises the drawer. */
-  cart: { count: number; onOpen: () => void };
+  cart: { count: number; onOpen: () => void; badgeCap?: number };
   account?: { onOpen: () => void; disabled?: boolean };
   /** sf-072: controlled dropdown; open-state and close callback owned by NavbarMount. */
   accountMenu?: { model: AccountMenuModel; open: boolean; onClose: () => void };
@@ -171,7 +172,15 @@ export default function Navbar({
               disabled={wishlist?.disabled ?? false}
             />
           )}
-          {regions.cart && <NavCartButton count={cart.count} onCart={cart.onOpen} label="Cart" />}
+          {regions.cart && (
+            <NavCartButton
+              count={cart.count}
+              badgeCap={cart.badgeCap}
+              badgeVisible={regions.badge !== false}
+              onCart={cart.onOpen}
+              label="Cart"
+            />
+          )}
         </span>
       </div>
       <MobileDrawer

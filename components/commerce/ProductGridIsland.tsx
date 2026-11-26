@@ -73,7 +73,7 @@ export default function ProductGridIsland({
     () => createCartPort({ onAdded: () => void refresh() }),
     [refresh],
   );
-  const { addedIds, pendingIds, quickAdd } = useQuickAdd(port);
+  const { addedIds, pendingIds, quickAdd, error: quickAddError } = useQuickAdd(port);
 
   // The ring/check is a confirmation, not a permanent banner: useQuickAdd keeps
   // addedIds until the owner clears them, so the island holds a short-lived
@@ -114,6 +114,13 @@ export default function ProductGridIsland({
 
   return (
     <>
+      {/* A19: a failed quick-add must have a face; a silent undo looks like a
+          broken button rather than a refused write. */}
+      {quickAddError ? (
+        <p className="m-0 mb-3 text-sm text-[var(--color-ink)]" role="alert">
+          We could not add that item to your bag. Please try again.
+        </p>
+      ) : null}
       <ProductGrid
         items={items}
         columns={columns}
@@ -139,8 +146,10 @@ export default function ProductGridIsland({
         open={activeQuickView !== null}
         onClose={() => setActiveQuickView(null)}
         onAddToCart={async (productId, variantId, qty) => {
-          await cart.add(productId, { variantId, qty });
-          cart.openDrawer();
+          const ok = await cart.add(productId, { variantId, qty });
+          // A7: the drawer is a success destination, never a failure reaction.
+          if (ok) cart.openDrawer();
+          return ok;
         }}
       />
     </>

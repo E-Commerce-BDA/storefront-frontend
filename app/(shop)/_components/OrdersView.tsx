@@ -1,54 +1,61 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/shell/PageHeader";
 import { Badge, Button, EmptyState, Icon } from "@/components/ui";
 import { bff } from "@/lib/http/browser";
 import { orderListResponseSchema, type OrderDto } from "@/lib/order/schemas";
+import { initialOrdersMachine, ordersMachine } from "@/lib/orders/machine";
 type OrderListResponse = { data: OrderDto[]; nextCursor?: string | null };
 
 export default function OrdersView() {
   const router = useRouter();
-  const [orders, setOrders] = useState<OrderDto[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [machine, dispatch] = useReducer(ordersMachine, undefined, initialOrdersMachine);
+  const { orders, cursor: nextCursor, status, loadingMore, moreError } = machine;
 
   useEffect(() => {
+    dispatch({ type: "mount" });
     let alive = true;
     void bff<OrderListResponse>("/api/orders", { schema: orderListResponseSchema }).then((res) => {
       if (!alive) return;
-      setLoading(false);
-      if (res.ok) {
-        setOrders(res.data.data);
-        setNextCursor(res.data.nextCursor ?? null);
-      } else {
+      if (!res.ok) {
         if (res.status === 401) {
           router.push("/signin?next=/account/orders");
           return;
         }
-        setError("Unable to load orders right now.");
+        dispatch({ type: "list/error", message: "Unable to load orders right now." });
+        return;
       }
+      dispatch({
+        type: "list/success",
+        orders: res.data.data,
+        cursor: res.data.nextCursor ?? null,
+      });
     });
     return () => {
       alive = false;
+      dispatch({ type: "unmount" });
     };
   }, [router]);
 
   async function loadMore() {
-    if (!nextCursor || loadingMore) return;
-    setLoadingMore(true);
+    if (nextCursor === null || loadingMore) return;
+    dispatch({ type: "more/start" });
     const res = await bff<OrderListResponse>(`/api/orders?cursor=${encodeURIComponent(nextCursor)}`, {
       schema: orderListResponseSchema,
     });
-    setLoadingMore(false);
-    if (res.ok) {
-      setOrders((prev) => [...prev, ...res.data.data]);
-      setNextCursor(res.data.nextCursor ?? null);
+    if (!res.ok) {
+      // A12: a failed load-more is visible, never silently swallowed.
+      dispatch({ type: "more/error", message: "Could not load more orders. Please try again." });
+      return;
     }
+    dispatch({
+      type: "more/success",
+      orders: res.data.data,
+      cursor: res.data.nextCursor ?? null,
+    });
   }
 
   return (
@@ -62,13 +69,13 @@ export default function OrdersView() {
         ]}
       />
 
-      {loading ? (
+      {status === "loading" || status === "idle" ? (
         <p className="py-12 text-center text-sm text-[var(--text-muted)]" role="status">
           Loading your orders…
         </p>
-      ) : error ? (
-        <p className="rounded-[var(--radius-md,10px)] border border-[var(--border)] p-4 text-sm text-[var(--text-muted)]">
-          {error}
+      ) : status === "error" ? (
+        <p className="rounded-[var(--radius-md,10px)] border border-[var(--border)] p-4 text-sm text-[var(--text-muted)]" role="alert">
+          Unable to load orders right now.
         </p>
       ) : orders.length === 0 ? (
         <EmptyState
@@ -128,6 +135,12 @@ export default function OrdersView() {
               </li>
             ))}
           </ul>
+
+          {moreError ? (
+            <p className="mt-4 text-center text-sm text-[var(--color-ink)]" role="alert">
+              {moreError}
+            </p>
+          ) : null}
 
           {nextCursor ? (
             <div className="mt-4 flex justify-center">

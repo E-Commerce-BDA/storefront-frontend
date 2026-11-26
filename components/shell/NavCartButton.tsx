@@ -9,6 +9,8 @@ import { Icon, IconButton } from "@/components/ui";
 export interface NavCartButtonProps {
   count?: number;
   badgeCap?: number;
+  /** Resolved nav knob: a hidden badge is absent UI, not an invisible one. */
+  badgeVisible?: boolean;
   onCart: () => void;
   label?: string;
   /** Preview mode (cart slice lands later): visibly disabled, never a dead click. */
@@ -16,14 +18,17 @@ export interface NavCartButtonProps {
 }
 
 const NavCartButton = forwardRef<HTMLButtonElement, NavCartButtonProps>(
-  function NavCartButton({ count = 0, badgeCap = 9, onCart, label = "Cart", disabled = false }, ref) {
+  function NavCartButton(
+    { count = 0, badgeCap = 9, badgeVisible = true, onCart, label = "Cart", disabled = false },
+    ref,
+  ) {
     const shown = count > badgeCap ? `${badgeCap}+` : `${count}`;
     return (
       <span className="sf-navcart">
         <IconButton ref={ref} label={count > 0 ? `${label}, ${shown} items` : label} onClick={onCart} disabled={disabled}>
           <Icon name="shopping-bag" size={20} />
         </IconButton>
-        {count > 0 && (
+        {count > 0 && badgeVisible && (
           <span className="sf-navcart__badge" aria-hidden="true">
             {shown}
           </span>

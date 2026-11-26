@@ -70,12 +70,14 @@ describe("ProductCard", () => {
     expect(document.querySelector("article")?.getAttribute("data-badgepos")).toBe("right");
   });
 
-  it("disables everything out of stock, flags low stock", () => {
+  it("disables purchase CTAs out of stock, keeps save/compare, flags low stock", () => {
     const { unmount } = render(<ProductCard product={{ ...P, stock: "out" }} onOpen={() => {}} />);
     expect(document.querySelector("article")?.getAttribute("data-stock")).toBe("out");
     expect(screen.getByText("Sold out")).not.toBeNull();
+    // A23: an out-of-stock product is still worth saving or comparing.
     (screen.getAllByRole("button") as HTMLButtonElement[]).forEach((b) => {
-      expect(b.disabled).toBe(true);
+      const saves = (b.getAttribute("aria-label") ?? "").includes("wishlist");
+      expect(b.disabled).toBe(saves ? false : true);
     });
     unmount();
     render(<ProductCard product={{ ...P, stock: "low" }} />);

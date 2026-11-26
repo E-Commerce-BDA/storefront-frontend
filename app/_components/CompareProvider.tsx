@@ -1,27 +1,26 @@
 "use client";
 
 /**
- * Compare tray — sf-055 (A3.7)
+ * Compare tray — sf-055 (A3.7), sf-074 (A18).
  *
  * Session-only in-memory state for the tray (no localStorage — AGENTS.md §5
  * hard-bans it). The shareable artifact is `/compare?ids=`, not the tray. One
  * provider in the root layout gives cards, the PDP and the tray one truth.
+ *
+ * A18: the query is re-seeded on navigation (not only at mount), and the
+ * toggle reducer has no side effect — the cap notice is returned as state.
  */
 import {
   createContext,
-  useCallback,
   useContext,
+  useEffect,
   useMemo,
-  useState,
+  useReducer,
   type ReactNode,
 } from "react";
-import {
-  addCompareId,
-  COMPARE_LIMIT,
-  compareQuery,
-  parseCompareQuery,
-  removeCompareId,
-} from "@/lib/commerce/compare";
+import { usePathname } from "next/navigation";
+import { COMPARE_LIMIT, compareQuery, parseCompareQuery } from "@/lib/commerce/compare";
+import { compareMachine, initialCompareMachine } from "@/lib/compare/machine";
 
 export interface CompareContextValue {
   ids: string[];
@@ -39,21 +38,22 @@ export interface CompareContextValue {
 const CompareContext = createContext<CompareContextValue | null>(null);
 
 export function CompareProvider({ children }: { children: ReactNode }) {
-  // Seed the tray from ?ids= so a shared /compare link can be edited in place.
-  const [ids, setIds] = useState<string[]>(() =>
-    typeof window === "undefined" ? [] : parseCompareQuery(new URLSearchParams(window.location.search).get("ids")),
-  );
-  const [notice, setNotice] = useState<string | null>(null);
+  const [machine, dispatch] = useReducer(compareMachine, undefined, initialCompareMachine);
+  const { ids, notice } = machine;
+  const pathname = usePathname();
 
-  const toggle = useCallback((productId: string) => {
-    setNotice(null);
-    setIds((prev) => {
-      if (prev.includes(productId)) return removeCompareId(prev, productId);
-      const next = addCompareId(prev, productId);
-      if (next.full) setNotice(`You can compare up to ${COMPARE_LIMIT} products.`);
-      return next.ids;
+  useEffect(() => {
+    // Read the query from the browser here, not via useSearchParams in the
+    // root layout (which would opt every route into a Suspense boundary).
+    const params = new URLSearchParams(
+      typeof window === "undefined" ? "" : window.location.search,
+    );
+    dispatch({
+      type: "seed",
+      pathname: `${pathname}?${params.toString()}`,
+      ids: parseCompareQuery(params.get("ids")),
     });
-  }, []);
+  }, [pathname]);
 
   const value = useMemo<CompareContextValue>(
     () => ({
@@ -61,16 +61,13 @@ export function CompareProvider({ children }: { children: ReactNode }) {
       count: ids.length,
       full: ids.length >= COMPARE_LIMIT,
       has: (productId) => ids.includes(productId),
-      toggle,
-      clear: () => {
-        setIds([]);
-        setNotice(null);
-      },
+      toggle: (productId) => dispatch({ type: "toggle", productId }),
+      clear: () => dispatch({ type: "clear" }),
       notice,
-      dismissNotice: () => setNotice(null),
+      dismissNotice: () => dispatch({ type: "notice/dismiss" }),
       href: `/compare${compareQuery(ids)}`,
     }),
-    [ids, notice, toggle],
+    [ids, notice],
   );
 
   return <CompareContext.Provider value={value}>{children}</CompareContext.Provider>;

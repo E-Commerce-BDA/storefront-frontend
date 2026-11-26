@@ -97,6 +97,11 @@ export function applyRemove(state: CartState, itemId: string): CartState {
   );
 }
 
+/** Replace the line list while keeping the cart id and recomputing totals. */
+export function withItems(state: CartState, items: CartItemDto[]): CartState {
+  return recompute(state, items);
+}
+
 export function applyRemoveMany(state: CartState, itemIds: string[]): CartState {
   const drop = new Set(itemIds);
   return recompute(

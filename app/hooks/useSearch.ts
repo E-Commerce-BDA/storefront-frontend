@@ -50,7 +50,13 @@ export function useSearch(source: SearchSource, initialDept = "All"): UseSearch 
           }
         })
         .catch((err: unknown) => {
-          if (seq.current === id && !(err instanceof Error && err.message === "aborted")) {
+          // A8: an abort (or a superseded sequence) is silence, never an error
+          // face. DOMException("AbortError") is not an `Error` with a message.
+          const aborted =
+            controller.signal.aborted ||
+            (err instanceof Error &&
+              (err.name === "AbortError" || err.message === "aborted"));
+          if (seq.current === id && !aborted) {
             setResults([]);
             setStatus("error");
           }

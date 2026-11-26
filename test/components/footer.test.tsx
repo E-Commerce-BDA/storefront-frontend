@@ -21,7 +21,12 @@ import type { Footer as FooterDocument } from "@ecom/contracts";
  *  the bundler, and a component test that mocks around both proves less than the
  *  two lines of DOM order it would take to check them directly. */
 const here = dirname(fileURLToPath(import.meta.url));
-const layoutSource = readFileSync(join(here, "..", "..", "app", "layout.tsx"), "utf8");
+// A15: shop chrome moved from the root layout to the (shop) group so auth
+// routes stay chromeless; the wiring guards below read the group layout.
+const layoutSource = readFileSync(
+  join(here, "..", "..", "app", "(shop)", "layout.tsx"),
+  "utf8",
+);
 
 const CMS_FOOTER: FooterDocument = {
   columns: [

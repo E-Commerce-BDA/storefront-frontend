@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import Input from "@/components/ui/Input";
 import { Icon } from "@/components/ui";
 import { AuthForm, PasswordMeter, type AuthFormError } from "@/components/auth";
@@ -34,6 +35,7 @@ export default function ForgotForm({
   token = "",
   footer,
 }: ForgotFormProps) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [tokenInput, setTokenInput] = useState("");
@@ -90,6 +92,9 @@ export default function ForgotForm({
     }
     setError(null);
     setDone(true);
+    // A25: a single-use token must not stay in the address bar (history,
+    // screenshots, referrers). Replace, not push — there is nothing to go back to.
+    if (token !== "") router.replace("/forgot");
   }
 
   if (resetMode) {

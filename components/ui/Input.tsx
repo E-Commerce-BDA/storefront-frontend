@@ -67,7 +67,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           minHeight: size === "sm" ? 36 : 40,
           padding: "0 12px",
           background: bg ?? "var(--theme-input-bg, #FFFFFF)",
-          opacity: disabled ? 0.6 : undefined,
+          // A24: solid disabled face (opacity destroys contrast).
+          ...(disabled
+            ? { background: "var(--surface-disabled)", color: "var(--text-disabled)" }
+            : {}),
         }}
       >
         {leftIcon && (

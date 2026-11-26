@@ -6,8 +6,8 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useReducer,
   useRef,
-  useState,
   type ReactNode,
 } from "react";
 import WishlistSignInPrompt from "@/components/commerce/WishlistSignInPrompt";
@@ -20,12 +20,14 @@ import {
 } from "@/lib/wishlist/port";
 import { resolveWishlistGuestPrompt } from "@/lib/wishlist/prompt";
 import type { HydratedWishlistEntry } from "@/lib/wishlist/schemas";
+import { initialWishlistMachine, wishlistMachine } from "@/lib/wishlist/machine";
+import type { Status } from "@/lib/machine/status";
 
 export interface WishlistContextValue {
   items: HydratedWishlistEntry[];
   ids: readonly string[];
   count: number;
-  status: "idle" | "loading" | "ready" | "error";
+  status: Status;
   has: (productId: string) => boolean;
   itemFor: (productId: string) => HydratedWishlistEntry | undefined;
   toggle: (productId: string) => Promise<boolean>;
@@ -40,33 +42,26 @@ export interface WishlistContextValue {
 const WishlistContext = createContext<WishlistContextValue | null>(null);
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<HydratedWishlistEntry[]>([]);
-  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
-  const [pendingIds, setPendingIds] = useState<string[]>([]);
-  const [optimisticIds, setOptimisticIds] = useState<string[]>([]);
-  const [guestPrompt, setGuestPrompt] = useState<{ productId: string; next: string } | null>(null);
+  const [machine, dispatch] = useReducer(wishlistMachine, undefined, initialWishlistMachine);
+  const { items, status, pendingIds, optimisticIds, guestPrompt } = machine;
+  // A2: one read at a time, with a monotonic sequence. A second caller is
+  // coalesced into the in-flight read instead of starting a racing refresh.
   const loadingRef = useRef(false);
+  const seqRef = useRef(0);
 
   const refresh = useCallback(async () => {
     if (loadingRef.current) return;
     loadingRef.current = true;
-    setStatus((prev) => (prev === "idle" ? "loading" : prev));
+    const seq = ++seqRef.current;
+    dispatch({ type: "refresh/start", seq });
 
     try {
-      // First try consuming any pending guest wishlist item
       await postConsumePending();
       const res = await fetchWishlist();
-      if (res.ok) {
-        setItems(res.data.items);
-        setStatus("ready");
-      } else {
-        // If unauthenticated or unavailable, treat as empty
-        setItems([]);
-        setStatus(res.status === 401 ? "ready" : "error");
-      }
+      if (res.ok) dispatch({ type: "refresh/success", seq, items: res.data.items });
+      else dispatch({ type: "refresh/error", seq });
     } catch {
-      setItems([]);
-      setStatus("error");
+      dispatch({ type: "refresh/error", seq });
     } finally {
       loadingRef.current = false;
     }
@@ -99,45 +94,42 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   const toggle = useCallback(
     async (productId: string): Promise<boolean> => {
       const existing = items.find((it) => it.productId === productId);
-      setPendingIds((prev) => (prev.includes(productId) ? prev : [...prev, productId]));
 
       if (existing) {
-        // Optimistic remove
-        setItems((prev) => prev.filter((it) => it.id !== existing.id));
+        dispatch({ type: "toggle/remove-optimistic", productId, itemId: existing.id });
         const res = await deleteWishlistItem(existing.id);
-        setPendingIds((prev) => prev.filter((id) => id !== productId));
         if (!res.ok) {
-          // Rollback
-          setItems((prev) => [...prev, existing]);
+          dispatch({ type: "toggle/remove-failure", productId, entry: existing });
           return false;
         }
-        return true;
-      } else {
-        // Optimistic add: paint the saved face immediately, then revert if the
-        // write fails. No fake product is inserted — ids drive the toggles,
-        // the hydrated card only appears after the real read.
-        setOptimisticIds((prev) => (prev.includes(productId) ? prev : [...prev, productId]));
-        const res = await postWishlistItem(productId);
-        setOptimisticIds((prev) => prev.filter((id) => id !== productId));
-        setPendingIds((prev) => prev.filter((id) => id !== productId));
-
-        if (!res.ok) {
-          if (res.status === 401) {
-            // The BFF already parked the product in the HttpOnly sf_pw cookie.
-            // Prompt rather than yank the shopper off the page; the link carries
-            // the current page as `next` so the product is still in reach.
-            setGuestPrompt({
-              productId,
-              next: typeof window !== "undefined" ? window.location.pathname + window.location.search : "/products",
-            });
-          }
-          return false;
-        }
-
-        // Refresh list to pull full hydrated product
-        await refresh();
+        dispatch({ type: "toggle/remove-success", productId });
         return true;
       }
+
+      // Optimistic add: paint the saved face immediately. The machine keeps the
+      // id until its own write settles, so a coalesced refresh cannot revert it.
+      dispatch({ type: "toggle/add-optimistic", productId });
+      const res = await postWishlistItem(productId);
+      if (!res.ok) {
+        // A17: the parked product resumes on the public product route, never
+        // /account (proxy-guarded for signed-out shoppers).
+        dispatch({
+          type: "toggle/add-failure",
+          productId,
+          ...(res.status === 401
+            ? {
+                guestNext:
+                  typeof window !== "undefined"
+                    ? window.location.pathname + window.location.search
+                    : "/products",
+              }
+            : {}),
+        });
+        return false;
+      }
+      dispatch({ type: "toggle/add-success", productId });
+      await refresh();
+      return true;
     },
     [items, refresh],
   );
@@ -145,26 +137,21 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   const remove = useCallback(
     async (itemId: string): Promise<boolean> => {
       const target = items.find((it) => it.id === itemId);
-      if (!target) return false;
+      if (target === undefined) return false;
 
-      const pId = target.productId;
-      setPendingIds((prev) => (prev.includes(pId) ? prev : [...prev, pId]));
-      setItems((prev) => prev.filter((it) => it.id !== itemId));
-
+      dispatch({ type: "toggle/remove-optimistic", productId: target.productId, itemId });
       const res = await deleteWishlistItem(itemId);
-      setPendingIds((prev) => prev.filter((id) => id !== pId));
-
       if (!res.ok) {
-        // Rollback
-        setItems((prev) => [...prev, target]);
+        dispatch({ type: "toggle/remove-failure", productId: target.productId, entry: target });
         return false;
       }
+      dispatch({ type: "toggle/remove-success", productId: target.productId });
       return true;
     },
     [items],
   );
 
-  const dismissGuestPrompt = useCallback(() => setGuestPrompt(null), []);
+  const dismissGuestPrompt = useCallback(() => dispatch({ type: "prompt/dismiss" }), []);
 
   // Escape is a request to close, never an owner of the prompt's open-state.
   useEffect(() => {

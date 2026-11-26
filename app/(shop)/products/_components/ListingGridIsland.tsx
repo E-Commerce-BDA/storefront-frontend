@@ -10,13 +10,12 @@
  * click never re-fetch it or duplicate a card.
  */
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import ProductGridIsland from "@/components/commerce/ProductGridIsland";
 import Button from "@/components/ui/Button";
 import { bff } from "@/lib/http/browser";
 import type { ProductCardData } from "@/lib/commerce/productCard";
-
-type Status = "idle" | "loading" | "error" | "done";
+import { initialListingMachine, listingMachine } from "@/lib/listing/machine";
 
 export interface ListingGridIslandProps {
   initialItems: ProductCardData[];
@@ -44,11 +43,13 @@ export default function ListingGridIsland({
   tones,
   empty,
 }: ListingGridIslandProps) {
-  const [items, setItems] = useState<ProductCardData[]>(initialItems);
-  const [cursor, setCursor] = useState<string | null>(initialCursor);
-  const [status, setStatus] = useState<Status>(
-    initialCursor === null ? "done" : "idle",
+  const [grid, dispatch] = useReducer(
+    listingMachine,
+    { queryKey, initialItems, initialCursor },
+    ({ queryKey: key, initialItems: rows, initialCursor: next }) =>
+      initialListingMachine(key, rows, next),
   );
+  const { items, cursor, status } = grid;
   const cacheRef = useRef<Map<string, { items: ProductCardData[]; nextCursor: string | null }>>(
     new Map(),
   );
@@ -64,27 +65,33 @@ export default function ListingGridIsland({
     }
   }, [queryKey, initialItems, initialCursor]);
 
+  // A6: a new filter/sort query resets rows to the new server page. Without
+  // this, rows from the previous query survive under the new query key.
+  useEffect(() => {
+    dispatch({ type: "query/change", queryKey, items: initialItems, cursor: initialCursor });
+  }, [queryKey, initialItems, initialCursor]);
+
   const loadMore = useCallback(async () => {
-    if (cursor === null || status === "loading" || status === "done") return;
+    if (cursor === null || status === "loading" || (status !== "idle" && status !== "error")) return;
     const nextKey = withCursor(queryKey, cursor);
     const cached = cacheRef.current.get(nextKey);
     if (cached !== undefined) {
-      setItems((prev) => {
-        const known = new Set(prev.map((item) => item.id));
-        return [...prev, ...cached.items.filter((item) => !known.has(item.id))];
+      dispatch({
+        type: "more/success",
+        queryKey,
+        items: cached.items,
+        cursor: cached.nextCursor,
       });
-      setCursor(cached.nextCursor);
-      setStatus(cached.nextCursor === null ? "done" : "idle");
       return;
     }
 
-    setStatus("loading");
+    dispatch({ type: "more/start" });
     const result = await bff<{
       items: ProductCardData[];
       nextCursor: string | null;
     }>(`/api/catalog/products${nextKey}`);
     if (!result.ok || !Array.isArray(result.data?.items)) {
-      setStatus("error");
+      dispatch({ type: "more/error" });
       return;
     }
     const page = {
@@ -92,12 +99,7 @@ export default function ListingGridIsland({
       nextCursor: result.data.nextCursor ?? null,
     };
     cacheRef.current.set(nextKey, page);
-    setItems((prev) => {
-      const known = new Set(prev.map((item) => item.id));
-      return [...prev, ...page.items.filter((item) => !known.has(item.id))];
-    });
-    setCursor(page.nextCursor);
-    setStatus(page.nextCursor === null ? "done" : "idle");
+    dispatch({ type: "more/success", queryKey, items: page.items, cursor: page.nextCursor });
   }, [cursor, queryKey, status]);
 
   return (

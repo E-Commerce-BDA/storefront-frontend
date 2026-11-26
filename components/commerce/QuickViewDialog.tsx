@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Button, Dialog, Icon, QuantityStepper } from "@/components/ui";
 import WishlistButton from "@/components/commerce/WishlistButton";
@@ -14,7 +14,12 @@ export interface QuickViewDialogProps {
   product: ProductCardData | null;
   open: boolean;
   onClose: () => void;
-  onAddToCart?: (productId: string, variantId?: string, qty?: number) => Promise<void> | void;
+  /** Returns whether the write succeeded — success copy is never assumed. */
+  onAddToCart?: (
+    productId: string,
+    variantId?: string,
+    qty?: number,
+  ) => Promise<boolean> | boolean;
 }
 
 export default function QuickViewDialog({
@@ -28,6 +33,15 @@ export default function QuickViewDialog({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  // A19/A20: a failure face and a cancellable success timer.
+  const [addError, setAddError] = useState<string | null>(null);
+  const addedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    const timer = addedTimer;
+    return () => {
+      if (timer.current !== null) clearTimeout(timer.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (product && open) {
@@ -35,6 +49,7 @@ export default function QuickViewDialog({
       setQuantity(1);
       setSelectedImageIndex(0);
       setAdded(false);
+      setAddError(null);
     }
   }, [product, open]);
 
@@ -66,11 +81,18 @@ export default function QuickViewDialog({
     if (!product || !resolved || !resolved.inStock) return;
     setAdding(true);
     try {
-      if (onAddToCart) {
-        await onAddToCart(product.id, resolved.variantId, quantity);
+      const ok = onAddToCart
+        ? await onAddToCart(product.id, resolved.variantId, quantity)
+        : true;
+      if (ok) {
+        setAddError(null);
+        setAdded(true);
+        if (addedTimer.current !== null) clearTimeout(addedTimer.current);
+        addedTimer.current = setTimeout(() => setAdded(false), 2000);
+      } else {
+        // A7/A19: no success face, no drawer — just an honest failure.
+        setAddError("We could not add that item. Please try again.");
       }
-      setAdded(true);
-      setTimeout(() => setAdded(false), 2000);
     } finally {
       setAdding(false);
     }
@@ -273,6 +295,11 @@ export default function QuickViewDialog({
               />
             </div>
 
+            {addError ? (
+              <p className="m-0 text-sm text-[var(--color-ink)]" role="alert">
+                {addError}
+              </p>
+            ) : null}
             <Button
               fullWidth
               onClick={() => void handleAdd()}

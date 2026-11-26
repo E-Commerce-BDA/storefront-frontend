@@ -26,7 +26,7 @@
  * shipping methods are sf-058; one mock payment provider is all v1 can honestly
  * offer (the plan's A5.5), so the select has exactly one real option.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Checkbox, Input, Select, Textarea } from "@/components/ui";
 import CartLineItem from "@/components/shell/CartLineItem";
@@ -48,6 +48,7 @@ import {
 import { discountAmount, totalAfterDiscount } from "@/lib/order/discount";
 import { nextKey, type IdemPair } from "@/lib/checkout/idempotency";
 import { isShortLine, resolveShortfall } from "@/lib/checkout/shortfall";
+import { checkoutMachine, initialCheckoutMachine, shouldBounceToCart } from "@/lib/checkout/machine";
 import type { StockShortfall } from "@/lib/order/schemas";
 
 /** `describeFailure` input: a failure plus the status it arrived with. */
@@ -217,9 +218,19 @@ export default function CheckoutForm() {
   /** The one key per logical attempt — a ref because a re-render must never reset it. */
   const attempt = useRef<IdemPair | null>(null);
 
-  // An empty cart is the /cart page's problem; bounce instead of mirroring its
-  // empty state here (decision 4: one surface, one reducer, one empty state).
-  const settledEmpty = cart.status !== "loading" && cart.items.length === 0 && !submitting;
+  // A1: the cart's status is mirrored into the island machine so only a
+  // settled `ready` answer can bounce to /cart. A cold load ("idle") and a
+  // failed load ("error") keep the checkout face and show their own state.
+  const [machine, dispatch] = useReducer(checkoutMachine, undefined, initialCheckoutMachine);
+  useEffect(() => {
+    if (cart.status === "loading") dispatch({ type: "load/start" });
+    else if (cart.status === "error") dispatch({ type: "load/error" });
+    else if (cart.status === "ready") {
+      dispatch({ type: "load/success", itemCount: cart.items.length });
+    }
+  }, [cart.status, cart.items.length]);
+
+  const settledEmpty = shouldBounceToCart(machine, cart.items.length);
   useEffect(() => {
     if (settledEmpty) router.replace("/cart");
   }, [settledEmpty, router]);
@@ -306,6 +317,21 @@ export default function CheckoutForm() {
         }}
       >
         <CheckoutSteps steps={steps} />
+        {cart.status === "loading" ? (
+          <p className="m-0 text-sm text-[var(--text-muted)]" role="status">
+            Checking your bag…
+          </p>
+        ) : null}
+        {cart.status === "error" ? (
+          <div className="flex items-center gap-3 rounded-[var(--radius-md,10px)] border border-[var(--color-danger,#c0392b)] px-4 py-3" role="alert">
+            <p className="m-0 text-sm text-[var(--color-ink)]">
+              We could not load your bag. Please try again.
+            </p>
+            <Button variant="light" size="sm" onClick={() => void cart.refresh()}>
+              Retry
+            </Button>
+          </div>
+        ) : null}
         {banner ? (
           <div
             role="alert"

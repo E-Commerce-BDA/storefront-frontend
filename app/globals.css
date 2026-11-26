@@ -46,6 +46,9 @@
      keeps a sane floor above 16px. Navbar, Footer and every (shop) page share it
      so the shell and the pages align on one gutter. */
   --sf-page-pad: clamp(16px, 4vw, 50px);
+  /* A24: disabled faces are explicit solids â?" transparency destroys contrast. */
+  --surface-disabled: #e6ecf1;
+  --text-disabled: #5b7286;
 }
 
 @theme inline {
@@ -4898,7 +4901,8 @@ body {
   text-decoration: none;
 }
 .sf-compare-tray__go[data-disabled="true"] {
-  opacity: var(--compare-disabled-opacity, 0.55);
+  background: var(--surface-disabled);
+  color: var(--text-disabled);
   pointer-events: none;
 }
 .sf-compare-tray__notice {

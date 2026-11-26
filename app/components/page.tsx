@@ -20,6 +20,8 @@ import { DEFAULT_THEME } from "@/lib/cms/themeSettings";
 import { resolveNavSettings } from "@/lib/shell/resolveNav";
 import { DEMO_NAV_INPUT } from "@/lib/shell/demoNavInput";
 import NavbarMount from "@/app/_components/NavbarMount";
+import CartProvider from "@/app/_components/CartProvider";
+import { WishlistProvider } from "@/app/_components/WishlistProvider";
 import ProductCard from "@/components/commerce/ProductCard";
 import type {
   CtaIconPosition,
@@ -934,7 +936,11 @@ export default function PreviewPage() {
             above). Announcement, links, search overlay and drawer all live.
             Production mounts once in <code>app/layout.tsx</code>.
           </p>
-          <NavbarMount nav={demoNav} />
+          <CartProvider>
+            <WishlistProvider>
+              <NavbarMount nav={demoNav} />
+            </WishlistProvider>
+          </CartProvider>
         </Card>
 
         <H2>19. ProductCard — commerce face (all variants + interactive customizations)</H2>

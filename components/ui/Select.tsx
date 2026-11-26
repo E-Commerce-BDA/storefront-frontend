@@ -157,7 +157,10 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
             color: textColor ?? "var(--theme-select-text, var(--color-ink))",
             paddingRight: `calc(${arrowPadding ?? 12}px + 24px)`,
             ...(focusBorderColor ? ({ "--se-focus": focusBorderColor } as CSSProperties) : {}),
-            opacity: disabled ? 0.6 : undefined,
+            // A24: a disabled face is a solid token, never a transparency.
+            ...(disabled
+              ? { background: "var(--surface-disabled)", color: "var(--text-disabled)" }
+              : {}),
           }}
           value={value}
           onChange={(e) => onChange?.(e.target.value, e)}

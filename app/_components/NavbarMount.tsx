@@ -1,13 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useReducer, useState, useSyncExternalStore } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Navbar from "@/components/shell/Navbar";
 import SearchMount, { preloadSearchOverlay } from "@/components/shell/SearchMount";
 import { useCart } from "./CartProvider";
 import { useWishlist } from "./WishlistProvider";
 import { resolveAccountMenu } from "@/lib/shell/accountMenu";
 import type { ResolvedNavSettings } from "@/lib/shell/navSettings";
+import { initialNavbarMachine, navbarMachine } from "@/lib/navbar/machine";
 
 const COLLAPSE_MS = 220;
 const ACCOUNT_MENU = resolveAccountMenu();
@@ -30,13 +31,22 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
   const cart = useCart();
   const wishlist = useWishlist();
   const router = useRouter();
+  const pathname = usePathname();
+  const [shell, dispatch] = useReducer(navbarMachine, undefined, () =>
+    initialNavbarMachine(pathname),
+  );
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [closing, setClosing] = useState(false);
   const [active, setActive] = useState(0);
-  const [barHidden, setBarHidden] = useState(false);
+  const { hidden: barHidden } = shell;
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+
+  // A14: a route change restores the bar before any scroll event can re-hide it.
+  useEffect(() => {
+    dispatch({ type: "navigate", pathname });
+  }, [pathname]);
 
   const query = `(max-width: ${nav.mobile.breakpoint - 1}px)`;
   const subscribe = useCallback(
@@ -70,7 +80,7 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
   // scroll entirely — no listener, no state churn).
   useEffect(() => {
     if (nav.bar.sticky !== "hide-on-scroll") return;
-    const onScroll = () => setBarHidden(window.scrollY > 8);
+    const onScroll = () => dispatch({ type: window.scrollY > 8 ? "scroll/hide" : "scroll/show" });
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, [nav.bar.sticky]);
@@ -138,7 +148,15 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
         isMobile={isMobile}
         mobileOpen={mobileOpen}
         mobileSide={nav.mobile.drawerSide}
-        cart={{ count: cart.count, onOpen: cart.openDrawer }}
+        cart={{
+          count: cart.count,
+          badgeCap: nav.cart.badgeCap,
+          // A16: the resolved destination knob decides drawer vs page.
+          onOpen:
+            nav.cart.destination === "page"
+              ? () => router.push("/cart")
+              : cart.openDrawer,
+        }}
         account={{ onOpen: () => setAccountMenuOpen((open) => !open) }}
         accountMenu={{
           model: ACCOUNT_MENU,

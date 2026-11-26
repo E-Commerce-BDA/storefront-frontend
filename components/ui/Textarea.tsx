@@ -43,7 +43,10 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textare
           background: bg ?? "var(--theme-textarea-bg, var(--color-navbar-bg, #ffffff))",
           color: textColor ?? "var(--theme-textarea-text, var(--color-ink))",
           ...(focusBorderColor ? ({ "--ta-focus": focusBorderColor } as CSSProperties) : {}),
-          opacity: disabled ? 0.6 : undefined,
+          // A24: solid disabled face (opacity destroys contrast).
+          ...(disabled
+            ? { background: "var(--surface-disabled)", color: "var(--text-disabled)" }
+            : {}),
         }}
         value={value}
         onChange={(e) => onChange?.(e.target.value, e)}

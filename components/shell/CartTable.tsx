@@ -61,8 +61,8 @@ export default function CartTable({
             return (
               <tr
                 key={line.id}
-                className={`transition-opacity ${isPending ? "opacity-60 pointer-events-none" : ""}`}
                 data-pending={isPending ? "true" : undefined}
+                className={isPending ? "pointer-events-none bg-[var(--surface-disabled)]" : ""}
                 data-selected={selected ? "true" : undefined}
                 data-stock-capped={line.stock != null && ceiling < 99 ? "true" : undefined}
               >
