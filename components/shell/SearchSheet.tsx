@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useRef } from "react";
 import { Icon, Pill } from "@/components/ui";
+import type { ProductCardData } from "@/lib/commerce/productCard";
 import type { SearchResult } from "@/lib/search/source";
 import type { SearchStatus } from "@/app/hooks/useSearch";
 import type { ResolvedOverlayMotion } from "@/lib/search/motion";
@@ -12,7 +13,7 @@ import type { ResolvedOverlayMotion } from "@/lib/search/motion";
  */
 export interface SearchSheetProps {
   query: string;
-  results: SearchResult[];
+  results: ProductCardData[];
   status?: SearchStatus;
   dept?: string;
   departments?: string[];
@@ -204,8 +205,8 @@ export default function SearchSheet({
                 onClick={() => onSelect?.(r)}
                 aria-label={`${r.name}, $${r.price}`}
               >
-                <span className="sf-searchsheet__thumb" aria-hidden="true">
-                  {r.name.charAt(0)}
+                <span className="sf-searchsheet__thumb" aria-hidden="true" data-empty={r.image === ""}>
+                  {r.image !== "" ? <img src={r.image} alt="" loading="lazy" /> : null}
                 </span>
                 <span className="sf-searchsheet__name">{r.name}</span>
                 <span className="sf-searchsheet__pricerow">

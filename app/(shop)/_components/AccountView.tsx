@@ -15,20 +15,21 @@
  * Order *detail*, profile edit and the address book are sf-059; a row that
  * links into an unbuilt page would be the fake this wave promised not to ship.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
-import { Badge, Button, DegradedState, EmptyState, ErrorState, Icon, LoadingState } from "@/components/ui";
+import { Button, DegradedState, EmptyState, ErrorState, Icon, LoadingState } from "@/components/ui";
+import OrderRow from "@/components/commerce/OrderRow";
 import PageHeader from "@/components/shell/PageHeader";
 import { useCart } from "@/app/_components/CartProvider";
 import { useWishlist } from "@/app/_components/WishlistProvider";
 import { bff } from "@/lib/http/browser";
+import { fromCatalogList } from "@/lib/commerce/fromCatalog";
 import { orderSchema } from "@/lib/order/schemas";
 import ProfileForm from "./ProfileForm";
 import AddressBook from "./AddressBook";
 import PasswordForm from "./PasswordForm";
-import type { OrderDto } from "@/lib/order/schemas";
 
 const accountResponseSchema = z
   .object({
@@ -54,6 +55,11 @@ export default function AccountView() {
   const router = useRouter();
   const cart = useCart();
   const wishlist = useWishlist();
+  // One mapper: the mini-list quotes effectivePrice, not the raw list price.
+  const wishlistCards = useMemo(
+    () => fromCatalogList(wishlist.items.map((entry) => entry.product)),
+    [wishlist.items],
+  );
   const [data, setData] = useState<AccountView | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
@@ -163,14 +169,14 @@ export default function AccountView() {
           </p>
         ) : (
           <div className="grid gap-2 sm:grid-cols-2">
-            {wishlist.items.slice(0, 4).map((entry) => (
+            {wishlistCards.slice(0, 4).map((card) => (
               <Link
-                key={entry.id}
-                href={`/products/${encodeURIComponent(entry.product.slug)}`}
+                key={card.id}
+                href={card.url ?? `/products/${encodeURIComponent(card.name)}`}
                 className="flex items-baseline justify-between gap-3 rounded-[var(--radius-md,10px)] border border-[var(--border)] px-4 py-3 text-sm transition-colors hover:border-[var(--color-navy)] hover:bg-[var(--surface-hover)]"
               >
-                <span className="truncate text-[var(--color-ink)]">{entry.product.name}</span>
-                <span className="font-medium text-[var(--color-ink)]">${entry.product.price}</span>
+                <span className="truncate text-[var(--color-ink)]">{card.name}</span>
+                <span className="font-medium text-[var(--color-ink)]">${card.price}</span>
               </Link>
             ))}
           </div>
@@ -196,7 +202,7 @@ export default function AccountView() {
         ) : (
           <ul className="m-0 grid list-none gap-3 p-0" role="list">
             {data.orders.map((order) => (
-              <OrderRow key={order.id} order={order} />
+              <OrderRow key={order.id} order={order} compact />
             ))}
           </ul>
         )}
@@ -205,35 +211,3 @@ export default function AccountView() {
   );
 }
 
-function OrderRow({ order }: { order: OrderDto }) {
-  return (
-    <li>
-      <Link
-        href={`/account/orders/${encodeURIComponent(order.id)}`}
-        className="flex items-baseline justify-between gap-4 rounded-[var(--radius-md,10px)] border border-[var(--border)] px-4 py-3 transition-colors hover:border-[var(--color-navy)] hover:bg-[var(--surface-hover)]"
-      >
-      <div className="grid gap-1">
-        <span className="text-sm font-medium text-[var(--color-ink)]">{order.order_number}</span>
-        <span className="text-xs text-[var(--text-muted)]">{formatDate(order.created_at)}</span>
-      </div>
-      <div className="flex items-center gap-3">
-        <Badge tone={order.status === "cancelled" ? "error" : order.status === "delivered" ? "success" : "neutral"}>
-          {order.status}
-        </Badge>
-        <span className="text-sm font-semibold text-[var(--color-ink)]">${order.grand_total}</span>
-      </div>
-      </Link>
-    </li>
-  );
-}
-
-/** ISO row → a readable date; an unparseable stamp shows raw rather than "Invalid Date". */
-function formatDate(iso: string): string {
-  try {
-    const date = new Date(iso);
-    if (Number.isNaN(date.getTime())) return iso;
-    return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(date);
-  } catch {
-    return iso;
-  }
-}

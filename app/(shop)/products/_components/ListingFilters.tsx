@@ -10,7 +10,7 @@
  * set, so reusing it after a filter change would skip rows.
  */
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import FilterRail, {
   type FilterRailSelection,
@@ -37,6 +37,9 @@ export default function ListingFilters({
 }: ListingFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
+  // sf-081: the rail is a disclosure now. The URL still owns every filter
+  // value; this flag only owns how much of the rail is on screen.
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const go = useCallback(
     (next: Partial<FilterRailSelection> & { sort?: CatalogSort }) => {
@@ -78,6 +81,8 @@ export default function ListingFilters({
         tags={tags}
         priceBounds={priceBounds}
         selected={selected}
+        open={filtersOpen}
+        onToggle={() => setFiltersOpen((open) => !open)}
         onCategoryChange={(categorySlug) => go({ categorySlug })}
         onBrandChange={(brandSlug) => go({ brandSlug })}
         onTagToggle={toggleTag}

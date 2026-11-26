@@ -89,8 +89,9 @@ describe("CartView", () => {
     render(<CartView />);
     expect(screen.getAllByText("$20")).toHaveLength(2);
     expect(screen.queryByText("Plate")).not.toBeNull();
-    expect(screen.getByRole("table")).not.toBeNull();
-    expect(screen.getAllByRole("row")).toHaveLength(3);
+    // sf-081: the rows are shared CartLineItems in a labelled list.
+    expect(screen.getByRole("list", { name: "Shopping cart items" })).not.toBeNull();
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
   });
 
   it("collapses repeated qty taps on one line into a single debounced write", () => {

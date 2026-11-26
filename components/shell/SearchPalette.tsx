@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useRef } from "react";
 import { Badge, Icon, Pill } from "@/components/ui";
+import type { ProductCardData } from "@/lib/commerce/productCard";
 import type { SearchResult } from "@/lib/search/source";
 import { tagTone } from "@/lib/search/tagTone";
 import type { SearchStatus } from "@/app/hooks/useSearch";
@@ -19,7 +20,7 @@ import { DEFAULT_NAV_SETTINGS, type ResolvedPaletteSettings } from "@/lib/shell/
  */
 export interface SearchPaletteProps {
   query: string;
-  results: SearchResult[];
+  results: ProductCardData[];
   status?: SearchStatus;
   dept?: string;
   departments?: string[];
@@ -28,7 +29,7 @@ export interface SearchPaletteProps {
   /** Visit-memory recent terms (useRecentSearches owns). */
   recent?: string[];
   /** Empty-query product grid (curated-before-typing rule, see below). */
-  curated?: SearchResult[];
+  curated?: ProductCardData[];
   placeholder?: string;
   activeIndex?: number;
   /** Ids the quick-add hook reports added (row flips to Added). */
@@ -347,9 +348,7 @@ export default function SearchPalette({
                         // announces "name, $price" — a named img would
                         // double-announce (same rule as editorial cards).
                         <img src={r.image} alt="" loading="lazy" />
-                      ) : (
-                        <span className="sf-searchpalette__initial">{r.name.charAt(0)}</span>
-                      )}
+                      ) : null}
                     </span>
                     <span className="sf-searchpalette__meta">
                       <span className="sf-searchpalette__tagrow">

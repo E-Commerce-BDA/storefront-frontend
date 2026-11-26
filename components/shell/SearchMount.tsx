@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { Toast } from "@/components/ui";
 import { resolveSearchOverlay, type SearchOverlayId } from "./searchRegistry";
 import { useSearch } from "@/app/hooks/useSearch";
+import { fromSearchResults } from "@/lib/commerce/fromSearch";
 import { useRecentSearches } from "@/app/hooks/useRecentSearches";
 import { useQuickAdd } from "@/app/hooks/useQuickAdd";
 import { useCart } from "@/app/_components/CartProvider";
@@ -157,7 +158,9 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
 
   const shared = {
     query: live.query,
-    results: live.results,
+    // One mapper feeds all three overlays: a search row is a card with media,
+    // not a letter tile invented per variant.
+    results: fromSearchResults(live.results),
     status: live.status,
     dept: live.dept,
     departments,
@@ -188,7 +191,7 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
         {...shared}
         theme={search.editorial}
         motion={search.editorial.editorialAnimation}
-        curated={curated}
+        curated={fromSearchResults(curated)}
         activeIndex={activeIndex}
         onActive={setActiveIndex}
         onActiveChange={setActiveIndex}
@@ -203,7 +206,7 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
         settings={search.palette}
         motion={search.palette.paletteAnimation}
         trending={trending}
-        curated={curated}
+        curated={fromSearchResults(curated)}
         recent={recents.recent}
         recents={recents.recent}
         onClearRecent={recents.clear}

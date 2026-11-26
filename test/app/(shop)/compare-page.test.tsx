@@ -19,12 +19,6 @@ vi.mock("@/lib/catalog/client", () => ({
     },
   }),
 }));
-vi.mock("@/lib/cms/theme", () => ({
-  fetchThemeSettings: async () => ({ theme: null, stale: false, fallback: true }),
-}));
-vi.mock("@/components/commerce/ProductGridIsland", () => ({
-  default: () => <div data-testid="grid" />,
-}));
 vi.mock("@/app/(shop)/compare/_components/CompareTray", () => ({
   default: () => <div data-testid="tray" />,
 }));
@@ -41,14 +35,16 @@ describe("GET /compare", () => {
     });
     render(tree);
     expect(harness.ids).toEqual(["a", "b", "c", "d"]);
-    expect(screen.getByTestId("grid")).not.toBeNull();
+    // sf-081: a real side-by-side table, one column per capped id.
+    expect(screen.getByRole("table", { name: "Product comparison" })).not.toBeNull();
+    expect(screen.getAllByRole("columnheader")).toHaveLength(5); // attribute + 4 products
     expect(screen.getByTestId("tray")).not.toBeNull();
   });
 
   it("renders an empty state without ids", async () => {
     const tree = await ComparePage({ searchParams: Promise.resolve({}) });
     render(tree);
-    expect(screen.queryByTestId("grid")).toBeNull();
+    expect(screen.queryByRole("table", { name: "Product comparison" })).toBeNull();
     expect(harness.ids).toBeUndefined();
   });
 });

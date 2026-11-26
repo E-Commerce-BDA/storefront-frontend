@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useRef } from "react";
 import { Badge, Icon, IconButton, Pill } from "@/components/ui";
+import type { ProductCardData } from "@/lib/commerce/productCard";
 import type { SearchResult } from "@/lib/search/source";
 import { tagTone } from "@/lib/search/tagTone";
 import type { SearchStatus } from "@/app/hooks/useSearch";
@@ -21,12 +22,12 @@ import { DEFAULT_NAV_SETTINGS, type ResolvedEditorialSettings } from "@/lib/shel
  */
 export interface SearchEditorialProps {
   query: string;
-  results: SearchResult[];
+  results: ProductCardData[];
   status?: SearchStatus;
   dept?: string;
   departments?: string[];
   /** Empty-query grid (throwaway demo rows today, CMS collections later). */
-  curated?: SearchResult[];
+  curated?: ProductCardData[];
   placeholder?: string;
   activeIndex?: number;
   /** Flat copy wins over theme (trio rule: flat > object > resolver). */
@@ -259,9 +260,7 @@ export default function SearchEditorial({
                       // disable comment for next/image either: plain img
                       // keeps CMS URLs working with zero config.
                       <img src={r.image} alt="" loading="lazy" />
-                    ) : (
-                      <span className="sf-editorial__initial">{r.name.charAt(0)}</span>
-                    )}
+                    ) : null}
                     {r.tag && (
                       <Badge tone={tagTone(r.tag)} className="sf-editorial__badge">
                         {r.tag}

@@ -8,7 +8,14 @@ import ProductGridIsland from "@/components/commerce/ProductGridIsland";
 import { useWishlist } from "@/app/_components/WishlistProvider";
 import { fromCatalogList } from "@/lib/commerce/fromCatalog";
 
-export default function WishlistView() {
+export interface WishlistViewProps {
+  /** Resolved card theme, passed by the route — no CMS read in this island. */
+  columns?: React.ComponentProps<typeof ProductGridIsland>["columns"];
+  themeFallback?: React.ComponentProps<typeof ProductGridIsland>["themeFallback"];
+  tones?: React.ComponentProps<typeof ProductGridIsland>["tones"];
+}
+
+export default function WishlistView({ columns, themeFallback, tones }: WishlistViewProps) {
   const router = useRouter();
   const { items, status, refresh, pendingIds } = useWishlist();
 
@@ -52,6 +59,9 @@ export default function WishlistView() {
           <ProductGridIsland
             items={cardItems}
             label="Wishlist items"
+            columns={columns}
+            themeFallback={themeFallback}
+            tones={tones}
             wishlistPendingIds={pendingIds}
           />
         </div>

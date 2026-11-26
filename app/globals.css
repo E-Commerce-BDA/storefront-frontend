@@ -1425,6 +1425,12 @@ body {
   font-size: 32px;
   font-weight: 700;
 }
+.sf-searchsheet__thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .sf-searchsheet__name {
   display: block;
   padding: 10px 12px 0;
@@ -4312,6 +4318,35 @@ body {
    Thumb + info + a right rail (total stacked over remove). Paint through tokens;
    the pending face is an explicit solid via data-pending, never `opacity` â€” a
    dimmed price loses the contrast a shopper reads a total by. */
+/* Cart list shell (sf-081): the rows are shared CartLineItems; only this
+   scope adds the batch-select and unit-price columns. */
+.sf-carttable__head {
+  display: grid;
+  grid-template-columns: auto 64px minmax(0, 1fr) auto auto;
+  gap: var(--cartline-gap, 12px);
+  align-items: center;
+  padding-block: var(--carttable-head-pad, 8px);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-caption);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.sf-carttable__rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sf-carttable .sf-cartline {
+  grid-template-columns: auto 64px minmax(0, 1fr) auto auto;
+}
+.sf-cartline__stock {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+.sf-cartline__unit {
+  font-weight: 500;
+  color: var(--color-ink);
+}
 .sf-cartline {
   display: grid;
   grid-template-columns: 64px minmax(0, 1fr) auto;
@@ -4937,6 +4972,24 @@ body {
   border-radius: var(--facet-radius, 10px);
   background: var(--facet-bg, var(--color-navbar-bg));
 }
+/* sf-081: the rail is a capped disclosure. The owner owns `open`; CSS only
+   hides the body and caps its scroll height so the first product stays near
+   the top of a short viewport. */
+.sf-filter-rail__actions {
+  display: inline-flex;
+  gap: var(--facet-action-gap, 8px);
+  align-items: center;
+}
+.sf-filter-rail__body {
+  display: grid;
+  gap: var(--facet-gap, 20px);
+  max-height: var(--facet-max-height, 320px);
+  overflow-y: auto;
+  align-content: start;
+}
+.sf-filter-rail__body[data-open="false"] {
+  display: none;
+}
 .sf-filter-rail__head {
   display: flex;
   align-items: center;
@@ -4995,6 +5048,54 @@ body {
 /* -- Compare tray — sf-055 (A3.7) -----------------------------------------
  * Session-only tray; the shareable artifact is /compare?ids=. State reaches
  * CSS through data attrs, all faces through vars. */
+/* Comparison table (sf-081): one column per product. The media cell is the
+   card's own painter, so the cover and its solid fallback are identical. */
+.sf-compare {
+  overflow-x: auto;
+}
+.sf-compare__table {
+  width: 100%;
+  min-width: var(--compare-table-min, 640px);
+  border-collapse: collapse;
+  text-align: left;
+}
+.sf-compare__col,
+.sf-compare__cell,
+.sf-compare__rowhead,
+.sf-compare__corner {
+  padding: var(--compare-cell-pad, 12px);
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.sf-compare__rowhead,
+.sf-compare__corner {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.sf-compare__col a {
+  display: grid;
+  gap: var(--compare-media-gap, 8px);
+  text-decoration: none;
+  color: var(--color-ink);
+}
+.sf-compare__media {
+  display: block;
+  width: var(--compare-media-size, 120px);
+  aspect-ratio: 4 / 5;
+}
+.sf-compare__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sf-compare__name {
+  font-weight: 600;
+}
+.sf-compare__cell {
+  font-size: var(--fs-body);
+}
 .sf-compare-tray {
   position: fixed;
   inset-inline-end: var(--compare-inset, 16px);

@@ -33,6 +33,9 @@ export interface FilterRailProps {
   onMinPriceChange?: (value: number | undefined) => void;
   onMaxPriceChange?: (value: number | undefined) => void;
   onReset?: () => void;
+  /** sf-081: controlled disclosure — the owner holds the open flag. */
+  open?: boolean;
+  onToggle?: () => void;
   className?: string;
 }
 
@@ -51,6 +54,8 @@ export default function FilterRail({
   onMinPriceChange,
   onMaxPriceChange,
   onReset,
+  open = true,
+  onToggle,
   className = "",
 }: FilterRailProps) {
   const categoryOptions = [
@@ -89,13 +94,27 @@ export default function FilterRail({
     >
       <div className="sf-filter-rail__head">
         <h2 className="sf-filter-rail__title">Filters</h2>
-        {onReset ? (
-          <Button variant="ghost-ink" size="sm" onClick={onReset}>
-            Clear all
-          </Button>
-        ) : null}
+        <span className="sf-filter-rail__actions">
+          {onToggle ? (
+            <Button
+              variant="ghost-ink"
+              size="sm"
+              aria-expanded={open}
+              aria-controls="sf-filter-rail-body"
+              onClick={onToggle}
+            >
+              {open ? "Hide filters" : "Show filters"}
+            </Button>
+          ) : null}
+          {onReset ? (
+            <Button variant="ghost-ink" size="sm" onClick={onReset}>
+              Clear all
+            </Button>
+          ) : null}
+        </span>
       </div>
 
+      <div className="sf-filter-rail__body" id="sf-filter-rail-body" data-open={open}>
       <div className="sf-facet">
         <Select
           label="Category"
@@ -158,6 +177,7 @@ export default function FilterRail({
           checked={selected.discounted === true}
           onChange={(checked) => onDiscountedChange?.(checked)}
         />
+      </div>
       </div>
     </aside>
   );

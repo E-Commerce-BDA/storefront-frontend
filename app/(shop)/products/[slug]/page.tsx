@@ -178,7 +178,16 @@ export default async function ProductPage({
         />
       ) : null}
 
-      <RecentlyViewed excludeSlug={product.slug} />
+      <RecentlyViewed
+        excludeSlug={product.slug}
+        columns={{
+          desktop: cardTheme.colsDesktop,
+          tablet: cardTheme.colsTablet,
+          phone: cardTheme.colsPhone,
+        }}
+        themeFallback={cardTheme}
+        tones={toBadgeTones(theme)}
+      />
 
       <script
         type="application/ld+json"

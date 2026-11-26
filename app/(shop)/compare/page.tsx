@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 import PageHeader from "@/components/shell/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import Button from "@/components/ui/Button";
-import ProductGridIsland from "@/components/commerce/ProductGridIsland";
+import CompareTable from "@/components/commerce/CompareTable";
 import { catalogClient } from "@/lib/catalog/client";
-import { fetchThemeSettings } from "@/lib/cms/theme";
-import { resolveThemeSettings, toBadgeTones } from "@/lib/cms/themeSettings";
 import { parseCompareQuery } from "@/lib/commerce/compare";
 import { fromCatalogList } from "@/lib/commerce/fromCatalog";
 import CompareTray from "./_components/CompareTray";
@@ -40,12 +38,7 @@ export default async function ComparePage({
     );
   }
 
-  const [page, themeResult] = await Promise.all([
-    catalogClient().listProducts({ ids, limit: ids.length }),
-    fetchThemeSettings(),
-  ]);
-  const theme = resolveThemeSettings({ settings: themeResult.theme });
-  const cardTheme = theme.productCard;
+  const page = await catalogClient().listProducts({ ids, limit: ids.length });
 
   // I-13: an outage is not "removed products". Keep the two faces distinct.
   const items = page.ok
@@ -70,16 +63,7 @@ export default async function ComparePage({
           action={<Button variant="primary" href="/products">Browse products</Button>}
         />
       ) : (
-        <ProductGridIsland
-          items={items}
-          columns={{
-            desktop: cardTheme.colsDesktop,
-            tablet: cardTheme.colsTablet,
-            phone: cardTheme.colsPhone,
-          }}
-          themeFallback={cardTheme}
-          tones={toBadgeTones(theme)}
-        />
+        <CompareTable items={items} />
       )}
     </>
   );

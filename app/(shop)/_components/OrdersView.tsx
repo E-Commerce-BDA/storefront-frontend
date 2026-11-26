@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useReducer } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/shell/PageHeader";
-import { Badge, Button, EmptyState, ErrorState, Icon, LoadingState } from "@/components/ui";
+import OrderRow from "@/components/commerce/OrderRow";
+import { Button, EmptyState, ErrorState, Icon, LoadingState } from "@/components/ui";
 import { bff } from "@/lib/http/browser";
 import { orderListResponseSchema, type OrderDto } from "@/lib/order/schemas";
 import { initialOrdersMachine, ordersMachine } from "@/lib/orders/machine";
@@ -88,47 +88,7 @@ export default function OrdersView() {
         <div className="mt-6 grid gap-4">
           <ul className="m-0 grid list-none gap-3 p-0" role="list">
             {orders.map((order) => (
-              <li
-                key={order.id}
-                className="group relative rounded-[var(--radius-md,10px)] border border-[var(--border)] p-4 transition-colors hover:border-[var(--color-navy)] hover:bg-[var(--surface-hover)]"
-              >
-                <Link
-                  href={`/account/orders/${encodeURIComponent(order.id)}`}
-                  className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="grid gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-[var(--color-ink)]">
-                        {order.order_number}
-                      </span>
-                      <Badge
-                        tone={
-                          order.status === "cancelled"
-                            ? "error"
-                            : order.status === "delivered"
-                              ? "success"
-                              : "neutral"
-                        }
-                      >
-                        {order.status}
-                      </Badge>
-                    </div>
-                    <span className="text-xs text-[var(--text-muted)]">
-                      Placed on {formatDate(order.created_at)} · {order.items.length}{" "}
-                      {order.items.length === 1 ? "item" : "items"}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <span className="text-base font-semibold text-[var(--color-ink)]">
-                      ${order.grand_total}
-                    </span>
-                    <span className="text-xs font-medium text-[var(--color-navy)] group-hover:underline">
-                      View details →
-                    </span>
-                  </div>
-                </Link>
-              </li>
+              <OrderRow key={order.id} order={order} />
             ))}
           </ul>
 
@@ -147,12 +107,3 @@ export default function OrdersView() {
   );
 }
 
-function formatDate(iso: string): string {
-  try {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
-    return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(d);
-  } catch {
-    return iso;
-  }
-}

@@ -7,9 +7,18 @@ import type { ProductCardData } from "@/lib/commerce/productCard";
 
 export interface RecentlyViewedProps {
   excludeSlug?: string;
+  /** Resolved card theme, forwarded by the PDP route. */
+  columns?: React.ComponentProps<typeof ProductGridIsland>["columns"];
+  themeFallback?: React.ComponentProps<typeof ProductGridIsland>["themeFallback"];
+  tones?: React.ComponentProps<typeof ProductGridIsland>["tones"];
 }
 
-export default function RecentlyViewed({ excludeSlug }: RecentlyViewedProps) {
+export default function RecentlyViewed({
+  excludeSlug,
+  columns,
+  themeFallback,
+  tones,
+}: RecentlyViewedProps) {
   const [items, setItems] = useState<ProductCardData[]>([]);
   // I-15: a failed fetch is not an empty list. Keep the failure distinct so
   // the section can say "unavailable" instead of pretending nothing was viewed.
@@ -59,7 +68,13 @@ export default function RecentlyViewed({ excludeSlug }: RecentlyViewedProps) {
   return (
     <section className="mt-12" aria-label="Recently viewed products">
       <h2 className="mb-4 font-display text-lg text-[var(--color-ink)]">Recently viewed</h2>
-      <ProductGridIsland items={items} label="Recently viewed" />
+      <ProductGridIsland
+        items={items}
+        label="Recently viewed"
+        columns={columns}
+        themeFallback={themeFallback}
+        tones={tones}
+      />
     </section>
   );
 }
