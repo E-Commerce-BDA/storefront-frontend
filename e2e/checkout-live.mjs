@@ -10,7 +10,7 @@ import { spawn } from "node:child_process";
 import { browserCheckout } from "./browser.mjs";
 import { CONVERSION_TIMEOUT_MS, POLL_MS } from "./config.mjs";
 import { missingServices, pollUntil, skip } from "./probe.mjs";
-import { seedProduct } from "./seed.mjs";
+import { seedProduct, shopperCredentials } from "./seed.mjs";
 
 const SERVICE_DIRS = [
   ["auth-svc", "../../auth-svc"],
@@ -54,7 +54,10 @@ async function main() {
   if (seeded.skipped) return skip(seeded.skipped);
   if (seeded.error) throw new Error(seeded.error);
 
-  const result = await browserCheckout(seeded.product.slug);
+  const shopper = await shopperCredentials();
+  if (shopper.error) throw new Error(shopper.error);
+
+  const result = await browserCheckout(seeded.product.slug, shopper);
   if (result.skipped) return skip(result.skipped);
   if (result.error) throw new Error(result.error);
 

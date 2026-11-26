@@ -1,7 +1,8 @@
 /**
  * Seed one active product with stock through catalog-svc's admin API, and
- * create a shopper through auth-svc. Both are HTTP-only; no service client is
- * imported from the storefront app.
+ * register a shopper through auth-svc. Both are HTTP-only; no service client is
+ * imported from the storefront app. The shopper signs in later, in the browser,
+ * through the storefront's public signin route.
  */
 
 import { SERVICES } from "./config.mjs";
@@ -36,7 +37,7 @@ export async function seedProduct() {
   return { product: { id: product.id, slug: product.slug } };
 }
 
-export async function shopperSession() {
+export async function shopperCredentials() {
   const email = `e2e-${Date.now()}@example.test`;
   const password = "linen1234";
   const registered = await fetch(`${SERVICES.auth}/api/v1/auth/register`, {
@@ -46,15 +47,5 @@ export async function shopperSession() {
     signal: AbortSignal.timeout(5_000),
   });
   if (!registered.ok) return { error: `shopper register failed with ${registered.status}` };
-
-  const loggedIn = await fetch(`${SERVICES.auth}/api/v1/auth/login`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ email, password }),
-    signal: AbortSignal.timeout(5_000),
-  });
-  if (!loggedIn.ok) return { error: `shopper login failed with ${loggedIn.status}` };
-  const body = await loggedIn.json();
-  if (typeof body?.accessToken !== "string") return { error: "login response had no accessToken" };
-  return { accessToken: body.accessToken };
+  return { email, password };
 }

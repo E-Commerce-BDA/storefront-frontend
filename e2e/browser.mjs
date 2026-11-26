@@ -3,13 +3,15 @@
  * dynamically so the storefront can ship without a browser dependency; a
  * missing module or binary is a printed SKIP, never a fake HTTP-only checkout.
  *
- * The replay goes through the same browser context so the HttpOnly session and
- * the user-scoped idempotency key are the ones the first attempt used.
+ * Checkout is signed-in-only: the proxy redirects a guest to `/signin`, so the
+ * harness signs in through that public route before it reaches the form. The
+ * replay goes through the same browser context so the HttpOnly session and the
+ * user-scoped idempotency key are the ones the first attempt used.
  */
 
 import { SERVICES } from "./config.mjs";
 
-export async function browserCheckout(productSlug) {
+export async function browserCheckout(productSlug, shopper) {
   let chromium;
   try {
     ({ chromium } = await import("playwright"));
@@ -20,6 +22,13 @@ export async function browserCheckout(productSlug) {
   const browser = await chromium.launch({ headless: true });
   try {
     const page = await browser.newPage();
+    // The island clears its own cart after success. Swallow only that DELETE,
+    // so an empty server cart can only have come from the order.created
+    // consumer — otherwise the conversion assertion proves nothing.
+    await page.route("**/api/cart", (route) => {
+      if (route.request().method() === "DELETE") return route.fulfill({ status: 204 });
+      return route.continue();
+    });
     let captured = null;
     page.on("request", (request) => {
       if (!request.url().endsWith("/api/checkout") || request.method() !== "POST") return;
@@ -33,6 +42,17 @@ export async function browserCheckout(productSlug) {
     await page.goto(`${SERVICES.storefront}/products/${encodeURIComponent(productSlug)}`);
     await page.getByRole("button", { name: /add to cart/i }).first().click();
     await page.goto(`${SERVICES.storefront}/cart`);
+
+    // `next=/cart` resumes the basket the guest just filled: the BFF merges it
+    // into the account on sign-in, so checkout still has the seeded item.
+    await page.goto(
+      `${SERVICES.storefront}/signin?next=${encodeURIComponent("/cart")}`,
+    );
+    await page.getByLabel(/^Email/).fill(shopper.email);
+    await page.getByLabel(/^Password/).fill(shopper.password);
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await page.waitForURL(/\/cart$/, { timeout: 30_000 });
+
     await page.getByRole("button", { name: "Checkout" }).click();
 
     await page.getByLabel(/Address line 1/).fill("1 E2E Street");
@@ -44,7 +64,13 @@ export async function browserCheckout(productSlug) {
     await page.getByRole("button", { name: /Place order/ }).click();
     const confirmationResponse = await placed;
     const confirmation = await confirmationResponse.json();
-    await page.waitForURL(/\/checkout\/confirmation\//, { timeout: 30_000 });
+    // Success is the 201 with an order id, not the client route: the island
+    // clears its local cart and pushes to confirmation, but its empty-cart
+    // effect can replace that push with /cart. Waiting on the URL would fail a
+    // checkout that already created the order.
+    if (typeof confirmation?.orderId !== "string") {
+      return { error: "checkout response had no orderId" };
+    }
 
     if (captured === null) {
       return { error: "storefront did not send an x-idempotency-key on /api/checkout" };

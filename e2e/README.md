@@ -1,7 +1,7 @@
-# Live checkout harness (sf-053a) — UNVERIFIED
+# Live checkout harness (sf-053a)
 
-This directory is **harness code only**. It has never been run against a live
-stack in this wave, so no acceptance criterion below is claimed as passing.
+This directory is **harness code only**. It was run against a live stack on
+2026-11-26; see "Live verification" below for what actually passed.
 
 ## Contract
 
@@ -12,14 +12,28 @@ four services first). The harness:
    prints `SKIP: <reason>` and exits 0 — a missing stack is not a failure.
 2. Seeds one active product with stock via catalog-svc's admin API. Requires
    `E2E_ADMIN_TOKEN`; without it the harness prints a SKIP reason.
-3. Registers + logs in a shopper through auth-svc, then runs a **real browser**
-   checkout through the storefront with Playwright, capturing the
-   `x-idempotency-key` on the `/api/checkout` request. Missing Playwright or
-   browser binary is a printed SKIP, not an invented checkout.
-4. Polls `GET /api/v1/cart` until the cart is empty — the `order.created`
-   consumer is what converts it, not the browser.
-5. Replays the captured key directly against order-svc and requires the same
-   confirmation body (no second order, no second charge).
+3. Registers a shopper through auth-svc, signs in via the storefront's public
+   `/signin?next=/cart` route, then runs a **real browser** checkout through
+   the storefront with Playwright, capturing the `x-idempotency-key` on the
+   `/api/checkout` request. Missing Playwright or browser binary is a printed
+   SKIP, not an invented checkout.
+4. Polls the BFF's `GET /api/cart` until the cart is empty. The island's own
+   `DELETE /api/cart` is suppressed in the browser, so an empty cart can only
+   have come from the order-svc `order.created` consumer.
+5. Replays the captured key and body through the same signed-in browser context
+   against `POST /api/checkout` and requires the same confirmation body (no
+   second order, no second charge).
+
+## Live verification (2026-11-26)
+
+`pnpm test:e2e:live` with `E2E_ADMIN_TOKEN` set and all five services up:
+exit 0, `PASS: order … replay matched, cart converted`. Assertions that ran and
+passed: product seed, shopper registration, browser sign-in, add-to-cart,
+`POST /api/checkout` 201 with an order id, captured `x-idempotency-key`, same-key
+replay body equality, and cart emptied with the browser's own DELETE suppressed
+(so the `order.created` consumer did it). No assertion failed; the probe and
+Playwright SKIP branches did not fire. Playwright is deliberately not a
+storefront dependency — a clone without a resolvable `playwright` still SKIPs.
 
 ## Why skip instead of fail
 
