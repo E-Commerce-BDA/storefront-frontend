@@ -275,11 +275,13 @@ export default function CartProvider({ children, drawerActions }: CartProviderPr
         showViewCart={drawerActions?.showViewCart ?? true}
         showCheckout={drawerActions?.showCheckout ?? true}
       />
-      <Toast
-        open={notice !== null}
-        title={notice ?? ""}
-        onClose={() => dispatch({ type: "notice/dismiss" })}
-      />
+      <div className="sf-toast-wrap">
+        <Toast
+          open={notice !== null}
+          title={notice ?? ""}
+          onClose={() => dispatch({ type: "notice/dismiss" })}
+        />
+      </div>
     </CartContext.Provider>
   );
 }

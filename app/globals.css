@@ -125,7 +125,7 @@
   --minicart-title: var(--sf-color-ink);
   --minicart-subtotal: var(--sf-color-ink);
   --minicart-border: var(--sf-color-border);
-  --minicart-scrim: rgba(10, 37, 64, 0.5);
+  --minicart-scrim: var(--sf-color-scrim-panel);
   --minicart-width: 380px;
   --minicart-pad: 20px;
   --minicart-duration: 240ms;
@@ -201,6 +201,15 @@
   --surface-hover: var(--sf-color-brand-wash);
   --surface-muted: var(--sf-color-image-placeholder);
   --scrim: var(--sf-color-scrim-panel);
+  /* sf-090 shell aliases: the footer's dark oceanic face and the compare tray
+     share the same locked radii/scrim as the navbar and drawers. */
+  --footer-bg: var(--sf-color-footer-bg);
+  --footer-text: var(--sf-color-footer-text);
+  --footer-link: var(--sf-color-footer-link);
+  --footer-link-hover: var(--sf-color-footer-hover);
+  --compare-radius: var(--sf-radius-button);
+  --sf-drawer-z: 80;
+  --sf-toast-z: 95;
   --radius-sm: var(--sf-radius-sm);
   --radius-md: var(--sf-radius-md);
   /* Stacking scale: sticky chrome < its dropdown < sheets < toasts. Values
@@ -4724,8 +4733,8 @@ body {
    `[data-face="minimal"]` — same block, fewer rows, no invented content. */
 .sf-footer {
   padding: var(--footer-pad-block, 48px) var(--sf-page-pad) var(--footer-pad-block-end, 28px);
-  background: var(--footer-bg, var(--color-ink));
-  color: var(--footer-text, #ffffff);
+  background: var(--footer-bg, var(--sf-color-footer-bg));
+  color: var(--footer-text, var(--sf-color-footer-text));
   font-size: var(--footer-size, 14px);
   line-height: 1.6;
 }
@@ -4738,17 +4747,17 @@ body {
   max-width: var(--footer-measure, none);
 }
 .sf-footer a {
-  color: var(--footer-link, #ffffff);
+  color: var(--footer-link, var(--sf-color-footer-link));
   text-decoration: none;
 }
 .sf-footer a:hover {
-  color: var(--footer-link-hover, var(--color-accent-50));
+  color: var(--footer-link-hover, var(--sf-color-footer-hover));
   text-decoration: underline;
 }
 .sf-footer a:focus-visible {
-  outline: 2px solid var(--footer-focus, var(--color-accent));
+  outline: 2px solid var(--footer-focus, var(--sf-state-focus-outline));
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--sf-radius-sm, 6px);
 }
 .sf-footer ul {
   margin: 0;
@@ -5583,6 +5592,82 @@ body {
 .sf-rail[data-motion="off"] .sf-rail__track {
   transition: none;
   scroll-behavior: auto;
+}
+
+/* sf-090 shared overlay language. Scrim and drawer paint resolve only through
+   --sf-* tokens; side/open/motion are data attrs, never class toggles. Focus
+   trapping and Escape stay with the owning island (controlled-only rule). */
+.sf-scrim {
+  background: var(--scrim, var(--sf-color-scrim-panel));
+}
+.sf-drawer {
+  position: fixed;
+  inset-block: 0;
+  z-index: var(--sf-drawer-z);
+  display: flex;
+  flex-direction: column;
+  width: var(--drawer-width, 380px);
+  max-width: 100vw;
+  background: var(--drawer-bg, var(--sf-color-surface));
+  color: var(--drawer-fg, var(--sf-color-ink));
+  box-shadow: var(--sf-shadow-nav);
+}
+.sf-drawer[data-side="left"] {
+  left: 0;
+  transform: translateX(calc(-100% - 8px));
+}
+.sf-drawer[data-side="right"] {
+  right: 0;
+  transform: translateX(calc(100% + 8px));
+}
+.sf-drawer[data-open="true"] {
+  transform: none;
+}
+.sf-drawer[data-motion="on"] {
+  transition: transform var(--drawer-duration, 240ms) var(--drawer-easing, cubic-bezier(0.32, 0.72, 0.32, 1));
+}
+@media (prefers-reduced-motion: reduce) {
+  .sf-drawer[data-motion="on"] {
+    transition: none;
+  }
+}
+/* Toast stack (bottom-right, prototype face). Each Toast stays a single
+   dumb card; the wrap owns geometry so N notices stack without overlapping. */
+.sf-toast-wrap {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: var(--sf-toast-z);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 340px;
+  pointer-events: none;
+}
+.sf-toast-wrap .sf-toast {
+  position: static;
+  left: auto;
+  bottom: auto;
+  max-width: 100%;
+  pointer-events: auto;
+  border-radius: var(--sf-radius-button, 8px);
+  animation: sf-toast-stack-in 200ms ease-out;
+}
+@keyframes sf-toast-stack-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sf-toast-wrap .sf-toast {
+    animation: none;
+  }
 }
 
 /* Navbar-anchored mega menu (sf-089): positioned against the sticky bar and

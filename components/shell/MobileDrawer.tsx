@@ -25,6 +25,19 @@ export default function MobileDrawer({
   className = "",
 }: MobileDrawerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const returnFocus = useRef<HTMLElement | null>(null);
+
+  // Hand focus into the panel on open and give it back on close — a keyboard
+  // shopper must not be left on the trigger while the dialog owns the screen.
+  useEffect(() => {
+    if (!open) return;
+    returnFocus.current = document.activeElement as HTMLElement | null;
+    panelRef.current?.focus();
+    return () => {
+      returnFocus.current?.focus?.();
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -59,8 +72,15 @@ export default function MobileDrawer({
 
   return (
     <div ref={rootRef} data-trap="true" data-side={side} className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Menu">
-      <div className="absolute inset-0 bg-[rgba(10,37,64,0.5)]" onClick={onClose} aria-hidden />
-      <div className={`sf-mobiledrawer ${className}`}>
+      <div className="sf-scrim absolute inset-0" onClick={onClose} aria-hidden />
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        className={`sf-mobiledrawer sf-drawer ${className}`}
+        data-side={side}
+        data-open="true"
+        data-motion="on"
+      >
         <button type="button" onClick={onClose} aria-label="Close menu" className="sf-mobiledrawer__x">
           <Icon name="x" size={20} />
         </button>

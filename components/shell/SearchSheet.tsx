@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { useEffect, useRef } from "react";
-import { Icon, Pill } from "@/components/ui";
+import { EmptyState, ErrorState, Icon, LoadingState, Pill } from "@/components/ui";
 import type { ProductCardData } from "@/lib/commerce/productCard";
 import type { SearchResult } from "@/lib/search/source";
 import type { SearchStatus } from "@/app/hooks/useSearch";
@@ -182,19 +182,19 @@ export default function SearchSheet({
           <span className="sf-searchsheet__hint">Use Arrow keys to cycle products</span>
         </div>
         {status === "error" ? (
-          <p className="sf-searchsheet__empty sf-searchsheet__error" role="alert">
-            Search is unavailable right now. Please try again.
-          </p>
+          <ErrorState
+            className="sf-searchsheet__empty sf-searchsheet__error"
+            title="Search is unavailable right now. Please try again."
+            size="compact"
+          />
         ) : status === "loading" ? (
-          <p className="sf-searchsheet__empty" role="status">
-            Searching…
-          </p>
+          <LoadingState className="sf-searchsheet__empty" label="Searching…" size="compact" />
         ) : !showResults ? (
-          <p className="sf-searchsheet__empty">Type 2+ characters to search the catalog.</p>
+          <EmptyState className="sf-searchsheet__empty" title="Type 2+ characters to search the catalog." />
         ) : results.length === 0 ? (
-          <p className="sf-searchsheet__empty" role="status">
-            No matches for “{query.trim()}”.
-          </p>
+          <div role="status">
+            <EmptyState className="sf-searchsheet__empty" title={`No matches for “${query.trim()}”.`} />
+          </div>
         ) : (
           <div className="sf-searchsheet__cards">
             {results.map((r, i) => (

@@ -242,12 +242,14 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
     <>
       <Suspense fallback={null}>{overlayNode}</Suspense>
       {toast ? (
-        <Toast
-          open={true}
-          title={toast.title}
-          message={toast.message}
-          onClose={() => dispatch({ type: "toast/clear" })}
-        />
+        <div className="sf-toast-wrap">
+          <Toast
+            open={true}
+            title={toast.title}
+            message={toast.message}
+            onClose={() => dispatch({ type: "toast/clear" })}
+          />
+        </div>
       ) : null}
     </>
   );

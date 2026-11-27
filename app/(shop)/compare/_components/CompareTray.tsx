@@ -8,7 +8,12 @@ export default function CompareTray() {
   if (compare.count === 0) return null;
 
   return (
-    <aside className="sf-compare-tray" aria-label="Compare tray">
+    <aside
+      className="sf-compare-tray"
+      aria-label="Compare tray"
+      data-count={compare.count}
+      data-full={compare.full ? "true" : "false"}
+    >
       <div className="sf-compare-tray__head">
         <span className="sf-compare-tray__count">
           {compare.count} selected

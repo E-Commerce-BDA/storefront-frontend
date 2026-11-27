@@ -43,13 +43,15 @@ export default function FilterDrawer({
 
   return (
     <div className="sf-filter-drawer" style={vars} data-side={resolved.side}>
-      <div className="sf-filter-drawer__scrim" aria-hidden onClick={onClose} />
+      <div className="sf-filter-drawer__scrim sf-scrim" aria-hidden onClick={onClose} />
       <aside
-        className={`sf-filter-drawer__panel ${className}`}
+        className={`sf-filter-drawer__panel sf-drawer ${className}`}
         role="dialog"
         aria-modal="true"
         aria-label={resolved.title}
+        data-side={resolved.side}
         data-open="true"
+        data-motion="on"
       >
         <header className="sf-filter-drawer__head">
           <h2 className="sf-filter-drawer__title">{resolved.title}</h2>

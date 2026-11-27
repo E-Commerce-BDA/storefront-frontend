@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Button, EmptyState, Icon } from "@/components/ui";
+import { Button, EmptyState, ErrorState, Icon, LoadingState } from "@/components/ui";
 import CartLineItem from "./CartLineItem";
 import type { CartItemDto } from "@/lib/cart/schemas";
 
@@ -103,8 +103,16 @@ export default function MiniCartDrawer({
 
   return (
     <div className={`sf-minicart ${className}`} role="dialog" aria-modal="true" aria-label="Shopping cart">
-      <div className="sf-minicart__overlay" onClick={onClose} aria-hidden="true" />
-      <div className="sf-minicart__panel" ref={panelRef} tabIndex={-1} data-trap="true">
+      <div className="sf-minicart__overlay sf-scrim" onClick={onClose} aria-hidden="true" />
+      <div
+        className="sf-minicart__panel sf-drawer"
+        ref={panelRef}
+        tabIndex={-1}
+        data-trap="true"
+        data-side="right"
+        data-open="true"
+        data-motion="on"
+      >
         <header className="sf-minicart__head">
           <p className="sf-minicart__title">
             Your cart{totals.itemCount > 0 ? ` (${totals.itemCount})` : ""}
@@ -116,11 +124,13 @@ export default function MiniCartDrawer({
 
         <div className="sf-minicart__body">
           {loading ? (
-            <p className="sf-minicart__note">Loading your cart…</p>
+            <LoadingState className="sf-minicart__note" label="Loading your cart…" size="compact" />
           ) : errored ? (
-            <EmptyState
+            <ErrorState
+              className="sf-minicart__note"
               title="We couldn't load your cart"
               body="Please try again in a moment."
+              size="compact"
             />
           ) : empty ? (
             <EmptyState

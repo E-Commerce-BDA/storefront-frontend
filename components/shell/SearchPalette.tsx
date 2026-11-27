@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { useEffect, useRef } from "react";
-import { Badge, Icon, Pill } from "@/components/ui";
+import { Badge, EmptyState, ErrorState, Icon, LoadingState, Pill } from "@/components/ui";
 import type { ProductCardData } from "@/lib/commerce/productCard";
 import type { SearchResult } from "@/lib/search/source";
 import { tagTone } from "@/lib/search/tagTone";
@@ -312,19 +312,19 @@ export default function SearchPalette({
           <p className="sf-searchpalette__hint">Use ↑ ↓ then Enter</p>
         </div>
         {status === "error" && typing ? (
-          <p className="sf-searchpalette__empty sf-searchpalette__error" role="alert">
-            Search is unavailable right now. Please try again.
-          </p>
+          <ErrorState
+            className="sf-searchpalette__empty sf-searchpalette__error"
+            title="Search is unavailable right now. Please try again."
+            size="compact"
+          />
         ) : status === "loading" && typing ? (
-          <p className="sf-searchpalette__empty" role="status">
-            Searching…
-          </p>
+          <LoadingState className="sf-searchpalette__empty" label="Searching…" size="compact" />
         ) : !typing && curatedShown.length === 0 ? (
-          <p className="sf-searchpalette__empty">No products to show.</p>
+          <EmptyState className="sf-searchpalette__empty" title="No products to show." />
         ) : typing && pool.length === 0 ? (
-          <p className="sf-searchpalette__empty" role="status">
-            No matches for “{query.trim()}”.
-          </p>
+          <div role="status">
+            <EmptyState className="sf-searchpalette__empty" title={`No matches for “${query.trim()}”.`} />
+          </div>
         ) : (
           <div className="sf-searchpalette__rows">
             {pool.map((r, i) => {
