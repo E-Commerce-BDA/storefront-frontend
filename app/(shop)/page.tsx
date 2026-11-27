@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import SectionRenderer from "@/components/sections/SectionRenderer";
 import DegradedState from "@/components/ui/DegradedState";
+import { previewTokenFromPage, type PageSearchParams } from "@/lib/admin/guard";
 import { cmsBaseUrl, createCmsClient } from "@/lib/cms/client";
 import { fetchThemeSettings } from "@/lib/cms/theme";
 import { resolveThemeSettings, toBadgeTones } from "@/lib/cms/themeSettings";
@@ -20,7 +22,9 @@ import { buildHomeJsonLd, serializeJsonLd, SITE_DESCRIPTION, SITE_NAME } from "@
  * `revalidate: 300` is the ceiling, not the cadence: every CMS write fires the
  * outbox → `POST /api/revalidate` with `cms:sections:homepage`, which drops the
  * tag long before five minutes. The window only matters if the webhook cannot
- * get through.
+ * get through. `searchParams` opts the page into request-time rendering so an
+ * admin preview sees its own draft sections; the `(shop)` layout's `connection()`
+ * already keeps the published shell fresh on every other request.
  *
  * Degradation is honest, not decorative. If cms-svc is unreachable the page
  * still renders a 200 with a real link to the catalog (`/products` reads a
@@ -45,8 +49,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function HomePage() {
-  const cms = createCmsClient({ baseUrl: cmsBaseUrl() });
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<PageSearchParams>;
+}) {
+  // sf-096: the preview token is read on the server and used only for the CMS
+  // fetch. It is never placed in a component prop, so no island can see it.
+  const [query, requestHeaders] = await Promise.all([searchParams, headers()]);
+  const previewToken = previewTokenFromPage(requestHeaders, query);
+  const cms = createCmsClient({ baseUrl: cmsBaseUrl(), previewToken });
   const read = await cms.getSections(HOME_PAGE_KEY);
   const list = read.data;
   let content: React.ReactNode;

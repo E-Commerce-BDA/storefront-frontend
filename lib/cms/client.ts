@@ -5,11 +5,16 @@
  * Server-only. The one place the storefront talks to cms-svc, so the tag
  * vocabulary and the budget live here rather than at each call site.
  *
- * Every request is a Next Data Cache read:
+ * Published requests are Next Data Cache reads:
  *   fetch(url, { next: { tags: [tag], revalidate: 300 } })
  * which is what makes `POST /api/revalidate` → `revalidateTag(tag, 'max')`
  * actually drop something. A plain `fetch` here would still render, it just
  * would never be invalidatable — the webhook would be decoration.
+ *
+ * sf-096: a request carrying a preview token is `cache: "no-store"` instead.
+ * The token is a header and therefore invisible to the Data Cache key; sharing
+ * the published entry would let a draft answer a shopper. The policy lives in
+ * `lib/cms/cachePolicy.ts` so the rule has one testable home.
  *
  * WHY null instead of throwing: every caller has a documented fallback
  * (`fetchAuthSettings` → builtins, `fetchNavSettings` → DEMO_NAV_INPUT), so a
@@ -46,10 +51,12 @@ import type { AuthSettings } from "@/lib/auth/settings";
 import type { ThemeSettings } from "@/lib/cms/themeSettings";
 import { serviceUrl } from "@/lib/services/urls";
 import type { NavSettings } from "@/lib/shell/navSettings";
+import { CMS_REVALIDATE_SECONDS, cmsFetchCache } from "./cachePolicy";
 import { cmsTag, isPageKey } from "./tags";
 
+export { CMS_REVALIDATE_SECONDS } from "./cachePolicy";
+
 export const CMS_TIMEOUT_MS = 2000;
-export const CMS_REVALIDATE_SECONDS = 300;
 
 /**
  * I-02: distinguish "the service answered" from "the service failed" and from
@@ -107,7 +114,7 @@ export interface CmsClientOptions {
   timeoutMs?: number;
   revalidateSeconds?: number;
   /** Preview token for inactive/draft reads; cms-svc ignores invalid tokens. */
-  previewToken?: string;
+  previewToken?: string | null;
 }
 
 /**
@@ -137,7 +144,7 @@ export function createCmsClient(options: CmsClientOptions): CmsClient {
           ...(options.previewToken ? { "x-preview-token": options.previewToken } : {}),
         },
         signal: AbortSignal.timeout(timeoutMs),
-        next: { tags: [tag], revalidate },
+        ...cmsFetchCache(tag, options.previewToken, revalidate),
       });
       if (!response.ok) return cmsMissing(response.status);
       return cmsFound(await response.json());

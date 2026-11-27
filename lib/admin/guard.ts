@@ -8,6 +8,7 @@
  */
 import { authServiceUrl, createAuthClient } from "@/lib/auth/client";
 import { apiError, unauthenticated } from "@/lib/bff/handler";
+import { PREVIEW_METADATA } from "@/lib/config/preview";
 import { readIdentity } from "@/lib/session/identity";
 import type { NextRequest, NextResponse } from "next/server";
 
@@ -40,9 +41,53 @@ export async function requireAdmin(
   return { identity: { accessToken: identity.accessToken }, error: null };
 }
 
+/**
+ * The minimum shape shared by `Headers`, `NextRequest.headers` and
+ * `URLSearchParams`. Keeping it structural lets the extraction stay pure and
+ * usable from both route handlers and server components.
+ */
+export interface TokenSource {
+  get(name: string): string | null | undefined;
+}
+
+/** `searchParams` on a Next 16 page (arrays are repeated query keys). */
+export type PageSearchParams = Record<string, string | string[] | undefined>;
+
+/**
+ * One extraction rule for every public preview read. The header wins when both
+ * are present: it is the channel a trusted proxy can set, while `?preview=` is
+ * the iframe-friendly fallback. Both are trimmed so a whitespace-only value
+ * never becomes a cache key.
+ *
+ * Rejected: reading the token in a client island — that would put it in the
+ * browser bundle and defeat the scoped-token boundary.
+ */
+export function previewTokenFromSources(
+  headers: TokenSource | null | undefined,
+  query: TokenSource | null | undefined,
+): string | null {
+  const fromHeader = headers?.get(PREVIEW_METADATA.headerName);
+  if (typeof fromHeader === "string" && fromHeader.trim() !== "") return fromHeader.trim();
+  const fromQuery = query?.get(PREVIEW_METADATA.queryParam);
+  if (typeof fromQuery === "string" && fromQuery.trim() !== "") return fromQuery.trim();
+  return null;
+}
+
+/** Page-shaped adapter: Next hands `searchParams` as an object, not a URL. */
+export function previewTokenFromPage(
+  headers: TokenSource,
+  searchParams: PageSearchParams,
+): string | null {
+  const raw = searchParams[PREVIEW_METADATA.queryParam];
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  const query =
+    typeof value === "string"
+      ? new URLSearchParams([[PREVIEW_METADATA.queryParam, value]])
+      : null;
+  return previewTokenFromSources(headers, query);
+}
+
 /** Preview token for draft/inactive CMS reads; invalid tokens are ignored by cms-svc. */
 export function previewTokenFrom(request: NextRequest): string | null {
-  const fromHeader = request.headers.get("x-preview-token");
-  if (fromHeader !== null && fromHeader.trim() !== "") return fromHeader.trim();
-  return request.nextUrl.searchParams.get("preview");
+  return previewTokenFromSources(request.headers, request.nextUrl.searchParams);
 }

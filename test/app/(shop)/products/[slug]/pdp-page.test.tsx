@@ -16,6 +16,8 @@ const harness = vi.hoisted(() => ({
   models: [] as any[],
   requestedPageKeys: [] as string[],
   resolveCalls: [] as any[],
+  clientOptions: [] as Array<{ previewToken?: string | null }>,
+  requestHeaders: new Headers(),
   product: {
     id: "00000000-0000-4000-8000-0000000000a1",
     name: "Ocean Linen Shirt",
@@ -32,6 +34,9 @@ const harness = vi.hoisted(() => ({
   } as any,
 }));
 
+vi.mock("next/headers", () => ({
+  headers: async () => harness.requestHeaders,
+}));
 vi.mock("next/navigation", () => ({
   notFound: () => {
     throw new Error("not-found");
@@ -55,16 +60,19 @@ vi.mock("@/lib/catalog/client", () => ({
 
 vi.mock("@/lib/cms/client", () => ({
   cmsBaseUrl: () => "http://cms.test",
-  createCmsClient: () => ({
-    getSections: async (pageKey: string) => {
-      harness.requestedPageKeys.push(pageKey);
-      return {
-        data: harness.sections,
-        status: harness.sections === null ? 503 : 200,
-        code: null,
-      };
-    },
-  }),
+  createCmsClient: (options?: { previewToken?: string | null }) => {
+    harness.clientOptions.push(options ?? {});
+    return {
+      getSections: async (pageKey: string) => {
+        harness.requestedPageKeys.push(pageKey);
+        return {
+          data: harness.sections,
+          status: harness.sections === null ? 503 : 200,
+          code: null,
+        };
+      },
+    };
+  },
 }));
 
 vi.mock("@/lib/cms/theme", () => ({
@@ -112,10 +120,17 @@ afterEach(() => {
   harness.models = [];
   harness.requestedPageKeys = [];
   harness.resolveCalls = [];
+  harness.clientOptions = [];
+  harness.requestHeaders = new Headers();
 });
 
-const renderPage = async () =>
-  render(await ProductPage({ params: Promise.resolve({ slug: "ocean-linen-shirt" }) }));
+const renderPage = async (searchParams: Promise<Record<string, string | string[] | undefined>> = Promise.resolve({})) =>
+  render(
+    await ProductPage({
+      params: Promise.resolve({ slug: "ocean-linen-shirt" }),
+      searchParams,
+    }),
+  );
 
 describe("PDP page section seams", () => {
   it("reads exactly pdp-<id>, never the slug", async () => {
@@ -182,5 +197,16 @@ describe("PDP page section seams", () => {
     expect(harness.resolveCalls[0].sections).toEqual([]);
     expect(screen.queryByTestId("section-renderer")).toBeNull();
     expect(screen.getByRole("heading", { level: 1 })).not.toBeNull();
+  });
+
+  it("forwards a preview token to the CMS read but never to the island", async () => {
+    harness.sections = { sections: [], version: 1 };
+    const { container } = await renderPage(Promise.resolve({ preview: "draft-token" }));
+    expect(harness.clientOptions[0]?.previewToken).toBe("draft-token");
+    expect(container.innerHTML).not.toContain("draft-token");
+
+    harness.requestHeaders = new Headers({ "x-preview-token": "header-token" });
+    await renderPage();
+    expect(harness.clientOptions.at(-1)?.previewToken).toBe("header-token");
   });
 });

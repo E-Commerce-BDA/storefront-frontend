@@ -11,6 +11,10 @@
  * revision. The numeric `version` alias stays for one release so a 2.1.0 reader
  * can repin without a flag day. Rejected: emitting admin-authored CSS text —
  * only typed palette/groups reach the resolver and its var emitters.
+ *
+ * sf-096: the token changes only the upstream read (no-store per
+ * lib/cms/cachePolicy.ts); the response carries metadata for minting one, never
+ * the token itself.
  */
 import type { NextRequest, NextResponse } from "next/server";
 import { jsonNoStore } from "@/lib/bff/handler";
@@ -30,7 +34,7 @@ import { paletteToThemeVars } from "@/lib/theme/vars";
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const cms = createCmsClient({
     baseUrl: cmsBaseUrl(),
-    previewToken: previewTokenFrom(request) ?? undefined,
+    previewToken: previewTokenFrom(request),
   });
 
   const [theme, navigation, footer, badges] = await Promise.all([

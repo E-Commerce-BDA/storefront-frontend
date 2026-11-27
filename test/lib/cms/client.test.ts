@@ -278,3 +278,36 @@ describe("configuration", () => {
     expect(CMS_TIMEOUT_MS).toBe(2000);
   });
 });
+
+describe("preview reads (sf-096)", () => {
+  it("forwards the token and refuses the shared Data Cache entry", async () => {
+    const fetchFn = vi.fn(async () => json({ theme: {}, version: 1 }));
+    const cms = createCmsClient({
+      baseUrl: BASE,
+      fetchFn: fetchFn as unknown as typeof fetch,
+      previewToken: "draft-token",
+    });
+
+    expect((await cms.getGlobalSettings()).data).not.toBeNull();
+
+    const [, init] = callOf(fetchFn);
+    expect(init.headers).toMatchObject({ "x-preview-token": "draft-token" });
+    expect(init.cache).toBe("no-store");
+    expect(init.next).toBeUndefined();
+  });
+
+  it("keeps the tagged ceiling when no token is supplied", async () => {
+    const fetchFn = vi.fn(async () => json({ theme: {}, version: 1 }));
+    const cms = createCmsClient({
+      baseUrl: BASE,
+      fetchFn: fetchFn as unknown as typeof fetch,
+      previewToken: null,
+    });
+
+    await cms.getGlobalSettings();
+    const [, init] = callOf(fetchFn);
+    expect(init.headers).not.toHaveProperty("x-preview-token");
+    expect(init.next).toEqual({ tags: ["cms:global-settings"], revalidate: 300 });
+    expect(init.cache).toBeUndefined();
+  });
+});

@@ -13,17 +13,27 @@ import { cleanup, render, screen } from "@testing-library/react";
 const harness = vi.hoisted(() => ({
   sections: null as { sections: unknown[]; version: number } | null,
   models: [] as unknown[],
+  clientOptions: [] as Array<{ previewToken?: string | null }>,
+  requestHeaders: new Headers(),
 }));
 
+vi.mock("next/headers", () => ({
+  headers: async () => harness.requestHeaders,
+}));
 vi.mock("@/lib/cms/client", () => ({
   cmsBaseUrl: () => "http://cms.test",
-  createCmsClient: () => ({
-    getSections: async () => ({
-      data: harness.sections,
-      status: harness.sections === null ? 503 : 200,
-      code: null,
-    }),
-  }),
+  createCmsClient: (options?: { previewToken?: string | null }) => {
+    // fetchThemeSettings() also builds a client; only the section read carries a
+    // preview decision, so ignore optionless calls.
+    if (options !== undefined && "previewToken" in options) harness.clientOptions.push(options);
+    return {
+      getSections: async () => ({
+        data: harness.sections,
+        status: harness.sections === null ? 503 : 200,
+        code: null,
+      }),
+    };
+  },
 }));
 vi.mock("@/lib/sections/resolveSections", async () => {
   const actual = await import("@/lib/sections/resolveSections");
@@ -39,10 +49,14 @@ vi.mock("@/components/sections/ProductGridIsland", () => ({
 import * as homeRoute from "@/app/(shop)/page";
 import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 
+const emptySearchParams = Promise.resolve({});
+
 afterEach(() => {
   cleanup();
   harness.sections = { sections: [], version: 1 };
   harness.models = [];
+  harness.clientOptions = [];
+  harness.requestHeaders = new Headers();
 });
 
 const heroModel = {
@@ -74,7 +88,7 @@ describe("home page", () => {
   it("renders one escaped WebSite JSON-LD script alongside the sections", async () => {
     harness.sections = { sections: [heroModel], version: 2 };
     harness.models = [heroModel];
-    const { container } = render(await homeRoute.default());
+    const { container } = render(await homeRoute.default({ searchParams: emptySearchParams }));
     const scripts = container.querySelectorAll('script[type="application/ld+json"]');
     expect(scripts).toHaveLength(1);
     const html = scripts[0]!.innerHTML;
@@ -89,14 +103,14 @@ describe("home page", () => {
   it("renders the resolved sections, not a hard-coded face", async () => {
     harness.sections = { sections: [heroModel], version: 2 };
     harness.models = [heroModel];
-    render(await homeRoute.default());
+    render(await homeRoute.default({ searchParams: emptySearchParams }));
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Winter drop");
     expect(screen.queryByText(/content service is not/i)).toBeNull();
   });
 
   it("says the content service is unreachable and still links to the catalog", async () => {
     harness.sections = null;
-    render(await homeRoute.default());
+    render(await homeRoute.default({ searchParams: emptySearchParams }));
     expect(screen.getByText(/content service is not/i)).toBeDefined();
     const link = screen.getByRole("link", { name: "Browse products" }) as HTMLAnchorElement;
     expect(link.getAttribute("href")).toBe("/products");
@@ -108,7 +122,7 @@ describe("home page", () => {
   it("says nothing is published when the CMS answered with an empty page", async () => {
     harness.sections = { sections: [], version: 1 };
     harness.models = [];
-    render(await homeRoute.default());
+    render(await homeRoute.default({ searchParams: emptySearchParams }));
     expect(screen.getByText(/Nothing is published/i)).toBeDefined();
     expect(screen.getByRole("link", { name: "Browse products" })).toBeDefined();
   });
@@ -116,7 +130,19 @@ describe("home page", () => {
   it("treats an all-skipped page the same as an empty one", async () => {
     harness.sections = { sections: [{ key: "x" }], version: 3 };
     harness.models = []; // every section was inactive, empty, or its service was down
-    render(await homeRoute.default());
+    render(await homeRoute.default({ searchParams: emptySearchParams }));
     expect(screen.getByText(/Nothing is published/i)).toBeDefined();
+  });
+
+  it("forwards a preview token to the sections read but never into the DOM", async () => {
+    const { container } = render(
+      await homeRoute.default({ searchParams: Promise.resolve({ preview: "draft-token" }) }),
+    );
+    expect(harness.clientOptions[0]?.previewToken).toBe("draft-token");
+    expect(container.innerHTML).not.toContain("draft-token");
+
+    harness.requestHeaders = new Headers({ "x-preview-token": "header-token" });
+    await homeRoute.default({ searchParams: emptySearchParams });
+    expect(harness.clientOptions.at(-1)?.previewToken).toBe("header-token");
   });
 });

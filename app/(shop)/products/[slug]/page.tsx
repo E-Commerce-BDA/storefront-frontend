@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/shell/PageHeader";
 import ErrorState from "@/components/ui/ErrorState";
 import PdpSections from "../../_components/PdpSections";
+import { previewTokenFromPage, type PageSearchParams } from "@/lib/admin/guard";
 import { catalogClient } from "@/lib/catalog/client";
 import { cmsBaseUrl, createCmsClient } from "@/lib/cms/client";
 import { fetchThemeSettings } from "@/lib/cms/theme";
@@ -24,6 +26,9 @@ import RecentlyViewed from "../../_components/RecentlyViewed";
  * slug), then handed to one client island (`PurchasePanel`) for the interactive
  * buy box. The rest of the page — description, attributes, CMS sections,
  * recently viewed, related — is static markup, so a shopper with JS off still reads the product.
+ *
+ * sf-096: `searchParams` makes only the CMS section read preview-aware at
+ * request time; the catalog read keeps its 60 s ISR ceiling.
  */
 
 export const revalidate = 60;
@@ -58,8 +63,10 @@ export async function generateMetadata({
 
 export default async function ProductPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<PageSearchParams>;
 }) {
   const { slug } = await params;
   const result = await loadProduct(slug);
@@ -103,9 +110,13 @@ export default async function ProductPage({
   // `pdp-default` blueprint is materialized into this page by the admin
   // clone endpoint; it is never read here.
   const pageKey = pdpPageKey(product.id);
+  // sf-096: the token is consumed here, on the server, and never handed to the
+  // PdpSections island. Preview sections read no-store (lib/cms/cachePolicy.ts).
+  const [query, requestHeaders] = await Promise.all([searchParams, headers()]);
+  const previewToken = previewTokenFromPage(requestHeaders, query);
   const [cmsRead, themeResult] = await Promise.all([
     pageKey
-      ? createCmsClient({ baseUrl: cmsBaseUrl() }).getSections(pageKey)
+      ? createCmsClient({ baseUrl: cmsBaseUrl(), previewToken }).getSections(pageKey)
       : Promise.resolve(null),
     fetchThemeSettings(),
   ]);
