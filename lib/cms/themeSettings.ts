@@ -1,5 +1,6 @@
 
 import type { ThemePhotoSettingsField } from "@ecom/contracts";
+import type { PaletteLayer } from "@/lib/theme/palette";
 import type { ButtonAnimationField } from "./buttonAnimation";
 import { resolveOverlayMotion, type OverlayMotionField, type ResolvedOverlayMotion } from "@/lib/search/motion";
 import type {
@@ -246,6 +247,8 @@ export interface ThemeSettings {
   dialog?: ThemeDialogField;
   productCard?: ThemeProductCardField;
   photoSettings?: ThemePhotoSettingsField;
+  /** contracts 2.2.0 layered palette; resolved by lib/theme/palette.ts. */
+  palette?: PaletteLayer;
 }
 
 

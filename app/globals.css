@@ -2,42 +2,123 @@
 
 /* Oceanic Blue v1.0 — storefront tokens (Documentation/design-system/storefront.md §3.2) */
 :root {
-  --color-navbar-bg: #ffffff;
-  --color-navbar-text: #0a2540;
-  --color-ink: #0a2540;
-  --color-accent: #0077b6;
-  --color-accent-hover: #023e8a;
-  --color-accent-50: #e6f7fb;
-  --color-button-bg: #0077b6;
-  --color-button-text: #ffffff;
-  --color-button-light-bg: #ffffff;
-  --color-button-light-text: #0077b6;
-  --color-section-bg: #f5fafc;
-  --color-image-bg: #caf0f8;
-  --color-sale: #ff6b4a;
-  --color-sale-soft: #ffede6;
+  /* sf-084 semantic mirrors of DEFAULT_PALETTE. The layout emits these names
+     on <body> from the resolved palette; these keep every token defined before
+     that read. Component defaults below are references, never a second copy. */
+  --sf-color-brand: #0077B6;
+  --sf-color-brand-hover: #023E8A;
+  --sf-color-on-brand: #FFFFFF;
+  --sf-color-brand-wash: #E6F7FB;
+  --sf-color-ink: #0A2540;
+  --sf-color-muted: #5B7286;
+  --sf-color-border: #DCE8EE;
+  --sf-color-surface: #FFFFFF;
+  --sf-color-surface-sunken: #F5FAFC;
+  --sf-color-surface-raised: #FFFFFF;
+  --sf-color-image-placeholder: #CAF0F8;
+  --sf-color-sale-fill: #FF6B4A;
+  --sf-color-sale-text: #B9381C;
+  --sf-color-sale-wash: #FFEDE6;
+  --sf-color-on-sale: #0A2540;
+  --sf-color-success: #0E9F6E;
+  --sf-color-success-fg: #067647;
+  --sf-color-success-bg: #ECFDF3;
+  --sf-color-success-border: #ABEFC6;
+  --sf-color-on-success: #FFFFFF;
+  --sf-color-warning: #F79009;
+  --sf-color-warning-fg: #B54708;
+  --sf-color-warning-bg: #FFFAEB;
+  --sf-color-warning-border: #FEDF89;
+  --sf-color-on-warning: #FFFFFF;
+  --sf-color-error: #D92D20;
+  --sf-color-error-fg: #B42318;
+  --sf-color-error-bg: #FEF3F2;
+  --sf-color-error-border: #FECDCA;
+  --sf-color-on-error: #FFFFFF;
+  --sf-color-navbar-bg: #FFFFFF;
+  --sf-color-navbar-text: #0A2540;
+  --sf-color-navbar-hover: #0077B6;
+  --sf-color-navbar-badge-bg: #0077B6;
+  --sf-color-navbar-badge-text: #FFFFFF;
+  --sf-color-navbar-announce-bg: #0A2540;
+  --sf-color-navbar-announce-text: #FFFFFF;
+  --sf-color-footer-bg: #0A2540;
+  --sf-color-footer-text: #FFFFFF;
+  --sf-color-footer-link: #FFFFFF;
+  --sf-color-footer-hover: #E6F7FB;
+  --sf-color-scrim-soft: rgba(10, 37, 64, 0.25);
+  --sf-color-scrim-panel: rgba(10, 37, 64, 0.45);
+  --sf-color-scrim-strong: rgba(10, 37, 64, 0.72);
+  --sf-state-focus-outline: #0077B6;
+  --sf-state-focus-halo: #0077B633;
+  --sf-state-disabled-bg: #E6ECF1;
+  --sf-state-disabled-text: #5B7286;
+  --sf-state-disabled-border: #DCE8EE;
+  --sf-radius-button: 8px;
+  --sf-radius-card: 12px;
+  --sf-radius-sm: 6px;
+  --sf-radius-md: 10px;
+  --sf-type-font-sans: "Outfit", system-ui, sans-serif;
+  --sf-type-font-display: "Fraunces", serif;
+  --sf-type-fs-display-1: 72px;
+  --sf-type-fs-display-2: 48px;
+  --sf-type-fs-display-3: 32px;
+  --sf-type-fs-body: 15px;
+  --sf-type-fs-caption: 12px;
+  --sf-comp-button-bg: var(--sf-color-brand);
+  --sf-comp-button-text: var(--sf-color-on-brand);
+  --sf-comp-button-hover-bg: var(--sf-color-brand-hover);
+  --sf-comp-button-light-bg: var(--sf-color-surface);
+  --sf-comp-button-light-text: var(--sf-color-brand);
+  --sf-comp-badge-bg: var(--sf-color-brand);
+  --sf-comp-badge-text: var(--sf-color-on-brand);
+  --sf-comp-link: var(--sf-color-ink);
+  --sf-comp-link-hover: var(--sf-color-navbar-hover);
+  --sf-comp-panel: var(--sf-color-surface-raised);
+  --sf-comp-panel-text: var(--sf-color-ink);
+  --sf-comp-panel-border: var(--sf-color-border);
+  --sf-comp-announce-bg: var(--sf-color-navbar-announce-bg);
+  --sf-comp-announce-text: var(--sf-color-navbar-announce-text);
+  --sf-comp-footer-bg: var(--sf-color-footer-bg);
+  --sf-comp-footer-text: var(--sf-color-footer-text);
+  --sf-comp-footer-link: var(--sf-color-footer-link);
+  --sf-comp-footer-hover: var(--sf-color-footer-hover);
+  --color-navbar-bg: var(--sf-color-navbar-bg);
+  --color-navbar-text: var(--sf-color-navbar-text);
+  --color-ink: var(--sf-color-ink);
+  --color-accent: var(--sf-color-brand);
+  --color-accent-hover: var(--sf-color-brand-hover);
+  --color-accent-50: var(--sf-color-brand-wash);
+  --color-button-bg: var(--sf-color-brand);
+  --color-button-text: var(--sf-color-on-brand);
+  --color-button-light-bg: var(--sf-color-surface);
+  --color-button-light-text: var(--sf-color-brand);
+  --color-section-bg: var(--sf-color-surface-sunken);
+  --color-image-bg: var(--sf-color-image-placeholder);
+  --color-sale: var(--sf-color-sale-fill);
+  --color-sale-soft: var(--sf-color-sale-wash);
   /* Sale on light chrome is text, not a surface: coral is only 2.82:1 on white
      (axe color-contrast); this dark counterpart reaches 5.76:1 and keeps the cue. */
-  --color-sale-text: #b9381c;
-  --color-success: #0e9f6e;
-  --color-success-bg: #ecfdf3;
-  --color-success-border: #abefc6;
-  --color-warning: #f79009;
-  --color-warning-bg: #fffaeb;
-  --color-warning-border: #fedf89;
-  --color-error: #d92d20;
-  --color-error-bg: #fef3f2;
-  --color-error-border: #fecdca;
+  --color-sale-text: var(--sf-color-sale-text);
+  --color-success: var(--sf-color-success);
+  --color-success-bg: var(--sf-color-success-bg);
+  --color-success-border: var(--sf-color-success-border);
+  --color-warning: var(--sf-color-warning);
+  --color-warning-bg: var(--sf-color-warning-bg);
+  --color-warning-border: var(--sf-color-warning-border);
+  --color-error: var(--sf-color-error);
+  --color-error-bg: var(--sf-color-error-bg);
+  --color-error-border: var(--sf-color-error-border);
   /* Lilac trio (sf-023 editorial "Trending" badge — photo lavender). :root
      is the token home; components read these through Badge, never raw. */
   --color-lilac: #6941c6;
   --color-lilac-bg: #f4f0ff;
   --color-lilac-border: #d9d0ff;
-  --border: #dce8ee;
-  --text-muted: #5b7286;
-  --focus-ring: #0077b633;
-  --radius-button: 8px;
-  --radius-card: 12px;
+  --border: var(--sf-color-border);
+  --text-muted: var(--sf-color-muted);
+  --focus-ring: var(--sf-state-focus-halo);
+  --radius-button: var(--sf-radius-button);
+  --radius-card: var(--sf-radius-card);
   --font-sans: "Outfit", system-ui, sans-serif;
   --font-display: "Fraunces", serif;
   /* Page-shell gutter (sf-060, design-system §4/§8). Full-bleed pages carry no
@@ -47,8 +128,8 @@
      so the shell and the pages align on one gutter. */
   --sf-page-pad: clamp(16px, 4vw, 50px);
   /* A24: disabled faces are explicit solids �?" transparency destroys contrast. */
-  --surface-disabled: #e6ecf1;
-  --text-disabled: #5b7286;
+  --surface-disabled: var(--sf-state-disabled-bg);
+  --text-disabled: var(--sf-state-disabled-text);
   /* sf-078 canonical aliases. One definition per family, each pointing at an
      existing token, so an admin retunes the family here instead of in every
      consumer. Rejected: per-component fallbacks - they compile today but drift
@@ -56,17 +137,17 @@
      that cannot be derived from an opaque surface: the page behind it must
      show through. Radii mirror the fallbacks already shipped, so defining the
      token changes no pixels. */
-  --color-surface: var(--color-navbar-bg);
-  --color-navy: var(--color-ink);
-  --color-on-navy: var(--color-button-text);
-  --color-on-success: var(--color-button-text);
-  --surface-base: var(--color-section-bg);
-  --surface-raised: var(--color-surface);
-  --surface-hover: var(--color-accent-50);
-  --surface-muted: var(--color-image-bg);
-  --scrim: rgba(10, 37, 64, 0.45);
-  --radius-sm: 6px;
-  --radius-md: 10px;
+  --color-surface: var(--sf-color-surface);
+  --color-navy: var(--sf-color-ink);
+  --color-on-navy: var(--sf-color-on-brand);
+  --color-on-success: var(--sf-color-on-success);
+  --surface-base: var(--sf-color-surface-sunken);
+  --surface-raised: var(--sf-color-surface-raised);
+  --surface-hover: var(--sf-color-brand-wash);
+  --surface-muted: var(--sf-color-image-placeholder);
+  --scrim: var(--sf-color-scrim-panel);
+  --radius-sm: var(--sf-radius-sm);
+  --radius-md: var(--sf-radius-md);
   /* Stacking scale: sticky chrome < its dropdown < sheets < toasts. Values
      mirror today's literals, so this is a rename, not a layering change. */
   --z-base: 0;
@@ -85,9 +166,9 @@
 }
 
 @theme inline {
-  --color-primary: var(--color-accent);
-  --color-card: #ffffff;
-  --color-muted: var(--text-muted);
+  --color-primary: var(--sf-color-brand);
+  --color-card: var(--sf-color-surface);
+  --color-muted: var(--sf-color-muted);
   --radius-button: var(--radius-button);
   --radius-card: var(--radius-card);
   --font-sans: var(--font-sans);

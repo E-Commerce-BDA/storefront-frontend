@@ -5,6 +5,8 @@ import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/lib/site";
 import { fetchThemeSettings } from "@/lib/cms/theme";
 import { resolveThemeSettings } from "@/lib/cms/themeSettings";
 import { themeToCssVars } from "@/lib/cms/themeVars";
+import { resolvePalette } from "@/lib/theme/palette";
+import { paletteToThemeVars } from "@/lib/theme/vars";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -44,9 +46,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // get a conversion surface, not a storefront header and footer.
   const themeResult = await fetchThemeSettings();
   const theme = resolveThemeSettings({ settings: themeResult.theme });
+  // The palette is a separate, versioned layer: cms-svc validation keeps raw
+  // admin CSS out, the resolver clamps it, and the emitter paints via vars.
+  const palette = resolvePalette({ global: themeResult.theme?.palette });
   return (
     <html lang="en" className={`${fraunces.variable} ${outfit.variable}`}>
-      <body style={themeToCssVars(theme)}>{children}</body>
+      <body style={{ ...themeToCssVars(theme), ...paletteToThemeVars(palette) }}>{children}</body>
     </html>
   );
 }

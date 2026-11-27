@@ -38,7 +38,9 @@ describe("sale nav link colour contrast", () => {
   });
 
   it("keeps that token at AA contrast on the navbar and the section wash", () => {
-    const token = css.match(/--color-sale-text:\s*(#[0-9a-fA-F]{6})\s*;/);
+    // The legacy name is now an alias; the concrete value lives in the
+    // sf-084 token mirror. Reading the mirror keeps this gate on real paint.
+    const token = css.match(/--sf-color-sale-text:\s*(#[0-9a-fA-F]{6})\s*;/i);
     expect(token, "sale-text token missing").not.toBeNull();
     const saleText = token![1]!;
     expect(contrast(saleText, "#ffffff")).toBeGreaterThanOrEqual(4.5);
