@@ -1,4 +1,5 @@
 
+import type { MegaMenuGroup } from "@ecom/contracts";
 import type { OverlayMotionField, ResolvedOverlayMotion } from "@/lib/search/motion";
 
 export type LogoPosition = "left" | "center";
@@ -20,8 +21,8 @@ export interface LinkBadge {
 }
 
 export type NavLink =
-  | { kind: "category"; label: string; href: string; categoryId: string; icon?: string; badge?: LinkBadge; highlight?: LinkHighlight; schedule?: LinkSchedule }
-  | { kind: "custom"; label: string; href: string; icon?: string; badge?: LinkBadge; highlight?: LinkHighlight; schedule?: LinkSchedule };
+  | { kind: "category"; label: string; href: string; categoryId: string; icon?: string; badge?: LinkBadge; highlight?: LinkHighlight; schedule?: LinkSchedule; groups?: MegaMenuGroup[] }
+  | { kind: "custom"; label: string; href: string; icon?: string; badge?: LinkBadge; highlight?: LinkHighlight; schedule?: LinkSchedule; groups?: MegaMenuGroup[] };
 
 export const NAV_LIMITS = {
   logoHeight: { min: 20, max: 40 },
@@ -352,6 +353,8 @@ export interface ResolvedNavLink {
   highlight: LinkHighlight;
   schedule: { startsAt: string; endsAt: string };
   current: boolean; //true if this link is the current page (or parent of current page)
+  /** CMS 2.2.0 mega-menu view model, normalized at resolve time. */
+  groups?: MegaMenuGroup[];
 }
 
 export interface ResolvedNavSettings {

@@ -83,6 +83,16 @@
   --sf-comp-footer-text: var(--sf-color-footer-text);
   --sf-comp-footer-link: var(--sf-color-footer-link);
   --sf-comp-footer-hover: var(--sf-color-footer-hover);
+  /* sf-089 shell hover language: squarish borders, wash on hover/active. */
+  --sf-nav-hover-bg: var(--sf-color-brand-wash);
+  --sf-nav-hover-border: var(--sf-color-border);
+  --sf-nav-hover-fg: var(--sf-color-navbar-hover);
+  --sf-nav-sale-hover-bg: var(--sf-color-sale-wash);
+  --sf-nav-sale-hover-border: var(--sf-color-sale-text);
+  --sf-nav-icon-bg: var(--sf-color-surface);
+  --sf-nav-icon-fg: var(--sf-color-ink);
+  --sf-nav-icon-border: var(--sf-color-border);
+  --sf-shadow-nav: 0 12px 32px rgba(10, 37, 64, 0.12);
   /* sf-084 component-group mirrors: nav, filter rail, drawer, strip, cards.
      Values match the shipped var() fallbacks, so these declarations change no
      pixels; only admin retunes them. --grid-gap/--marquee-duration stay absent
@@ -172,7 +182,7 @@
      keeps a sane floor above 16px. Navbar, Footer and every (shop) page share it
      so the shell and the pages align on one gutter. */
   --sf-page-pad: clamp(16px, 4vw, 50px);
-  /* A24: disabled faces are explicit solids �?" transparency destroys contrast. */
+  /* A24: disabled faces are explicit solids — transparency destroys contrast. */
   --surface-disabled: var(--sf-state-disabled-bg);
   --text-disabled: var(--sf-state-disabled-text);
   /* sf-078 canonical aliases. One definition per family, each pointing at an
@@ -652,6 +662,38 @@ body {
 .sf-navlinks a {
   color: var(--nb-text, #0a2540);
 }
+/* sf-089: nav cells paint a squarish border on hover/active, matching the
+   prototype's hover language. State reaches CSS only via data/aria attrs. */
+.sf-navlinks :is(a, button) {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--sf-radius-button, 8px);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.sf-navlinks :is(a, button):not([aria-disabled="true"]):hover,
+.sf-navlinks :is(a, button)[aria-expanded="true"],
+.sf-navlinks :is(a, button)[data-current="true"] {
+  background: var(--sf-nav-hover-bg);
+  border-color: var(--sf-nav-hover-border);
+  color: var(--sf-nav-hover-fg);
+}
+.sf-navlinks :is(a, button)[data-highlight="sale"] {
+  color: var(--color-sale-text);
+  font-weight: 700;
+}
+.sf-navlinks :is(a, button)[data-highlight="sale"]:hover {
+  background: var(--sf-nav-sale-hover-bg);
+  border-color: var(--sf-nav-sale-hover-border);
+  color: var(--color-sale-text);
+}
 .sf-navlinks a:hover {
   color: var(--nb-hover, #0077b6);
   text-decoration: underline;
@@ -678,6 +720,35 @@ body {
   background: var(--nb-badge-bg, #0077b6);
   color: var(--nb-badge-text, #ffffff);
   margin-left: 6px;
+}
+/* sf-089 icon triggers: squarish border, accent wash on hover (gated off
+   disabled), focus ring fixed by the shared a11y contract. */
+.sf-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sf-nav-icon-border);
+  border-radius: var(--sf-radius-button, 8px);
+  background: var(--sf-nav-icon-bg);
+  color: var(--sf-nav-icon-fg);
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.sf-iconbtn:not([disabled]):not([aria-disabled="true"]):hover {
+  background: var(--sf-nav-hover-bg);
+  border-color: var(--sf-nav-hover-fg);
+  color: var(--sf-nav-hover-fg);
+}
+.sf-iconbtn:focus-visible {
+  outline: 2px solid var(--sf-state-focus-outline);
+  outline-offset: 2px;
+}
+.sf-iconbtn[disabled],
+.sf-iconbtn[aria-disabled="true"] {
+  cursor: not-allowed;
+  border-color: var(--sf-state-disabled-border);
+  background: var(--sf-state-disabled-bg);
+  color: var(--sf-state-disabled-text);
 }
 /* Announcement bar — single-line promo carousel shell. Paint resolves
    through --nb-announce-* vars; fallbacks mirror DEFAULT_NAV_SETTINGS. */
@@ -781,6 +852,7 @@ body {
    geometry/stickiness via --nb-* vars (resolver inlines); state through
    data-* hooks only. Paint var-only; fallbacks mirror DEFAULT_NAV_SETTINGS. */
 .sf-navbar {
+  position: relative;
   background: var(--nb-bg, #ffffff);
   color: var(--nb-text, #0a2540);
   height: var(--nb-height, 64px);
@@ -5172,7 +5244,7 @@ body {
   color: var(--listing-error, var(--color-error));
 }
 
-/* -- Compare tray � sf-055 (A3.7) -----------------------------------------
+/* -- Compare tray — sf-055 (A3.7) -----------------------------------------
  * Session-only tray; the shareable artifact is /compare?ids=. State reaches
  * CSS through data attrs, all faces through vars. */
 /* Comparison table (sf-081): one column per product. The media cell is the
@@ -5513,6 +5585,34 @@ body {
   scroll-behavior: auto;
 }
 
+/* Navbar-anchored mega menu (sf-089): positioned against the sticky bar and
+   dropped in with the prototype's 180ms ease. The drop is motion, not data —
+   `data-open` is the only state hook and reduced-motion kills the animation. */
+.sf-megamenu--nav {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 45;
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--sf-shadow-nav);
+  animation: sf-mega-drop 180ms ease-out;
+}
+@keyframes sf-mega-drop {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-6px - 2px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sf-megamenu--nav {
+    animation: none;
+  }
+}
 .sf-megamenu {
   display: grid;
   grid-template-columns: repeat(var(--mega-columns, 3), minmax(0, 1fr));

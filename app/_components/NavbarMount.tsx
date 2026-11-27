@@ -7,6 +7,7 @@ import SearchMount, { preloadSearchOverlay } from "@/components/shell/SearchMoun
 import { useCart } from "./CartProvider";
 import { useWishlist } from "./WishlistProvider";
 import { resolveAccountMenu } from "@/lib/shell/accountMenu";
+import { markCurrentNavLinks } from "@/lib/shell/resolveNav";
 import type { ResolvedNavSettings } from "@/lib/shell/navSettings";
 import { initialNavbarMachine, navbarMachine } from "@/lib/navbar/machine";
 import { initialOverlayMachine, overlayMachine } from "@/lib/overlay/machine";
@@ -58,6 +59,8 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
   // sf-080: the resolved knobs are machine state, not parallel locals.
   useEffect(() => {
     dispatch({ type: "navigate", pathname, currentHref: pathname });
+    // A route change cannot leave a mega menu hanging over the new page.
+    dispatchUi({ type: "mega/close" });
   }, [pathname]);
   useEffect(() => {
     dispatch({ type: "sticky/set", sticky: nav.bar.sticky !== "static" });
@@ -117,17 +120,28 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
   // The account dropdown is owned here (controlled-only): Escape and an
   // outside pointer merely call the close setter, never own open-state.
   useEffect(() => {
-    if (!ui.accountMenuOpen) return;
+    const anyOpen = ui.accountMenuOpen || ui.megaMenuLabel !== null || ui.mobileOpen;
+    if (!anyOpen) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") dispatchUi({ type: "account/close" });
+      if (event.key !== "Escape") return;
+      dispatchUi({ type: "account/close" });
+      dispatchUi({ type: "mega/close" });
+      dispatchUi({ type: "mobile/close" });
     };
     const onPointer = (event: PointerEvent) => {
       const target = event.target;
-      if (
-        target instanceof Element &&
-        target.closest("[data-accountmenu-anchor]") === null
-      ) {
+      if (!(target instanceof Element)) return;
+      if (target.closest("[data-accountmenu-anchor]") === null) {
         dispatchUi({ type: "account/close" });
+      }
+      // The trigger and the panel are both inside the navbar; a click anywhere
+      // else is an outside dismissal for the mega menu.
+      if (
+        ui.megaMenuLabel !== null &&
+        target.closest("[data-megamenu]") === null &&
+        target.closest(".sf-megamenu") === null
+      ) {
+        dispatchUi({ type: "mega/close" });
       }
     };
     document.addEventListener("keydown", onKey);
@@ -136,7 +150,7 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onPointer);
     };
-  }, [ui.accountMenuOpen]);
+  }, [ui.accountMenuOpen, ui.megaMenuLabel, ui.mobileOpen]);
 
   // Two-phase dismiss (HomeChrome pattern, preserved verbatim): collapsing
   // class animates, unmount follows. Instant when animation is off or
@@ -172,7 +186,11 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
         logo={nav.logo}
         bar={{ height: nav.bar.height, sticky: nav.bar.sticky, shadow: nav.bar.shadow, hidden: barHidden }}
         colors={nav.colors}
-        links={nav.links.items}
+        links={markCurrentNavLinks(nav.links.items, currentHref)}
+        megaMenu={{
+          activeLabel: ui.megaMenuLabel,
+          onToggle: (label) => dispatchUi({ type: "mega/toggle", label }),
+        }}
         announcement={{
           items: ui.announcementDismissed ? [] : items,
           showArrows: nav.announcement.showArrows,

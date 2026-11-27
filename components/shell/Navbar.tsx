@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { Icon, IconButton } from "@/components/ui";
 import AnnouncementBar, { type AnnouncementItem } from "./AnnouncementBar";
+import MegaMenu from "./MegaMenu";
 import NavLinks from "./NavLinks";
 import NavLogo from "./NavLogo";
 import NavSearchTrigger from "./NavSearchTrigger";
@@ -57,6 +58,8 @@ export interface NavbarProps {
     announceText: string;
   };
   links: ResolvedNavLink[];
+  /** CMS 2.2.0 mega-menu disclosure; open-state is owned by NavbarMount. */
+  megaMenu?: { activeLabel?: string | null; onToggle?: (label: string) => void };
   announcement: NavbarAnnouncement;
   /** Live cart region (sf-051): count from the store, onOpen raises the drawer. */
   cart: { count: number; onOpen: () => void; badgeCap?: number };
@@ -84,6 +87,7 @@ export default function Navbar({
   bar,
   colors,
   links,
+  megaMenu,
   announcement,
   cart,
   account,
@@ -113,6 +117,11 @@ export default function Navbar({
     "--nb-height": `${bar.height}px`,
   } as CSSProperties;
 
+  // The active label selects the CMS groups; the navbar never carries its own
+  // menu content (no prototype copy) and owns no disclosure state.
+  const activeLabel = megaMenu?.activeLabel ?? null;
+  const megaGroups = activeLabel === null ? [] : links.find((link) => link.label === activeLabel)?.groups ?? [];
+
   return (
     <>
       {regions.announcement && (
@@ -136,6 +145,7 @@ export default function Navbar({
         data-hidden={bar.hidden}
         data-current={currentHref ?? undefined}
         data-status={status}
+        data-mega-open={activeLabel === null ? undefined : "true"}
       >
         {isMobile && (
           <IconButton label="Open menu" onClick={onMenuOpen}>
@@ -145,7 +155,9 @@ export default function Navbar({
         {regions.logo && (
           <NavLogo imageUrl={logo.imageUrl} height={logo.height} wordmark={logo.wordmark} />
         )}
-        {regions.links && !isMobile && <NavLinks links={links} />}
+        {regions.links && !isMobile && (
+          <NavLinks links={links} activeMegaMenu={activeLabel} onMegaMenuToggle={megaMenu?.onToggle} />
+        )}
         <span className="sf-navbar__spacer" aria-hidden="true" />
         <span className="sf-navbar__actions">
           {regions.search && (
@@ -190,6 +202,15 @@ export default function Navbar({
             />
           )}
         </span>
+        {megaGroups.length > 0 ? (
+          <MegaMenu
+            groups={megaGroups}
+            open
+            activeLabel={activeLabel ?? undefined}
+            className="sf-megamenu--nav"
+            options={{ ariaLabel: `${activeLabel ?? ""} menu` }}
+          />
+        ) : null}
       </div>
       <MobileDrawer
         open={mobileOpen}

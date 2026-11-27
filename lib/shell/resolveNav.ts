@@ -28,6 +28,7 @@ import {
   type ResolvedNavSettings,
 } from "./navSettings";
 import { resolveOverlayMotion } from "@/lib/search/motion";
+import { normalizeNavGroups } from "./megaMenuModel";
 
 export interface ResolveNavInput {
   settings?: NavSettings | null;
@@ -77,6 +78,9 @@ function resolveLinks(
       icon: l.icon ?? "",
       badge: l.badge ?? null,
       highlight: l.highlight ?? "none",
+      // 2.2.0 groups ride on the resolved link; normalization happens at this
+      // seam so an invalid CMS cell cannot become a dead nav target.
+      groups: normalizeNavGroups(l.groups),
       schedule: {
         startsAt: typeof l.schedule?.startsAt === "string" ? l.schedule.startsAt : "",
         endsAt: typeof l.schedule?.endsAt === "string" ? l.schedule.endsAt : "",
@@ -85,6 +89,24 @@ function resolveLinks(
       current: false,
     }));
   return { items: resolved.slice(0, cap), maxItems: cap };
+}
+
+/**
+ * Route-aware marking at the island seam. The resolver is route-agnostic
+ * (one request-fresh config shared by every route); only the mount knows the
+ * pathname. A parent href marks its descendants current ("/products" on a PDP),
+ * while "/" never marks every route.
+ */
+export function markCurrentNavLinks(
+  links: readonly ResolvedNavLink[],
+  pathname: string | null,
+): ResolvedNavLink[] {
+  const target = (pathname ?? "").split(/[?#]/)[0].replace(/\/+$/, "") || "/";
+  return links.map((link) => {
+    const path = link.href.split(/[?#]/)[0].replace(/\/+$/, "") || "/";
+    const isCurrent = path === target || (path !== "/" && target.startsWith(`${path}/`));
+    return { ...link, current: link.current || isCurrent };
+  });
 }
 
 export function resolveNavSettings(input: ResolveNavInput, now: number = Date.now()): ResolvedNavSettings {

@@ -11,6 +11,8 @@ import type { Status } from "@/lib/machine/status";
 export interface NavUiMachineState {
   mobileOpen: boolean;
   accountMenuOpen: boolean;
+  /** CMS mega-menu trigger label; null = no disclosure. One at a time. */
+  megaMenuLabel: string | null;
   announcementDismissed: boolean;
   announcementClosing: boolean;
   announcementIndex: number;
@@ -22,6 +24,8 @@ export type NavUiMachineEvent =
   | { type: "mobile/close" }
   | { type: "account/toggle" }
   | { type: "account/close" }
+  | { type: "mega/toggle"; label: string }
+  | { type: "mega/close" }
   | { type: "announcement/next"; count: number }
   | { type: "announcement/prev"; count: number }
   | { type: "announcement/dismiss/start" }
@@ -32,6 +36,7 @@ export function initialNavUiMachine(): NavUiMachineState {
   return {
     mobileOpen: false,
     accountMenuOpen: false,
+    megaMenuLabel: null,
     announcementDismissed: false,
     announcementClosing: false,
     announcementIndex: 0,
@@ -49,13 +54,19 @@ export function navUiMachine(
 ): NavUiMachineState {
   switch (event.type) {
     case "mobile/open":
-      return { ...state, mobileOpen: true };
+      return { ...state, mobileOpen: true, megaMenuLabel: null };
     case "mobile/close":
       return { ...state, mobileOpen: false };
     case "account/toggle":
-      return { ...state, accountMenuOpen: !state.accountMenuOpen };
+      // One disclosure at a time: opening the account menu dismisses the mega
+      // menu (the prototype's overlay machine makes the same promise).
+      return { ...state, accountMenuOpen: !state.accountMenuOpen, megaMenuLabel: null };
     case "account/close":
       return { ...state, accountMenuOpen: false };
+    case "mega/toggle":
+      return { ...state, megaMenuLabel: state.megaMenuLabel === event.label ? null : event.label };
+    case "mega/close":
+      return { ...state, megaMenuLabel: null };
     case "announcement/next":
       return { ...state, announcementIndex: wrap(state.announcementIndex + 1, event.count) };
     case "announcement/prev":

@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
 
-/** Dumb IconButton — 40px circle, hover border accent + wash. */
+/** Dumb IconButton — squarish 40px trigger; paint/state/motion live in .sf-iconbtn CSS. */
 export interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   label: string;
   children: React.ReactNode;
@@ -16,7 +16,7 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconB
       ref={ref}
       type="button"
       aria-label={label}
-      className={`inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-white text-[var(--color-ink)] transition-colors hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-50)] focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] disabled:cursor-not-allowed disabled:border-[var(--border)] disabled:bg-[var(--surface-disabled)] disabled:text-[var(--text-disabled)] ${className}`}
+      className={`sf-iconbtn ${className}`}
       style={{ width: size, height: size, ...style }}
       {...rest}
     >
