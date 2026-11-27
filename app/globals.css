@@ -5658,6 +5658,31 @@ body {
   gap: var(--timeline-section-gap, 10px);
 }
 
+/* sf-094: account tabs and the compare differences face. Both are layout plus
+   var paint; the tab's active face is already reported by Pill's data-active. */
+.sf-account-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--account-tab-gap, 8px);
+  padding-bottom: var(--account-tab-pad, 10px);
+  border-bottom: 1px solid var(--border);
+}
+.sf-compare-view {
+  display: grid;
+  gap: var(--compare-view-gap, 16px);
+}
+.sf-compare-view__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--compare-toggle-gap, 8px);
+  color: var(--color-ink);
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+.sf-compare[data-differences-only="true"] .sf-compare__rowhead {
+  color: var(--color-accent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sf-segmented__btn,
   .sf-menu__panel {

@@ -42,3 +42,68 @@ export function parseCompareQuery(raw: string | null | undefined): string[] {
   }
   return [...seen];
 }
+
+/** A row of the comparison table — values are already display strings. */
+export interface CompareRow {
+  label: string;
+  values: readonly string[];
+}
+
+export interface CompareCellSource {
+  price: number;
+  compareAt?: number;
+  category: string;
+  brandName?: string;
+  rating?: number;
+  stock?: string;
+}
+
+const money = (value: number) => `$${value}`;
+
+/** Pure mapper from the shared card data to display rows — one vocabulary. */
+export function compareRows(items: readonly CompareCellSource[]): CompareRow[] {
+  return [
+    { label: "Price", values: items.map((item) => money(item.price)) },
+    { label: "Was", values: items.map((item) => (item.compareAt ? money(item.compareAt) : "—")) },
+    { label: "Category", values: items.map((item) => item.category || "—") },
+    { label: "Brand", values: items.map((item) => item.brandName ?? "—") },
+    {
+      label: "Rating",
+      values: items.map((item) => (item.rating !== undefined ? `${item.rating} / 5` : "—")),
+    },
+    {
+      label: "Availability",
+      values: items.map((item) => (item.stock === "out" ? "Out of stock" : "Available")),
+    },
+  ];
+}
+
+/**
+ * "Differences only" keeps a row when at least one column disagrees. With a
+ * single product every row is trivially equal, so the full table stays.
+ */
+export function visibleCompareRows(rows: readonly CompareRow[], differencesOnly: boolean): CompareRow[] {
+  if (!differencesOnly || rows.length === 0) return [...rows];
+  const first = rows[0]?.values.length ?? 0;
+  if (first < 2) return [...rows];
+  return rows.filter((row) => row.values.some((value) => value !== row.values[0]));
+}
+
+export type CompareViewFace = "all" | "differences";
+
+export interface CompareViewModelachineState {
+  face: CompareViewFace;
+}
+
+export type CompareViewMachineEvent = { type: "face/set"; face: CompareViewFace };
+
+export function initialCompareViewMachine(): CompareViewModelachineState {
+  return { face: "all" };
+}
+
+export function compareViewMachine(
+  state: CompareViewModelachineState,
+  event: CompareViewMachineEvent,
+): CompareViewModelachineState {
+  return state.face === event.face ? state : { face: event.face };
+}

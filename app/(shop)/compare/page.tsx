@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import PageHeader from "@/components/shell/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import Button from "@/components/ui/Button";
-import CompareTable from "@/components/commerce/CompareTable";
+import CompareView from "./_components/CompareView";
 import { catalogClient } from "@/lib/catalog/client";
 import { parseCompareQuery } from "@/lib/commerce/compare";
 import { fromCatalogList } from "@/lib/commerce/fromCatalog";
@@ -63,7 +63,7 @@ export default async function ComparePage({
           action={<Button variant="primary" href="/products">Browse products</Button>}
         />
       ) : (
-        <CompareTable items={items} />
+        <CompareView items={items} />
       )}
     </>
   );

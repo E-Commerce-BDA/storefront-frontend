@@ -15,12 +15,20 @@
  * Order *detail*, profile edit and the address book are sf-059; a row that
  * links into an unbuilt page would be the fake this wave promised not to ship.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useReducer, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { Button, DegradedState, EmptyState, ErrorState, Icon, LoadingState } from "@/components/ui";
 import OrderRow from "@/components/commerce/OrderRow";
+import AccountTabs from "@/components/commerce/AccountTabs";
+import {
+  accountTabEvent,
+  accountTabHref,
+  accountTabsMachine,
+  initialAccountTabsMachine,
+  type AccountTab,
+} from "@/lib/account/machine";
 import PageHeader from "@/components/shell/PageHeader";
 import { useCart } from "@/app/_components/CartProvider";
 import { useWishlist } from "@/app/_components/WishlistProvider";
@@ -51,10 +59,22 @@ const accountResponseSchema = z
 
 type AccountView = z.infer<typeof accountResponseSchema>;
 
-export default function AccountView() {
+export interface AccountViewProps {
+  /** Deep link from `?tab=`; the URL stays the source of truth. */
+  tab?: AccountTab;
+}
+
+export default function AccountView({ tab = "overview" }: AccountViewProps) {
   const router = useRouter();
   const cart = useCart();
   const wishlist = useWishlist();
+  // The machine translates a tab press into a face and the island pushes the
+  // canonical URL; a refresh rehydrates the same face from the prop.
+  const [{ tab: active }, dispatch] = useReducer(
+    accountTabsMachine,
+    tab,
+    initialAccountTabsMachine,
+  );
   // One mapper: the mini-list quotes effectivePrice, not the raw list price.
   const wishlistCards = useMemo(
     () => fromCatalogList(wishlist.items.map((entry) => entry.product)),
@@ -128,16 +148,16 @@ export default function AccountView() {
         }
       />
       <p className="-mt-4 mb-4 text-sm text-[var(--text-muted)]">{data.user.email}</p>
-      <div className="mb-8 flex gap-3">
-        <Button variant="light" size="sm" onClick={() => router.push("/account/orders")}>
-          View all orders
-        </Button>
-        <Button variant="light" size="sm" onClick={() => router.push("/wishlist")}>
-          My wishlist
-        </Button>
-      </div>
+      <AccountTabs
+        active={active}
+        onSelect={(next) => {
+          dispatch(accountTabEvent(next));
+          router.push(accountTabHref(next));
+        }}
+        className="mb-6"
+      />
 
-      <section aria-label="Profile" className="mb-8 grid gap-4">
+      <section aria-label="Profile" className="mb-8 grid gap-4" hidden={active !== "overview" && active !== "profile"}>
         <h2 className="m-0 text-base font-semibold text-[var(--color-ink)]">Profile</h2>
         <ProfileForm
           email={data.user.email}
@@ -146,17 +166,17 @@ export default function AccountView() {
         />
       </section>
 
-      <section aria-label="Address book" className="mb-8 grid gap-4">
+      <section aria-label="Address book" className="mb-8 grid gap-4" hidden={active !== "overview" && active !== "addresses"}>
         <h2 className="m-0 text-base font-semibold text-[var(--color-ink)]">Address book</h2>
         <AddressBook />
       </section>
 
-      <section aria-label="Password" className="mb-8 grid gap-4">
+      <section aria-label="Password" className="mb-8 grid gap-4" hidden={active !== "overview" && active !== "profile"}>
         <h2 className="m-0 text-base font-semibold text-[var(--color-ink)]">Password</h2>
         <PasswordForm />
       </section>
 
-      <section aria-label="Saved items" className="mb-8 grid gap-3">
+      <section aria-label="Saved items" className="mb-8 grid gap-3" hidden={active !== "overview" && active !== "wishlist"}>
         <div className="flex items-baseline justify-between gap-4">
           <h2 className="m-0 text-base font-semibold text-[var(--color-ink)]">Wishlist</h2>
           <Button variant="light" size="sm" onClick={() => router.push("/wishlist")}>
@@ -183,7 +203,7 @@ export default function AccountView() {
         )}
       </section>
 
-      <section aria-label="Order history" className="grid gap-4">
+      <section aria-label="Order history" className="grid gap-4" hidden={active !== "overview" && active !== "orders" && active !== "orderDetail"}>
         <h2 className="m-0 text-base font-semibold text-[var(--color-ink)]">Recent orders</h2>
 
         {data.ordersError ? (

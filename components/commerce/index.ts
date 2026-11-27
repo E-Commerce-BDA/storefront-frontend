@@ -6,4 +6,5 @@ export { default as ProductRailIsland, type ProductRailIslandProps } from "./Pro
 export { default as PdpTabs, type PdpTabsProps, type PdpTabView } from "./PdpTabs";
 export { default as PaymentPill, type PaymentPillProps } from "./PaymentPill";
 export { default as QuickPromos, type QuickPromosProps } from "./QuickPromos";
+export { default as AccountTabs, type AccountTabsProps } from "./AccountTabs";
 

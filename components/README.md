@@ -90,6 +90,31 @@ Contract (roles, data hooks, controlled callbacks), resolver-unit (defaults,
 clamps, flat-over-object), style-contract (var-only paint, no hex, data hooks,
 reduced-motion guard) for all five components.
 
+## Account & compare faces (sf-094)
+
+### 1. Look per state
+- `AccountTabs` is a controlled pill strip; panels stay in the DOM and are
+  hidden natively, so `?tab=` deep links and page refresh keep the same face.
+- `CompareView` toggles the pure differences-only face; `CompareTable` paints
+  whichever rows the resolver returned. Tray and order rows remain shared.
+
+### 2. Customizable fields
+Active tab and a select callback arrive from the account island; comparison
+items arrive from the route. Neither painter holds a default.
+
+### 3. Where a value lives
+`lib/account/machine.ts` owns tab parsing/events, `lib/commerce/compare.ts` owns
+row mapping, difference filtering and the view machine. `OrderRow` and the
+orders machine stay the single order-list vocabulary.
+
+### 4. Global rules
+URL is the source of truth for the tab; the island's reducer only translates a
+press. Rejected: a checkbox in the server page or a `useState` tab mirror.
+
+### 5. Tests
+Resolver-unit (tab deep links, compare row filtering), contract (active tab,
+checkbox reporting), style-contract (var paint, data faces, no hex/opacity).
+
 ## Money-page chrome (sf-093)
 
 ### 1. Look per state
