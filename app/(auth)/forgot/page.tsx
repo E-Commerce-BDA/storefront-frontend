@@ -2,6 +2,7 @@ import { fetchAuthPageSettings } from "@/lib/cms/pageSettings";
 import { resolveAuthSettings } from "@/lib/auth/resolveSettings";
 import { authCssVars } from "@/lib/auth/cssVars";
 import { AuthPage, AuthPanel, AuthSplit } from "@/components/auth";
+import { safeNextPath } from "@/lib/auth/next";
 import ForgotForm from "../_components/ForgotForm";
 
 /**
@@ -13,9 +14,12 @@ import ForgotForm from "../_components/ForgotForm";
 export default async function ForgotPage({
   searchParams,
 }: {
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{ token?: string; next?: string }>;
 }) {
-  const { token } = await searchParams;
+  const { token, next } = await searchParams;
+  // Without an explicit resume target, a reset returns to the neutral forgot
+  // page — not to /account, which the proxy would immediately bounce to signin.
+  const nextPath = next === undefined ? "/forgot" : safeNextPath(next);
 
   // CMS-backed: cms-svc → stale cache → builtins. Never blank, never throws.
   const result = await fetchAuthPageSettings("auth");
@@ -38,6 +42,7 @@ export default async function ForgotPage({
       submitLabel="Send reset link"
       errorStyle={style.errors.style}
       token={typeof token === "string" ? token : ""}
+      nextPath={nextPath}
       footer={
         <p className="m-0 text-[13px] text-[var(--text-muted)]">
           Remembered it?{" "}

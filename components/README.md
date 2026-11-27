@@ -90,6 +90,34 @@ Contract (roles, data hooks, controlled callbacks), resolver-unit (defaults,
 clamps, flat-over-object), style-contract (var-only paint, no hex, data hooks,
 reduced-motion guard) for all five components.
 
+## Auth, blog and legal faces (sf-095)
+
+### 1. Look per state
+- Auth stays chromeless (`(auth)` owns no shop navbar/footer); the split, panel
+  and meter come from the shared auth components.
+- Blog list/detail and `/about`, `/privacy`, `/terms` render CMS documents only;
+  an outage uses `DegradedState`, an absent page uses a styled 404.
+- Root and group `not-found`/`error`/`loading` boundaries all use the shared
+  state faces and a real link or retry callback.
+
+### 2. Customizable fields
+`nextPath`, copy, error style, token and panel settings arrive from the route;
+the forms and meter hold no presentation defaults.
+
+### 3. Where a value lives
+`lib/auth/next.ts` owns the safe-resume guard (also used by the reset step),
+`lib/auth/machine.ts` owns draft/request state, `lib/blog/present.ts` and
+`lib/pages/richText.ts` own prose shaping.
+
+### 4. Global rules
+Private form state lives in route islands; composed auth blocks stay dumb.
+Rejected: a new auth layout or a fallback article — both already violate the
+one-source CMS rule.
+
+### 5. Tests
+Contract (meter bars/guidance, boundary links/retry, reset resume path),
+resolver-unit (score, safe next), style-contract (token paint, no hex/opacity).
+
 ## Account & compare faces (sf-094)
 
 ### 1. Look per state

@@ -31,6 +31,8 @@ export interface ForgotFormProps {
   submitLabel: string;
   errorStyle?: ErrorStyle;
   token?: string;
+  /** Safe resume path after a successful reset — same guard as sign-in. */
+  nextPath?: string;
   footer?: ReactNode;
 }
 
@@ -39,6 +41,7 @@ export default function ForgotForm({
   submitLabel,
   errorStyle = "banner",
   token = "",
+  nextPath = "/forgot",
   footer,
 }: ForgotFormProps) {
   const router = useRouter();
@@ -112,7 +115,7 @@ export default function ForgotForm({
     requestDispatch({ type: "success" });
     // A25: a single-use token must not stay in the address bar (history,
     // screenshots, referrers). Replace, not push — there is nothing to go back to.
-    if (token !== "") router.replace("/forgot");
+    if (token !== "") router.replace(nextPath);
   }
 
   if (resetMode) {
