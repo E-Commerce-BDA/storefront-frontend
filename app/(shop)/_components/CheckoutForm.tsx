@@ -26,13 +26,12 @@
  * shipping methods are sf-058; one mock payment provider is all v1 can honestly
  * offer (the plan's A5.5), so the select has exactly one real option.
  */
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Checkbox, ErrorState, Input, LoadingState, Select, Textarea } from "@/components/ui";
 import CartLineItem from "@/components/shell/CartLineItem";
 import CheckoutSteps from "@/components/shell/CheckoutSteps";
 import { fetchAddresses } from "@/lib/account/port";
-import type { AddressDto } from "@/lib/account/schemas";
 import { resolveCheckoutSteps } from "@/lib/checkout/steps";
 import { useCart } from "@/app/_components/CartProvider";
 import { bff } from "@/lib/http/browser";
@@ -49,6 +48,11 @@ import { discountAmount, totalAfterDiscount } from "@/lib/order/discount";
 import { nextKey, type IdemPair } from "@/lib/checkout/idempotency";
 import { isShortLine, resolveShortfall } from "@/lib/checkout/shortfall";
 import { checkoutMachine, initialCheckoutMachine, shouldBounceToCart } from "@/lib/checkout/machine";
+import {
+  checkoutFieldsMachine,
+  initialCheckoutFields,
+  stripAddress,
+} from "@/lib/checkout/fieldsMachine";
 import type { StockShortfall } from "@/lib/order/schemas";
 
 /** `describeFailure` input: a failure plus the status it arrived with. */
@@ -109,16 +113,8 @@ export const CHECKOUT_COUPON_DEBOUNCE_MS = 250;
 export const IN_PROGRESS_RETRY_MS = 1000;
 const IN_PROGRESS_MAX_RETRIES = 2;
 
-interface AddressForm {
-  line1: string;
-  line2: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-}
-
-const EMPTY_ADDRESS: AddressForm = { line1: "", line2: "", city: "", state: "", postalCode: "", country: "US" };
+/** Details is the active step on /checkout; the chrome never navigates. */
+const STEPS = resolveCheckoutSteps(1);
 
 // Static v1 list, not CMS/settings-sourced. The order service accepts any
 // 2-letter country code; this short list is an honest v1 checkout boundary,
@@ -180,23 +176,29 @@ export default function CheckoutForm() {
     };
   }, [discountCode, cart.subtotal]);
 
-  // Details is the active step on /checkout; the chrome never navigates.
-  const [steps] = useState(() => resolveCheckoutSteps(1));
-  const [savedAddresses, setSavedAddresses] = useState<AddressDto[]>([]);
-  const [selectedAddress, setSelectedAddress] = useState("");
-  const [shippingMethod, setShippingMethod] = useState("standard");
-
-  const [shipping, setShipping] = useState<AddressForm>(EMPTY_ADDRESS);
-  const [sameBilling, setSameBilling] = useState(true);
-  const [billing, setBilling] = useState<AddressForm>(EMPTY_ADDRESS);
-  const [notes, setNotes] = useState("");
+  // sf-086: every editable field is one machine. The submit machine above owns
+  // only the attempt, so a 409 never rewrites the shopper's address.
+  const [fields, fieldsDispatch] = useReducer(
+    checkoutFieldsMachine,
+    undefined,
+    initialCheckoutFields,
+  );
+  const {
+    savedAddresses,
+    selectedAddress,
+    shippingMethod,
+    shipping,
+    sameBilling,
+    billing,
+    notes,
+  } = fields;
 
   // Saved addresses are a convenience, not a requirement: a guest or a failed
   // read simply sees the empty "use a new address" option.
   useEffect(() => {
     let alive = true;
     void fetchAddresses().then((res) => {
-      if (alive && res.ok) setSavedAddresses(res.data);
+      if (alive && res.ok) fieldsDispatch({ type: "addresses/success", addresses: res.data });
     });
     return () => {
       alive = false;
@@ -204,17 +206,7 @@ export default function CheckoutForm() {
   }, []);
 
   function pickAddress(id: string) {
-    setSelectedAddress(id);
-    const address = savedAddresses.find((saved) => saved.id === id);
-    if (address === undefined) return;
-    setShipping({
-      line1: address.line1,
-      line2: address.line2 ?? "",
-      city: address.city,
-      state: address.state ?? "",
-      postalCode: address.postalCode,
-      country: address.country ?? "US",
-    });
+    fieldsDispatch({ type: "address/select", id });
   }
 
   /** The one key per logical attempt — a ref because a re-render must never reset it. */
@@ -317,7 +309,7 @@ export default function CheckoutForm() {
           void submit();
         }}
       >
-        <CheckoutSteps steps={steps} />
+        <CheckoutSteps steps={STEPS} />
         {cart.status === "loading" ? <LoadingState label="Checking your bag…" size="compact" /> : null}
         {cart.status === "error" ? (
           <ErrorState
@@ -376,15 +368,15 @@ export default function CheckoutForm() {
               ]}
             />
           ) : null}
-          <Input label="Address line 1" value={shipping.line1} onChange={(v) => setShipping({ ...shipping, line1: v })} required />
-          <Input label="Address line 2" value={shipping.line2} onChange={(v) => setShipping({ ...shipping, line2: v })} />
+          <Input label="Address line 1" value={shipping.line1} onChange={(value) => fieldsDispatch({ type: "field/set", group: "shipping", name: "line1", value })} required />
+          <Input label="Address line 2" value={shipping.line2} onChange={(value) => fieldsDispatch({ type: "field/set", group: "shipping", name: "line2", value })} />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="City" value={shipping.city} onChange={(v) => setShipping({ ...shipping, city: v })} required />
-            <Input label="State / Province" value={shipping.state} onChange={(v) => setShipping({ ...shipping, state: v })} />
+            <Input label="City" value={shipping.city} onChange={(value) => fieldsDispatch({ type: "field/set", group: "shipping", name: "city", value })} required />
+            <Input label="State / Province" value={shipping.state} onChange={(value) => fieldsDispatch({ type: "field/set", group: "shipping", name: "state", value })} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Postal code" value={shipping.postalCode} onChange={(v) => setShipping({ ...shipping, postalCode: v })} required />
-            <Select label="Country" value={shipping.country} onChange={(v) => setShipping({ ...shipping, country: v })} options={COUNTRY_OPTIONS} required />
+            <Input label="Postal code" value={shipping.postalCode} onChange={(value) => fieldsDispatch({ type: "field/set", group: "shipping", name: "postalCode", value })} required />
+            <Select label="Country" value={shipping.country} onChange={(value) => fieldsDispatch({ type: "field/set", group: "shipping", name: "country", value })} options={COUNTRY_OPTIONS} required />
           </div>
         </fieldset>
 
@@ -392,20 +384,20 @@ export default function CheckoutForm() {
           <Checkbox
             label="Billing address same as shipping"
             checked={sameBilling}
-            onChange={(checked) => setSameBilling(checked)}
+            onChange={(same) => fieldsDispatch({ type: "same-billing/set", same })}
           />
           {!sameBilling ? (
             <fieldset className="grid gap-4 border-0 p-0 min-w-0" disabled={submitting}>
               <legend className="mb-2 p-0 text-base font-semibold text-[var(--color-ink)]">Billing address</legend>
-              <Input label="Address line 1" value={billing.line1} onChange={(v) => setBilling({ ...billing, line1: v })} required />
-              <Input label="Address line 2" value={billing.line2} onChange={(v) => setBilling({ ...billing, line2: v })} />
+              <Input label="Address line 1" value={billing.line1} onChange={(value) => fieldsDispatch({ type: "field/set", group: "billing", name: "line1", value })} required />
+              <Input label="Address line 2" value={billing.line2} onChange={(value) => fieldsDispatch({ type: "field/set", group: "billing", name: "line2", value })} />
               <div className="grid gap-4 sm:grid-cols-2">
-                <Input label="City" value={billing.city} onChange={(v) => setBilling({ ...billing, city: v })} required />
-                <Input label="State / Province" value={billing.state} onChange={(v) => setBilling({ ...billing, state: v })} />
+                <Input label="City" value={billing.city} onChange={(value) => fieldsDispatch({ type: "field/set", group: "billing", name: "city", value })} required />
+                <Input label="State / Province" value={billing.state} onChange={(value) => fieldsDispatch({ type: "field/set", group: "billing", name: "state", value })} />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Input label="Postal code" value={billing.postalCode} onChange={(v) => setBilling({ ...billing, postalCode: v })} required />
-                <Select label="Country" value={billing.country} onChange={(v) => setBilling({ ...billing, country: v })} options={COUNTRY_OPTIONS} required />
+                <Input label="Postal code" value={billing.postalCode} onChange={(value) => fieldsDispatch({ type: "field/set", group: "billing", name: "postalCode", value })} required />
+                <Select label="Country" value={billing.country} onChange={(value) => fieldsDispatch({ type: "field/set", group: "billing", name: "country", value })} options={COUNTRY_OPTIONS} required />
               </div>
             </fieldset>
           ) : null}
@@ -416,7 +408,7 @@ export default function CheckoutForm() {
           <Select
             label="Method"
             value={shippingMethod}
-            onChange={setShippingMethod}
+            onChange={(method) => fieldsDispatch({ type: "method/set", method })}
             options={[
               { value: "standard", label: "Standard" },
               { value: "express", label: "Express" },
@@ -443,7 +435,7 @@ export default function CheckoutForm() {
             placeholder="e.g. SUMMER20"
             error={couponError ?? undefined}
           />
-          <Textarea label="Order notes" value={notes} onChange={(v) => setNotes(v)} placeholder="Delivery instructions, gift message…" rows={3} />
+          <Textarea label="Order notes" value={notes} onChange={(value) => fieldsDispatch({ type: "notes/set", notes: value })} placeholder="Delivery instructions, gift message…" rows={3} />
         </fieldset>
 
         <Button type="submit" fullWidth disabled={submitting || busy || hasPlaceholders || cart.items.length === 0}>
@@ -497,14 +489,3 @@ function postCheckout(body: CheckoutInput, key: string) {
   });
 }
 
-/** "" optional fields go out as absent, not empty strings — order-svc validates length-2 country etc. */
-function stripAddress(form: AddressForm) {
-  return {
-    line1: form.line1.trim(),
-    ...(form.line2.trim() === "" ? {} : { line2: form.line2.trim() }),
-    city: form.city.trim(),
-    ...(form.state.trim() === "" ? {} : { state: form.state.trim() }),
-    postalCode: form.postalCode.trim(),
-    country: form.country,
-  };
-}

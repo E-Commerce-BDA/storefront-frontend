@@ -29,7 +29,7 @@
  * vocabularies straight: `quickAdd(id)` for the network, url-keyed sets for the
  * paint.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef } from "react";
 import { useRouter } from "next/navigation";
 import ProductGrid from "@/components/commerce/ProductGrid";
 import QuickViewDialog from "@/components/commerce/QuickViewDialog";
@@ -39,6 +39,10 @@ import { useCompare } from "@/app/_components/CompareProvider";
 import { useQuickAdd } from "@/app/hooks/useQuickAdd";
 import { createCartPort } from "@/lib/cart/port";
 import type { ProductCardData } from "@/lib/commerce/productCard";
+import {
+  initialProductGridIslandMachine,
+  productGridIslandMachine,
+} from "@/lib/commerce/gridMachine";
 
 export interface ProductGridIslandProps {
   items: ProductCardData[];
@@ -71,7 +75,13 @@ export default function ProductGridIsland({
   const compare = useCompare();
   const refresh = cart.refresh;
 
-  const [activeQuickView, setActiveQuickView] = useState<ProductCardData | null>(null);
+  // sf-086: quick view and the transient added flash share one reducer, so a
+  // close cannot leave a stale product selected behind.
+  const [{ activeProduct, flashIds }, dispatch] = useReducer(
+    productGridIslandMachine,
+    undefined,
+    initialProductGridIslandMachine,
+  );
 
   const port = useMemo(
     () => createCartPort({ onAdded: () => void refresh() }),
@@ -84,15 +94,14 @@ export default function ProductGridIsland({
   // flash set that decays ~1.6s after each add. The dumb grid and the shared
   // hook API stay untouched — only the ids we forward to the cell change.
   const FLASH_MS = 1600;
-  const [flashIds, setFlashIds] = useState<string[]>([]);
   const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   useEffect(() => {
     for (const id of addedIds) {
       if (timersRef.current.has(id)) continue;
-      setFlashIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      dispatch({ type: "flash/add", id });
       const timer = setTimeout(() => {
-        setFlashIds((prev) => prev.filter((x) => x !== id));
+        dispatch({ type: "flash/remove", id });
         timersRef.current.delete(id);
       }, FLASH_MS);
       timersRef.current.set(id, timer);
@@ -139,16 +148,17 @@ export default function ProductGridIsland({
           if (product.url) router.push(product.url);
         }}
         onQuickAdd={(product) => quickAdd(product.id)}
-        onQuickView={(product) => setActiveQuickView(product)}
+        onQuickView={(product) => dispatch({ type: "quickview/open", product })}
         onWishlist={(product) => void wishlist.toggle(product.id)}
         onCompare={(product) => compare.toggle(product.id)}
         compareIds={compare.ids}
       />
 
       <QuickViewDialog
-        product={activeQuickView}
-        open={activeQuickView !== null}
-        onClose={() => setActiveQuickView(null)}
+        key={activeProduct === null ? "closed" : activeProduct.id}
+        product={activeProduct}
+        open={activeProduct !== null}
+        onClose={() => dispatch({ type: "quickview/close" })}
         onAddToCart={async (productId, variantId, qty) => {
           const ok = await cart.add(productId, { variantId, qty });
           // A7: the drawer is a success destination, never a failure reaction.

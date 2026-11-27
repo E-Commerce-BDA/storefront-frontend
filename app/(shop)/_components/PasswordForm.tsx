@@ -1,38 +1,45 @@
 "use client";
 
 /** `/account` password change — sf-059 (A6.6). auth-svc owns the policy and revokes sessions on success. */
-import { useState } from "react";
+import { useReducer } from "react";
 import { Button, Input, Toast } from "@/components/ui";
 import { patchPassword } from "@/lib/account/port";
+import {
+  canChangePassword,
+  initialPasswordFormMachine,
+  passwordFormMachine,
+  passwordMismatch,
+  passwordWeak,
+} from "@/lib/account/formsMachine";
 import { useNotice } from "./useNotice";
 
-const STRONG = /^(?=.*[a-zA-Z])(?=.*\d)/;
-
 export default function PasswordForm() {
-  const [current, setCurrent] = useState("");
-  const [next, setNext] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [draft, dispatch] = useReducer(
+    passwordFormMachine,
+    undefined,
+    initialPasswordFormMachine,
+  );
+  const { current, next, confirm, status } = draft;
+  const busy = status === "loading";
   const { notice, notify, close } = useNotice();
 
-  const mismatch = confirm !== "" && confirm !== next;
-  const weak = next !== "" && (next.length < 8 || !STRONG.test(next));
+  const mismatch = passwordMismatch(draft);
+  const weak = passwordWeak(draft);
 
   async function save() {
-    if (busy || mismatch || weak) return;
-    setBusy(true);
+    if (!canChangePassword(draft)) return;
+    dispatch({ type: "submit/start" });
     const result = await patchPassword({ currentPassword: current, newPassword: next });
-    setBusy(false);
     if (!result.ok) {
+      dispatch({ type: "submit/error" });
       notify("Could not change password", {
         message: result.message ?? "Check your current password and try again.",
         kind: "error",
       });
       return;
     }
-    setCurrent("");
-    setNext("");
-    setConfirm("");
+    // The reducer clears the secrets on success; nothing is echoed back.
+    dispatch({ type: "submit/success" });
     notify("Password changed", { message: "Other devices may need to sign in again." });
   }
 
@@ -45,12 +52,12 @@ export default function PasswordForm() {
           void save();
         }}
       >
-        <Input label="Current password" type="password" value={current} onChange={setCurrent} required />
+        <Input label="Current password" type="password" value={current} onChange={(value) => dispatch({ type: "field/set", name: "current", value })} required />
         <Input
           label="New password"
           type="password"
           value={next}
-          onChange={setNext}
+          onChange={(value) => dispatch({ type: "field/set", name: "next", value })}
           error={weak ? "Use at least 8 characters with a letter and a number." : undefined}
           required
         />
@@ -58,7 +65,7 @@ export default function PasswordForm() {
           label="Confirm new password"
           type="password"
           value={confirm}
-          onChange={setConfirm}
+          onChange={(value) => dispatch({ type: "field/set", name: "confirm", value })}
           error={mismatch ? "Passwords do not match." : undefined}
           required
         />

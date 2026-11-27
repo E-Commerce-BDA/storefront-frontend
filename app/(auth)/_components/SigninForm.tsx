@@ -1,16 +1,22 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useReducer, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Input from "@/components/ui/Input";
 import Checkbox from "@/components/ui/Checkbox";
 import { Icon } from "@/components/ui";
-import { AuthForm, type AuthFormError } from "@/components/auth";
+import { AuthForm } from "@/components/auth";
 import { submitAuth } from "@/lib/auth/browser";
 import { displayFor } from "@/lib/auth/errors";
 import type { ErrorStyle } from "@/lib/auth/settings";
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import {
+  authFormMachine,
+  initialAuthFormMachine,
+  initialSigninDraftMachine,
+  isEmail,
+  signinDraftMachine,
+  signinValid,
+} from "@/lib/auth/machine";
 
 /**
  * Route island: signin fields + courtesy validation + submit state.
@@ -43,28 +49,34 @@ export default function SigninForm({
   footer,
 }: SigninFormProps) {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPw, setShowPw] = useState(false);
-  const [remember, setRemember] = useState(rememberDefault);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<AuthFormError | null>(null);
-  const [touched, setTouched] = useState(false);
+  // sf-086: draft fields and the request lifecycle are separate machines, so
+  // a failed submit never clears what the shopper typed.
+  const [draft, draftDispatch] = useReducer(
+    signinDraftMachine,
+    undefined,
+    () => initialSigninDraftMachine(rememberDefault),
+  );
+  const [request, requestDispatch] = useReducer(
+    authFormMachine,
+    undefined,
+    () => initialAuthFormMachine("signin"),
+  );
+  const { email, password, showPassword: showPw, remember, touched } = draft;
+  const { status, error } = request;
+  const loading = status === "loading";
 
-  const emailBad = touched && !EMAIL_RE.test(email);
+  const emailBad = touched && !isEmail(email);
   const pwBad = touched && password === "";
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    setTouched(true);
-    if (!EMAIL_RE.test(email) || password === "") return;
-    setLoading(true);
-    setError(null);
+    draftDispatch({ type: "touch" });
+    if (!signinValid(draft)) return;
+    requestDispatch({ type: "submit" });
 
     const failure = await submitAuth("/api/auth/login", { email, password });
     if (failure !== null) {
-      setLoading(false);
-      setError(displayFor(failure));
+      requestDispatch({ type: "error", error: displayFor(failure) });
       return;
     }
 
@@ -87,7 +99,7 @@ export default function SigninForm({
       <Input
         label="Email"
         value={email}
-        onChange={setEmail}
+        onChange={(value) => draftDispatch({ type: "field/set", name: "email", value })}
         placeholder="ana@example.com"
         required
         type="email"
@@ -100,7 +112,7 @@ export default function SigninForm({
       <Input
         label="Password"
         value={password}
-        onChange={setPassword}
+        onChange={(value) => draftDispatch({ type: "field/set", name: "password", value })}
         placeholder="••••••••"
         required
         type={showPw ? "text" : "password"}
@@ -113,7 +125,7 @@ export default function SigninForm({
         rightIcon={
           <button
             type="button"
-            onClick={() => setShowPw((v) => !v)}
+            onClick={() => draftDispatch({ type: "password/toggle" })}
             aria-label={showPw ? "Hide password" : "Show password"}
             aria-pressed={showPw}
             className="inline-flex cursor-pointer border-0 bg-transparent p-1 text-[var(--text-muted)]"
@@ -125,7 +137,11 @@ export default function SigninForm({
       {/* Still cosmetic: auth-svc fixes the pair at 15m/30d, so there is no
           longer session to opt into yet. Logged as an auth-svc follow-up
           rather than silently extending a cookie the service would reject. */}
-      <Checkbox checked={remember} onChange={setRemember} label={rememberLabel} />
+      <Checkbox
+        checked={remember}
+        onChange={(value) => draftDispatch({ type: "remember/set", remember: value })}
+        label={rememberLabel}
+      />
     </AuthForm>
   );
 }

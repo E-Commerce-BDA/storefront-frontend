@@ -1,15 +1,21 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useReducer, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Input from "@/components/ui/Input";
 import { Icon } from "@/components/ui";
-import { AuthForm, PasswordMeter, type AuthFormError } from "@/components/auth";
+import { AuthForm, PasswordMeter } from "@/components/auth";
 import { submitAuth } from "@/lib/auth/browser";
 import { displayFor } from "@/lib/auth/errors";
 import type { ErrorStyle } from "@/lib/auth/settings";
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import {
+  authFormMachine,
+  initialAuthFormMachine,
+  initialSignupDraftMachine,
+  isEmail,
+  signupDraftMachine,
+  signupValid,
+} from "@/lib/auth/machine";
 
 /**
  * Route island: signup fields + courtesy validation + confirm-match
@@ -38,23 +44,34 @@ export default function SignupForm({
   footer,
 }: SignupFormProps) {
   const router = useRouter();
-  const [first, setFirst] = useState("");
-  const [last, setLast] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [showPw, setShowPw] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<AuthFormError | null>(null);
-  const [touched, setTouched] = useState(false);
+  const [draft, draftDispatch] = useReducer(
+    signupDraftMachine,
+    undefined,
+    initialSignupDraftMachine,
+  );
+  const [request, requestDispatch] = useReducer(
+    authFormMachine,
+    undefined,
+    () => initialAuthFormMachine("signup"),
+  );
+  const {
+    first,
+    last,
+    email,
+    password,
+    confirm,
+    showPassword: showPw,
+    touched,
+  } = draft;
+  const { status, error } = request;
+  const loading = status === "loading";
 
   const firstBad = touched && first.trim() === "";
   const lastBad = touched && last.trim() === "";
-  const emailBad = touched && !EMAIL_RE.test(email);
+  const emailBad = touched && !isEmail(email);
   const pwBad = touched && password.length < 8;
   const mismatch = touched && confirm !== "" && confirm !== password;
-  const valid =
-    first.trim() !== "" && last.trim() !== "" && EMAIL_RE.test(email) && password.length >= 8 && confirm === password;
+  const valid = signupValid(draft);
 
   const inputVars = {
     bg: "var(--auth-input-bg)",
@@ -65,10 +82,9 @@ export default function SignupForm({
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    setTouched(true);
+    draftDispatch({ type: "touch" });
     if (!valid) return;
-    setLoading(true);
-    setError(null);
+    requestDispatch({ type: "submit" });
 
     const failure = await submitAuth("/api/auth/register", {
       email,
@@ -77,8 +93,7 @@ export default function SignupForm({
       lastName: last.trim(),
     });
     if (failure !== null) {
-      setLoading(false);
-      setError(displayFor(failure));
+      requestDispatch({ type: "error", error: displayFor(failure) });
       return;
     }
 
@@ -97,14 +112,14 @@ export default function SignupForm({
       footer={footer}
     >
       <div className="grid grid-cols-2 gap-3">
-        <Input label="First name" value={first} onChange={setFirst} placeholder="Ana" required error={firstBad ? "Required" : undefined} {...inputVars} />
-        <Input label="Last name" value={last} onChange={setLast} placeholder="Silva" required error={lastBad ? "Required" : undefined} {...inputVars} />
+        <Input label="First name" value={first} onChange={(value) => draftDispatch({ type: "field/set", name: "first", value })} placeholder="Ana" required error={firstBad ? "Required" : undefined} {...inputVars} />
+        <Input label="Last name" value={last} onChange={(value) => draftDispatch({ type: "field/set", name: "last", value })} placeholder="Silva" required error={lastBad ? "Required" : undefined} {...inputVars} />
       </div>
-      <Input label="Email" value={email} onChange={setEmail} placeholder="ana@example.com" required type="email" error={emailBad ? "Enter a valid email" : undefined} {...inputVars} />
+      <Input label="Email" value={email} onChange={(value) => draftDispatch({ type: "field/set", name: "email", value })} placeholder="ana@example.com" required type="email" error={emailBad ? "Enter a valid email" : undefined} {...inputVars} />
       <Input
         label="Password"
         value={password}
-        onChange={setPassword}
+        onChange={(value) => draftDispatch({ type: "field/set", name: "password", value })}
         placeholder="Min. 8 chars, mixed case + number"
         required
         type={showPw ? "text" : "password"}
@@ -114,7 +129,7 @@ export default function SignupForm({
         rightIcon={
           <button
             type="button"
-            onClick={() => setShowPw((v) => !v)}
+            onClick={() => draftDispatch({ type: "password/toggle" })}
             aria-label={showPw ? "Hide password" : "Show password"}
             aria-pressed={showPw}
             className="inline-flex cursor-pointer border-0 bg-transparent p-1 text-[var(--text-muted)]"
@@ -127,7 +142,7 @@ export default function SignupForm({
       <Input
         label="Confirm password"
         value={confirm}
-        onChange={setConfirm}
+        onChange={(value) => draftDispatch({ type: "field/set", name: "confirm", value })}
         placeholder="Repeat password"
         required
         type="password"

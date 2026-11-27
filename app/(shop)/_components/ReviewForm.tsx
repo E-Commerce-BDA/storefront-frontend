@@ -5,10 +5,15 @@
  * A submission is *queued for moderation*, never shown as published here:
  * catalog-svc decides when a review becomes visible.
  */
-import { useState } from "react";
+import { useReducer } from "react";
 import { Button, Input, Textarea, Toast } from "@/components/ui";
 import { bff } from "@/lib/http/browser";
 import { createdReviewSchema } from "@/lib/reviews/schemas";
+import {
+  canSubmitReview,
+  initialReviewFormMachine,
+  reviewFormMachine,
+} from "@/lib/reviews/machine";
 import { useNotice } from "./useNotice";
 
 export interface ReviewFormProps {
@@ -17,17 +22,18 @@ export interface ReviewFormProps {
 }
 
 export default function ReviewForm({ productId, productName }: ReviewFormProps) {
-  const [open, setOpen] = useState(false);
-  const [rating, setRating] = useState(0);
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [queued, setQueued] = useState(false);
+  const [review, dispatch] = useReducer(
+    reviewFormMachine,
+    undefined,
+    initialReviewFormMachine,
+  );
+  const { open, rating, title, body, status, queued } = review;
+  const busy = status === "loading";
   const { notice, notify, close } = useNotice();
 
   async function submit() {
-    if (busy || rating === 0 || body.trim() === "") return;
-    setBusy(true);
+    if (!canSubmitReview(review)) return;
+    dispatch({ type: "submit/start" });
     const result = await bff<{ id: string }>("/api/reviews", {
       // I-18: explicit marker — the 201 body is {id,productId,status,createdAt}
       // but this form only needs the id, so the contract is checked at the BFF.
@@ -42,13 +48,12 @@ export default function ReviewForm({ productId, productName }: ReviewFormProps) 
         body: body.trim().slice(0, 2000),
       },
     });
-    setBusy(false);
     if (!result.ok) {
+      dispatch({ type: "submit/error" });
       notify("Could not submit review", { message: result.message ?? "Try again later.", kind: "error" });
       return;
     }
-    setQueued(true);
-    setOpen(false);
+    dispatch({ type: "submit/success" });
     notify("Review queued for moderation");
   }
 
@@ -62,7 +67,7 @@ export default function ReviewForm({ productId, productName }: ReviewFormProps) 
 
   return (
     <>
-      <Button variant="light" size="sm" onClick={() => setOpen((v) => !v)}>
+      <Button variant="light" size="sm" onClick={() => dispatch({ type: "open/toggle" })}>
         {open ? "Cancel review" : `Write a review for ${productName}`}
       </Button>
       {open ? (
@@ -82,7 +87,7 @@ export default function ReviewForm({ productId, productName }: ReviewFormProps) 
                   type="button"
                   aria-label={`${star} star${star === 1 ? "" : "s"}`}
                   aria-pressed={rating === star}
-                  onClick={() => setRating(star)}
+                  onClick={() => dispatch({ type: "rating/set", rating: star })}
                   className="rounded-[var(--radius-sm,6px)] px-2 py-1 text-sm text-[var(--color-ink)]"
                 >
                   {star}
@@ -90,8 +95,8 @@ export default function ReviewForm({ productId, productName }: ReviewFormProps) 
               ))}
             </div>
           </fieldset>
-          <Input label="Review title" value={title} onChange={setTitle} maxLength={120} />
-          <Textarea label="Your review" value={body} onChange={setBody} rows={3} maxLength={2000} />
+          <Input label="Review title" value={title} onChange={(value) => dispatch({ type: "title/set", title: value })} maxLength={120} />
+          <Textarea label="Your review" value={body} onChange={(value) => dispatch({ type: "body/set", body: value })} rows={3} maxLength={2000} />
           <div>
             <Button type="submit" size="sm" disabled={busy || rating === 0 || body.trim() === ""}>
               {busy ? "Submitting…" : "Submit review"}

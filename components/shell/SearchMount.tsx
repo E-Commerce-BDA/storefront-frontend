@@ -5,8 +5,8 @@ import {
   lazy,
   useEffect,
   useMemo,
+  useReducer,
   useRef,
-  useState,
   type ComponentType,
   type LazyExoticComponent,
 } from "react";
@@ -24,6 +24,10 @@ import { createCartPort } from "@/lib/cart/port";
 import type { SearchResult } from "@/lib/search/source";
 import type { ResolvedNavSettings } from "@/lib/shell/navSettings";
 import type { ResolvedOverlayMotion } from "@/lib/search/motion";
+import {
+  initialSearchMountMachine,
+  searchMountMachine,
+} from "@/lib/search/mountMachine";
 
 type AnyOverlay = ComponentType<Record<string, unknown>>;
 
@@ -80,11 +84,23 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
   // A21: the active row is machine state now — a new query resets it in the
   // same transition that publishes the new results, no follow-up effect.
   const { activeIndex, setActive: setActiveIndex } = live;
-  const [closing, setClosing] = useState(false);
-  const [toast, setToast] = useState<{ title: string; message: string } | null>(null);
-  const [trending, setTrending] = useState<string[]>([]);
-  const [curated, setCurated] = useState<SearchResult[]>([]);
+  // sf-086: exit, toast and editorial assets are one mount machine; the query
+  // remains owned by useSearch, so no two owners can fight over results.
+  const [{ closing, toast, trending, curated }, dispatch] = useReducer(
+    searchMountMachine,
+    undefined,
+    initialSearchMountMachine,
+  );
   const addedCountRef = useRef(0);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (closeTimer.current !== null) clearTimeout(closeTimer.current);
+      if (toastTimer.current !== null) clearTimeout(toastTimer.current);
+    },
+    [],
+  );
 
   const variant = search.overlayVariant;
   const motion: ResolvedOverlayMotion =
@@ -106,8 +122,7 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
     const controller = new AbortController();
     void fetchPaletteTrending(controller.signal).then((data) => {
       if (controller.signal.aborted) return;
-      setTrending(data.terms);
-      setCurated(data.curated);
+      dispatch({ type: "assets/success", terms: data.terms, curated: data.curated });
     });
     return () => controller.abort();
   }, [open, variant]);
@@ -119,10 +134,10 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
       onClose();
       return;
     }
-    setClosing(true);
-    setTimeout(() => {
+    dispatch({ type: "close/start" });
+    closeTimer.current = setTimeout(() => {
       onClose();
-      setClosing(false);
+      dispatch({ type: "close/finish" });
     }, motion.durationMs);
   }
 
@@ -143,10 +158,12 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
     if (quickAdd.addedIds.length > addedCountRef.current) {
       const id = quickAdd.addedIds[quickAdd.addedIds.length - 1];
       const row = live.results.find((p) => p.id === id);
-      setToast({ title: "Added to bag", message: row ? row.name : "" });
-      const t = setTimeout(() => setToast(null), 3000);
+      dispatch({ type: "toast/show", toast: { title: "Added to bag", message: row ? row.name : "" } });
+      toastTimer.current = setTimeout(() => dispatch({ type: "toast/clear" }), 3000);
       addedCountRef.current = quickAdd.addedIds.length;
-      return () => clearTimeout(t);
+      return () => {
+        if (toastTimer.current !== null) clearTimeout(toastTimer.current);
+      };
     }
     addedCountRef.current = quickAdd.addedIds.length;
     return undefined;
@@ -229,7 +246,7 @@ export default function SearchMount({ search, open, onClose }: SearchMountProps)
           open={true}
           title={toast.title}
           message={toast.message}
-          onClose={() => setToast(null)}
+          onClose={() => dispatch({ type: "toast/clear" })}
         />
       ) : null}
     </>

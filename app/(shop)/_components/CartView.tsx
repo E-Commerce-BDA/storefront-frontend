@@ -18,7 +18,7 @@
  *
  * "Empty cart" is the batch remove v1 can honestly offer.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button, EmptyState, ErrorState, Icon, Input, LoadingState } from "@/components/ui";
 import CartTable from "@/components/shell/CartTable";
@@ -31,6 +31,10 @@ import {
   discountValidationResultSchema,
   type DiscountValidationResult,
 } from "@/lib/order/schemas";
+import {
+  cartIslandMachine,
+  initialCartIslandMachine,
+} from "@/lib/cart/viewMachine";
 
 /** The quiet tap before a quantity leaves the island (shell-cart.md §4). */
 export const CART_QTY_DEBOUNCE_MS = 350;
@@ -39,27 +43,26 @@ export default function CartView() {
   const cart = useCart();
   const wishlist = useWishlist();
   const router = useRouter();
-  const [selected, setSelected] = useState<string[]>([]);
-
-  /** Typed-but-unsubmitted quantities, keyed by line id (see header note). */
-  const [draft, setDraft] = useState<Record<string, number>>({});
+  // sf-086: selection, typed drafts, in-flight writes and the coupon face are
+  // one interaction machine; the cart store itself stays the only data source.
+  const [view, dispatch] = useReducer(cartIslandMachine, undefined, initialCartIslandMachine);
+  const {
+    selectedIds: selected,
+    drafts: draft,
+    pendingIds,
+    couponCode,
+    couponStatus,
+    couponError,
+    appliedCoupon,
+  } = view;
   const draftRef = useRef(draft);
-  const [inFlight, setInFlight] = useState<Record<string, boolean>>({});
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
-
-  // Coupon state
-  const [couponCode, setCouponCode] = useState("");
-  const [couponLoading, setCouponLoading] = useState(false);
-  const [couponError, setCouponError] = useState<string | null>(null);
-  const [appliedCoupon, setAppliedCoupon] = useState<DiscountValidationResult | null>(null);
+  const couponLoading = couponStatus === "loading";
 
   // A11: selection ids are scoped to the current cart snapshot. After a GET
   // or a concurrent write, an id that no longer exists must not stay selected.
   useEffect(() => {
-    const live = new Set(cart.items.map((line) => line.id));
-    setSelected((prev) =>
-      prev.every((id) => live.has(id)) ? prev : prev.filter((id) => live.has(id)),
-    );
+    dispatch({ type: "select/prune", ids: cart.items.map((line) => line.id) });
   }, [cart.items]);
 
   // A navigation away must not strand a timer that PATCHes into a dead tree.
@@ -74,7 +77,7 @@ export default function CartView() {
   function changeQty(itemId: string, qty: number) {
     const nextDraft = { ...draftRef.current, [itemId]: qty };
     draftRef.current = nextDraft;
-    setDraft(nextDraft);
+    dispatch({ type: "draft/set", id: itemId, qty });
 
     const running = timers.current.get(itemId);
     if (running !== undefined) clearTimeout(running);
@@ -86,14 +89,14 @@ export default function CartView() {
         const line = cart.items.find((item) => item.id === itemId);
         const finalQty = capToStock(draftRef.current[itemId] ?? qty, line?.stock);
         draftRef.current = { ...draftRef.current, [itemId]: finalQty };
-        setDraft((prev) => ({ ...prev, [itemId]: finalQty }));
-        setInFlight((prev) => ({ ...prev, [itemId]: true }));
+        dispatch({ type: "draft/set", id: itemId, qty: finalQty });
+        dispatch({ type: "write/start", id: itemId });
         void cart.setQty(itemId, finalQty).then(() => {
-          setInFlight((prev) => ({ ...prev, [itemId]: false }));
+          dispatch({ type: "write/finish", id: itemId });
           const settled = { ...draftRef.current };
           delete settled[itemId];
           draftRef.current = settled;
-          setDraft(settled);
+          dispatch({ type: "draft/delete", id: itemId });
         });
       }, CART_QTY_DEBOUNCE_MS),
     );
@@ -102,11 +105,10 @@ export default function CartView() {
   async function applyCoupon() {
     const trimmed = couponCode.trim();
     if (!trimmed) {
-      setCouponError("Please enter a coupon code");
+      dispatch({ type: "coupon/error", message: "Please enter a coupon code" });
       return;
     }
-    setCouponLoading(true);
-    setCouponError(null);
+    dispatch({ type: "coupon/start" });
     try {
       const res = await bff<DiscountValidationResult>("/api/discount-codes/validate", {
         method: "POST",
@@ -114,8 +116,7 @@ export default function CartView() {
         schema: discountValidationResultSchema,
       });
       if (res.ok && res.data.valid) {
-        setAppliedCoupon(res.data);
-        setCouponError(null);
+        dispatch({ type: "coupon/success", result: res.data });
       } else {
         const msg =
           res.ok && res.data.message
@@ -123,43 +124,34 @@ export default function CartView() {
             : !res.ok && res.message
               ? res.message
               : "Invalid coupon code";
-        setCouponError(msg);
-        setAppliedCoupon(null);
+        dispatch({ type: "coupon/error", message: msg });
       }
     } catch {
-      setCouponError("Could not validate coupon code");
-    } finally {
-      setCouponLoading(false);
+      dispatch({ type: "coupon/error", message: "Could not validate coupon code" });
     }
   }
 
   function removeCoupon() {
-    setAppliedCoupon(null);
-    setCouponCode("");
-    setCouponError(null);
+    dispatch({ type: "coupon/clear" });
   }
 
   function toggleSelected(itemId: string) {
-    setSelected((prev) =>
-      prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId],
-    );
+    dispatch({ type: "select/toggle", id: itemId });
   }
 
   function toggleAll() {
-    setSelected((prev) =>
-      prev.length === cart.items.length ? [] : cart.items.map((line) => line.id),
-    );
+    dispatch({ type: "select/all", ids: cart.items.map((line) => line.id) });
   }
 
   async function removeSelected() {
     const ids = [...selected];
-    setSelected([]);
+    dispatch({ type: "select/set", ids: [] });
     await Promise.all(ids.map((id) => cart.remove(id)));
   }
 
   async function moveSelected() {
     const lines = cart.items.filter((line) => selected.includes(line.id));
-    setSelected([]);
+    dispatch({ type: "select/set", ids: [] });
     // A5: a line is removed only when its own wishlist write succeeded. A
     // failed toggle (out of stock, auth, network) must leave the cart intact.
     const moved = await Promise.all(
@@ -240,14 +232,14 @@ export default function CartView() {
             <Button variant="light" size="sm" onClick={() => void moveSelected()}>
               Move selected to wishlist
             </Button>
-            <Button variant="ghost-ink" size="sm" onClick={() => setSelected([])}>
+            <Button variant="ghost-ink" size="sm" onClick={() => dispatch({ type: "select/set", ids: [] })}>
               Clear selection
             </Button>
           </div>
         ) : null}
         <CartTable
           items={displayItems}
-          pending={inFlight}
+          pending={Object.fromEntries(pendingIds.map((id) => [id, true]))}
           onQty={changeQty}
           onRemove={(itemId) => void cart.remove(itemId)}
           selectedIds={selected}
@@ -308,7 +300,7 @@ export default function CartView() {
               <Input
                 id="cart-coupon-input"
                 value={couponCode}
-                onChange={(val) => setCouponCode(val)}
+                onChange={(value) => dispatch({ type: "coupon/type", code: value })}
                 placeholder="Enter code"
                 size="sm"
                 disabled={couponLoading || !!appliedCoupon}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef } from "react";
 import Link from "next/link";
 import { Button, Dialog, Icon, QuantityStepper } from "@/components/ui";
 import WishlistButton from "@/components/commerce/WishlistButton";
@@ -9,6 +9,7 @@ import {
   getDefaultQuickViewOptions,
   resolveQuickViewSelection,
 } from "@/lib/commerce/quickView";
+import { initialOverlayMachine, overlayMachine } from "@/lib/overlay/machine";
 
 export interface QuickViewDialogProps {
   product: ProductCardData | null;
@@ -28,13 +29,22 @@ export default function QuickViewDialog({
   onClose,
   onAddToCart,
 }: QuickViewDialogProps) {
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-  const [quantity, setQuantity] = useState(1);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [adding, setAdding] = useState(false);
-  const [added, setAdded] = useState(false);
-  // A19/A20: a failure face and a cancellable success timer.
-  const [addError, setAddError] = useState<string | null>(null);
+  // sf-086: variant, qty, image and add face are one reducer. The timer below
+  // only schedules the transient "Added" face to decay — it stores no state.
+  const [view, dispatch] = useReducer(overlayMachine, undefined, () => {
+    const base = initialOverlayMachine();
+    return product === null
+      ? base
+      : overlayMachine(base, {
+          type: "selection/reset",
+          options: getDefaultQuickViewOptions(product),
+        });
+  });
+  const { selectedOptions, qty: quantity, imageIndex: selectedImageIndex, status, message } = view;
+  const adding = status === "loading";
+  const added = status === "success";
+  // A19/A20: a failure face is part of state, never a silent undo.
+  const addError = status === "error" ? message : null;
   const addedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     const timer = addedTimer;
@@ -45,11 +55,10 @@ export default function QuickViewDialog({
 
   useEffect(() => {
     if (product && open) {
-      setSelectedOptions(getDefaultQuickViewOptions(product));
-      setQuantity(1);
-      setSelectedImageIndex(0);
-      setAdded(false);
-      setAddError(null);
+      dispatch({
+        type: "selection/reset",
+        options: getDefaultQuickViewOptions(product),
+      });
     }
   }, [product, open]);
 
@@ -79,23 +88,22 @@ export default function QuickViewDialog({
 
   async function handleAdd() {
     if (!product || !resolved || !resolved.inStock) return;
-    setAdding(true);
+    dispatch({ type: "add/start" });
     try {
       const ok = onAddToCart
         ? await onAddToCart(product.id, resolved.variantId, quantity)
         : true;
       if (ok) {
-        setAddError(null);
-        setAdded(true);
+        dispatch({ type: "add/success" });
         if (addedTimer.current !== null) clearTimeout(addedTimer.current);
-        addedTimer.current = setTimeout(() => setAdded(false), 2000);
-      } else {
-        // A7/A19: no success face, no drawer — just an honest failure.
-        setAddError("We could not add that item. Please try again.");
+        addedTimer.current = setTimeout(() => dispatch({ type: "add/reset" }), 2000);
+        return;
       }
-    } finally {
-      setAdding(false);
+    } catch {
+      // A thrown write is a failure face too — never leave the button spinning.
     }
+    // A7/A19: no success face, no drawer — just an honest failure.
+    dispatch({ type: "add/error", message: "We could not add that item. Please try again." });
   }
 
   const discountPercent =
@@ -138,7 +146,7 @@ export default function QuickViewDialog({
                 <button
                   key={img.url || idx}
                   type="button"
-                  onClick={() => setSelectedImageIndex(idx)}
+                  onClick={() => dispatch({ type: "image/set", index: idx, count: images.length })}
                   data-selected={selectedImageIndex === idx}
                   className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[var(--radius-sm,6px)] border-2"
                   style={{
@@ -239,10 +247,7 @@ export default function QuickViewDialog({
                               aria-checked={isSelected}
                               aria-label={`${opt.name} ${val.value}`}
                               onClick={() =>
-                                setSelectedOptions((prev) => ({
-                                  ...prev,
-                                  [opt.name]: val.value,
-                                }))
+                                dispatch({ type: "selection/set", name: opt.name, value: val.value })
                               }
                               className={`h-7 w-7 rounded-full transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
                                 isSelected
@@ -262,10 +267,7 @@ export default function QuickViewDialog({
                             role="radio"
                             aria-checked={isSelected}
                             onClick={() =>
-                              setSelectedOptions((prev) => ({
-                                ...prev,
-                                [opt.name]: val.value,
-                              }))
+                              dispatch({ type: "selection/set", name: opt.name, value: val.value })
                             }
                             className={`px-3 py-1 text-xs font-medium rounded-[var(--radius-sm,6px)] border transition-colors ${
                               isSelected
@@ -292,7 +294,9 @@ export default function QuickViewDialog({
                 value={quantity}
                 min={1}
                 max={99}
-                onChange={setQuantity}
+                onChange={(value) =>
+                  dispatch({ type: "qty/set", qty: value, min: 1, max: 99 })
+                }
                 disabled={!resolved.inStock || adding}
                 label={`${productName} quantity`}
               />

@@ -29,6 +29,8 @@ export type OverlayMachineEvent =
   | { type: "add/success" }
   | { type: "add/error"; message: string }
   | { type: "timer/clear" }
+  | { type: "add/start" }
+  | { type: "add/reset" }
   | { type: "selection/set"; name: string; value: string }
   | { type: "selection/reset"; options: Record<string, string> }
   | { type: "qty/set"; qty: number; min: number; max: number }
@@ -70,6 +72,11 @@ export function overlayMachine(
       return { ...state, status: "error", message: event.message };
     case "timer/clear":
       return { ...state, timerToken: null };
+    case "add/start":
+      return { ...state, status: "loading", message: null };
+    case "add/reset":
+      // The "Added" copy is a transient face, not a permanent selection state.
+      return { ...state, status: "ready", message: null };
     case "selection/set":
       return {
         ...state,

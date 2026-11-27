@@ -164,7 +164,7 @@ export type ForgotDraftEvent =
   | { type: "field/set"; name: "email" | "token" | "newPassword"; value: string }
   | { type: "touch" }
   | { type: "password/toggle" }
-  | { type: "request/sent"; message: string }
+  | { type: "request/sent"; message: string | null }
   | { type: "reset/done" };
 
 export function initialForgotDraftMachine(): ForgotDraftState {

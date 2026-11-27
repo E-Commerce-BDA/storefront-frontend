@@ -1,16 +1,22 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useReducer, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Input from "@/components/ui/Input";
 import { Icon } from "@/components/ui";
-import { AuthForm, PasswordMeter, type AuthFormError } from "@/components/auth";
+import { AuthForm, PasswordMeter } from "@/components/auth";
 import { submitAuth, submitAuthMessage } from "@/lib/auth/browser";
 import { displayFor } from "@/lib/auth/errors";
 import type { ErrorStyle } from "@/lib/auth/settings";
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const STRONG = /^(?=.*[a-zA-Z])(?=.*\d)/;
+import {
+  authFormMachine,
+  forgotDraftMachine,
+  forgotResetValid,
+  initialAuthFormMachine,
+  initialForgotDraftMachine,
+  isEmail,
+  isStrongPassword,
+} from "@/lib/auth/machine";
 
 /**
  * Route island: forgot-password request + post-link reset (au-007).
@@ -36,21 +42,35 @@ export default function ForgotForm({
   footer,
 }: ForgotFormProps) {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
-  const [tokenInput, setTokenInput] = useState("");
-  const [newPw, setNewPw] = useState("");
-  const [showPw, setShowPw] = useState(false);
-  const [done, setDone] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [touched, setTouched] = useState(false);
-  const [error, setError] = useState<AuthFormError | null>(null);
-  const [genericMessage, setGenericMessage] = useState<string | null>(null);
+  // sf-086: the two steps (request + reset) share one draft machine; request
+  // status stays separate so a failed reset cannot relabel the request step.
+  const [draft, draftDispatch] = useReducer(
+    forgotDraftMachine,
+    undefined,
+    initialForgotDraftMachine,
+  );
+  const [request, requestDispatch] = useReducer(
+    authFormMachine,
+    undefined,
+    () => initialAuthFormMachine("forgot"),
+  );
+  const {
+    email,
+    token: tokenInput,
+    newPassword: newPw,
+    showPassword: showPw,
+    touched,
+    sent,
+    done,
+    message: genericMessage,
+  } = draft;
+  const { status, error } = request;
+  const loading = status === "loading";
 
-  const emailBad = touched && !EMAIL_RE.test(email);
+  const emailBad = touched && !isEmail(email);
   const resetMode = token !== "" || sent;
   const activeToken = token !== "" ? token : tokenInput;
-  const pwBad = touched && newPw !== "" && (newPw.length < 8 || !STRONG.test(newPw));
+  const pwBad = touched && newPw !== "" && !isStrongPassword(newPw);
 
   const inputVars = {
     bg: "var(--auth-input-bg)",
@@ -61,37 +81,35 @@ export default function ForgotForm({
 
   async function onRequest(e: FormEvent) {
     e.preventDefault();
-    setTouched(true);
-    if (!EMAIL_RE.test(email)) return;
-    setLoading(true);
+    draftDispatch({ type: "touch" });
+    if (!isEmail(email)) return;
+    requestDispatch({ type: "submit" });
     const result = await submitAuthMessage("/api/auth/password/forgot", { email });
-    setLoading(false);
     if (result.code !== null) {
-      setError(displayFor(result.code));
+      requestDispatch({ type: "error", error: displayFor(result.code) });
       return;
     }
     // Identical generic copy for existing/unknown/disabled accounts — no
     // enumeration, and no token in the response or in this island.
-    setGenericMessage(result.message);
-    setSent(true);
+    draftDispatch({ type: "request/sent", message: result.message });
+    requestDispatch({ type: "success" });
   }
 
   async function onReset(e: FormEvent) {
     e.preventDefault();
-    setTouched(true);
-    if (activeToken === "" || newPw.length < 8 || !STRONG.test(newPw)) return;
-    setLoading(true);
+    draftDispatch({ type: "touch" });
+    if (!forgotResetValid(draft, token)) return;
+    requestDispatch({ type: "submit" });
     const code = await submitAuth("/api/auth/password/reset", {
       token: activeToken,
       newPassword: newPw,
     });
-    setLoading(false);
     if (code !== null) {
-      setError(displayFor(code));
+      requestDispatch({ type: "error", error: displayFor(code) });
       return;
     }
-    setError(null);
-    setDone(true);
+    draftDispatch({ type: "reset/done" });
+    requestDispatch({ type: "success" });
     // A25: a single-use token must not stay in the address bar (history,
     // screenshots, referrers). Replace, not push — there is nothing to go back to.
     if (token !== "") router.replace("/forgot");
@@ -125,10 +143,9 @@ export default function ForgotForm({
               <Input
                 label="Reset token (from a test/DB read)"
                 value={tokenInput}
-                onChange={(v) => {
-                  setTokenInput(v);
-                  setError(null);
-                }}
+                onChange={(value) =>
+                  draftDispatch({ type: "field/set", name: "token", value })
+                }
                 placeholder="Paste the token here"
                 required
                 {...inputVars}
@@ -137,7 +154,7 @@ export default function ForgotForm({
             <Input
               label="New password"
               value={newPw}
-              onChange={setNewPw}
+              onChange={(value) => draftDispatch({ type: "field/set", name: "newPassword", value })}
               placeholder="Min. 8 chars, letter + number"
               required
               type={showPw ? "text" : "password"}
@@ -147,7 +164,7 @@ export default function ForgotForm({
               rightIcon={
                 <button
                   type="button"
-                  onClick={() => setShowPw((v) => !v)}
+                  onClick={() => draftDispatch({ type: "password/toggle" })}
                   aria-label={showPw ? "Hide password" : "Show password"}
                   aria-pressed={showPw}
                   className="inline-flex cursor-pointer border-0 bg-transparent p-1 text-[var(--text-muted)]"
@@ -176,10 +193,7 @@ export default function ForgotForm({
       <Input
         label="Email"
         value={email}
-        onChange={(v) => {
-          setEmail(v);
-          setError(null);
-        }}
+        onChange={(value) => draftDispatch({ type: "field/set", name: "email", value })}
         placeholder="ana@example.com"
         required
         type="email"

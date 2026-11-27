@@ -1,9 +1,13 @@
 "use client";
 
 /** `/account` profile editor — sf-059 (A6.1). Route island: it owns the draft and the notice, not the data. */
-import { useState } from "react";
+import { useReducer } from "react";
 import { Button, Input, Toast } from "@/components/ui";
 import { patchProfile } from "@/lib/account/port";
+import {
+  initialProfileFormMachine,
+  profileFormMachine,
+} from "@/lib/account/formsMachine";
 import { useNotice } from "./useNotice";
 
 export interface ProfileFormProps {
@@ -13,16 +17,20 @@ export interface ProfileFormProps {
 }
 
 export default function ProfileForm({ email, firstName, lastName }: ProfileFormProps) {
-  const [first, setFirst] = useState(firstName ?? "");
-  const [last, setLast] = useState(lastName ?? "");
-  const [saving, setSaving] = useState(false);
+  const [draft, dispatch] = useReducer(
+    profileFormMachine,
+    undefined,
+    () => initialProfileFormMachine(firstName ?? "", lastName ?? ""),
+  );
+  const { first, last, status } = draft;
+  const saving = status === "loading";
   const { notice, notify, close } = useNotice();
 
   async function save() {
     if (saving) return;
-    setSaving(true);
+    dispatch({ type: "submit/start" });
     const result = await patchProfile({ firstName: first, lastName: last });
-    setSaving(false);
+    dispatch({ type: result.ok ? "submit/success" : "submit/error" });
     notify(
       result.ok ? "Profile saved" : "Could not save profile",
       result.ok ? undefined : { message: result.message ?? "Please try again.", kind: "error" },
@@ -40,8 +48,8 @@ export default function ProfileForm({ email, firstName, lastName }: ProfileFormP
       >
         <Input label="Email" value={email} disabled />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Input label="First name" value={first} onChange={setFirst} maxLength={100} />
-          <Input label="Last name" value={last} onChange={setLast} maxLength={100} />
+          <Input label="First name" value={first} onChange={(value) => dispatch({ type: "field/set", name: "first", value })} maxLength={100} />
+          <Input label="Last name" value={last} onChange={(value) => dispatch({ type: "field/set", name: "last", value })} maxLength={100} />
         </div>
         <div>
           <Button type="submit" size="sm" disabled={saving || (first === (firstName ?? "") && last === (lastName ?? ""))}>

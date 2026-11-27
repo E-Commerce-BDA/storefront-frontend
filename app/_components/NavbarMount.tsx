@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useReducer, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useReducer, useRef, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Navbar from "@/components/shell/Navbar";
 import SearchMount, { preloadSearchOverlay } from "@/components/shell/SearchMount";
@@ -10,6 +10,7 @@ import { resolveAccountMenu } from "@/lib/shell/accountMenu";
 import type { ResolvedNavSettings } from "@/lib/shell/navSettings";
 import { initialNavbarMachine, navbarMachine } from "@/lib/navbar/machine";
 import { initialOverlayMachine, overlayMachine } from "@/lib/overlay/machine";
+import { initialNavUiMachine, navUiMachine } from "@/lib/shell/navUiMachine";
 
 const COLLAPSE_MS = 220;
 const ACCOUNT_MENU = resolveAccountMenu();
@@ -36,14 +37,14 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
   const [shell, dispatch] = useReducer(navbarMachine, undefined, () =>
     initialNavbarMachine(pathname),
   );
-  const [mobileOpen, setMobileOpen] = useState(false);
+  // sf-086: the four shell disclosures share one reducer; a route change or
+  // Escape cannot desync them the way independent booleans could.
+  const [ui, dispatchUi] = useReducer(navUiMachine, undefined, initialNavUiMachine);
   // The search overlay's open/close lifecycle is machine state too — a stale
   // boolean could otherwise reopen the sheet with the previous query's face.
   const [overlay, dispatchOverlay] = useReducer(overlayMachine, undefined, initialOverlayMachine);
   const searchOpen = overlay.open;
-  const [dismissed, setDismissed] = useState(false);
-  const [closing, setClosing] = useState(false);
-  const [active, setActive] = useState(0);
+  const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const {
     hidden: barHidden,
     badgeCount,
@@ -52,7 +53,6 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
     currentHref,
     status,
   } = shell;
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   // A14: a route change restores the bar before any scroll event can re-hide it.
   // sf-080: the resolved knobs are machine state, not parallel locals.
@@ -100,10 +100,10 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
   // Autoplay rotation (owner timer; collapsing/animation live in CSS).
   useEffect(() => {
     const ms = nav.announcement.autoplayMs;
-    if (ms == null || count < 2 || dismissed) return;
-    const t = setInterval(() => setActive((a) => (a + 1) % count), ms);
+    if (ms == null || count < 2 || ui.announcementDismissed) return;
+    const t = setInterval(() => dispatchUi({ type: "announcement/next", count }), ms);
     return () => clearInterval(t);
-  }, [nav.announcement.autoplayMs, count, dismissed]);
+  }, [nav.announcement.autoplayMs, count, ui.announcementDismissed]);
 
   // Hide-on-scroll (only when the knob selects it; other modes ignore
   // scroll entirely — no listener, no state churn).
@@ -117,9 +117,9 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
   // The account dropdown is owned here (controlled-only): Escape and an
   // outside pointer merely call the close setter, never own open-state.
   useEffect(() => {
-    if (!accountMenuOpen) return;
+    if (!ui.accountMenuOpen) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setAccountMenuOpen(false);
+      if (event.key === "Escape") dispatchUi({ type: "account/close" });
     };
     const onPointer = (event: PointerEvent) => {
       const target = event.target;
@@ -127,7 +127,7 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
         target instanceof Element &&
         target.closest("[data-accountmenu-anchor]") === null
       ) {
-        setAccountMenuOpen(false);
+        dispatchUi({ type: "account/close" });
       }
     };
     document.addEventListener("keydown", onKey);
@@ -136,18 +136,28 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onPointer);
     };
-  }, [accountMenuOpen]);
+  }, [ui.accountMenuOpen]);
 
   // Two-phase dismiss (HomeChrome pattern, preserved verbatim): collapsing
   // class animates, unmount follows. Instant when animation is off or
   // reduced-motion is preferred.
+  useEffect(
+    () => () => {
+      if (collapseTimer.current !== null) clearTimeout(collapseTimer.current);
+    },
+    [],
+  );
+
   function dismiss() {
     if (!nav.announcement.collapseAnimation || prefersReducedMotion()) {
-      setDismissed(true);
+      dispatchUi({ type: "announcement/dismiss/finish" });
       return;
     }
-    setClosing(true);
-    setTimeout(() => setDismissed(true), COLLAPSE_MS);
+    dispatchUi({ type: "announcement/dismiss/start" });
+    collapseTimer.current = setTimeout(
+      () => dispatchUi({ type: "announcement/dismiss/finish" }),
+      COLLAPSE_MS,
+    );
   }
 
   const preload = useCallback(() => {
@@ -164,18 +174,18 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
         colors={nav.colors}
         links={nav.links.items}
         announcement={{
-          items: dismissed ? [] : items,
+          items: ui.announcementDismissed ? [] : items,
           showArrows: nav.announcement.showArrows,
-          activeIndex: count === 0 ? 0 : active % count,
+          activeIndex: count === 0 ? 0 : ui.announcementIndex % count,
           countdownText: "",
           dismissible: nav.announcement.dismissible,
-          collapsing: closing,
+          collapsing: ui.announcementClosing,
           onDismiss: dismiss,
-          onPrev: () => setActive((a) => (a - 1 + count) % count),
-          onNext: () => setActive((a) => (a + 1) % count),
+          onPrev: () => dispatchUi({ type: "announcement/prev", count }),
+          onNext: () => dispatchUi({ type: "announcement/next", count }),
         }}
         isMobile={isMobile}
-        mobileOpen={mobileOpen}
+        mobileOpen={ui.mobileOpen}
         mobileSide={nav.mobile.drawerSide}
         cart={{
           // A16: the machine caps the badge and owns the resolved destination.
@@ -186,15 +196,15 @@ export default function NavbarMount({ nav }: { nav: ResolvedNavSettings }) {
         }}
         currentHref={currentHref}
         status={status}
-        account={{ onOpen: () => setAccountMenuOpen((open) => !open) }}
+        account={{ onOpen: () => dispatchUi({ type: "account/toggle" }) }}
         accountMenu={{
           model: ACCOUNT_MENU,
-          open: accountMenuOpen,
-          onClose: () => setAccountMenuOpen(false),
+          open: ui.accountMenuOpen,
+          onClose: () => dispatchUi({ type: "account/close" }),
         }}
         wishlist={{ count: wishlist.count, onOpen: () => router.push("/wishlist") }}
-        onMenuOpen={() => setMobileOpen(true)}
-        onMenuClose={() => setMobileOpen(false)}
+        onMenuOpen={() => dispatchUi({ type: "mobile/open" })}
+        onMenuClose={() => dispatchUi({ type: "mobile/close" })}
         onSearchOpen={() => dispatchOverlay({ type: "open" })}
         onSearchPreload={preload}
       />
