@@ -5527,6 +5527,51 @@ body {
   gap: var(--toolbar-chip-gap, 6px);
 }
 
+/* sf-092: one listing shell, two column faces. The controls are mobile-only
+   because the desktop rail is always on screen — the same split as the
+   prototype. Paint stays in vars; display is a layout decision. */
+.sf-listing {
+  display: grid;
+  gap: var(--listing-gap, 24px);
+}
+.sf-listing__rail {
+  display: none;
+  min-width: 0;
+}
+@media (min-width: 1024px) {
+  .sf-listing {
+    grid-template-columns: var(--listing-rail-width, 260px) minmax(0, 1fr);
+  }
+  .sf-listing__rail {
+    display: block;
+  }
+  .sf-shop-toolbar__filter,
+  .sf-gridmode {
+    display: none;
+  }
+}
+
+/* sf-092: the PDP tab strip paints through vars; panels stay in the DOM and
+   are hidden natively so no second state vocabulary is needed. */
+.sf-pdp-tabs {
+  display: grid;
+  gap: var(--pdp-tabs-gap, 16px);
+  padding: var(--pdp-tabs-pad, 20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 10px);
+  background: var(--surface);
+}
+.sf-pdp-tabs__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pdp-tabs-chip-gap, 8px);
+  padding-bottom: var(--pdp-tabs-head-pad, 12px);
+  border-bottom: 1px solid var(--border);
+}
+.sf-pdp-tabs__panel[hidden] {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sf-segmented__btn,
   .sf-menu__panel {

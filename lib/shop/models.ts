@@ -1,3 +1,5 @@
+import type { GridMode } from "@/lib/shop/machine";
+
 export type { GridMode } from "@/lib/shop/machine";
 
 /**
@@ -126,4 +128,12 @@ export function resolveShopToolbar(
     resultLabel: flat.resultLabel ?? source.resultLabel ?? DEFAULT_SHOP_TOOLBAR.resultLabel,
     showCount: flat.showCount ?? source.showCount ?? DEFAULT_SHOP_TOOLBAR.showCount,
   };
+}
+
+/**
+ * A grid-mode string from the URL/owner becomes one of the two known faces.
+ * Junk is a default, never a guess at intent — the same rule as listing sort.
+ */
+export function parseGridMode(value: unknown): GridMode {
+  return value === "one" ? "one" : "two";
 }

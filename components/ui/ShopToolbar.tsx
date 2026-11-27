@@ -50,6 +50,7 @@ export default function ShopToolbar({
         <Button
           variant="light"
           size="sm"
+          className="sf-shop-toolbar__filter"
           onClick={onOpenFilters}
           aria-label="Filters"
           data-active-filter-count={activeFilters.length}

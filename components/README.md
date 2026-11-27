@@ -90,6 +90,35 @@ Contract (roles, data hooks, controlled callbacks), resolver-unit (defaults,
 clamps, flat-over-object), style-contract (var-only paint, no hex, data hooks,
 reduced-motion guard) for all five components.
 
+## Listing shell & PDP tabs (sf-092)
+
+### 1. Look per state
+- `ShopToolbar` carries sort, chips and the mobile filter trigger; the drawer
+  holds the same `FilterRail` the desktop aside shows.
+- The column switch is mobile-only (hidden at ≥1024px) and is passed to the grid
+  island as an explicit column count.
+- `PdpTabs` shows four pills over panels that stay in the DOM (`hidden`), so
+  CMS content remains crawlable and screen-reader visible.
+
+### 2. Customizable fields
+Resolved facets, selection, query key, theme/tone props and an optional result
+count arrive from the route; the shell adds no defaults of its own.
+
+### 3. Where a value lives
+`lib/shop/machine.ts` owns drawer/grid modes, `lib/pdp/tabs.ts` owns grouping and
+the active tab, `lib/catalog/listing.ts` owns canonical URL keys (reading the
+prototype's `cat`/`sale` aliases but never emitting them).
+
+### 4. Global rules
+Filters and sort stay in the URL; only disclosure and column count are island
+state — both use the existing pure machines, never `useState`. Rejected: two
+sibling islands sharing the mode through a CSS override of inline grid vars.
+
+### 5. Tests
+Resolver-unit (mode parse, URL aliases, tab grouping), contract (toolbar/drawer/
+chips/grid columns and tab panels), style-contract (var-only paint, mobile
+breakpoint, native hidden panels).
+
 ## ProductRailIsland (`commerce/ProductRailIsland.tsx`) — sf-091
 
 ### 1. Look per state

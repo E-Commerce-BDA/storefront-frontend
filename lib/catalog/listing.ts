@@ -110,13 +110,21 @@ function toLimit(value: SearchParamValue): number {
 export function parseListingParams(
   params: Record<string, SearchParamValue>,
 ): ListingParams {
-  const categorySlug = trimmed(params.category);
+  // Prototype links used `?cat=`/`?sale=`; the canonical vocabulary is
+  // `category`/`discounted`. Accepting the aliases on read (and emitting the
+  // canonical key on write) keeps an old deep link alive without letting two
+  // spellings become two cache entries.
+  const categorySlug = trimmed(
+    params.category !== undefined ? params.category : params.cat,
+  );
   const brandSlug = trimmed(params.brand);
   const q = trimmed(params.q);
   const sort = toSort(params.sort);
   const cursor = trimmed(params.cursor);
   const tags = toTags(params.tags);
-  const discounted = toDiscounted(params.discounted);
+  const discounted = toDiscounted(
+    params.discounted !== undefined ? params.discounted : params.sale,
+  );
 
   const query: ListingParams["query"] = { limit: toLimit(params.limit) };
   if (q !== undefined) query.q = q;

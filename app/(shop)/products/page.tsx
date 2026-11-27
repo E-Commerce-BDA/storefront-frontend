@@ -10,8 +10,7 @@ import {
   parseListingParams,
 } from "@/lib/catalog/listing";
 import { loadListingPage } from "@/lib/catalog/listingPage";
-import ListingFilters from "./_components/ListingFilters";
-import ListingGridIsland from "./_components/ListingGridIsland";
+import ListingShell from "./_components/ListingShell";
 
 /**
  * `/products` — the ONE canonical listing route (routing.md §1; sf-054).
@@ -120,7 +119,7 @@ export default async function ProductsPage({
         title={data.title}
         breadcrumb={data.breadcrumb.length > 0 ? data.breadcrumb : undefined}
       />
-      <ListingFilters
+      <ListingShell
         categories={data.facets.categories}
         brands={data.facets.brands}
         tags={data.facets.tags}
@@ -138,11 +137,10 @@ export default async function ProductsPage({
           q: data.q,
           sort: data.sort,
         }}
-      />
-      <ListingGridIsland
         initialItems={data.items}
         initialCursor={data.nextCursor}
         queryKey={queryKey}
+        resultCount={data.items.length}
         columns={{
           desktop: cardTheme.colsDesktop,
           tablet: cardTheme.colsTablet,

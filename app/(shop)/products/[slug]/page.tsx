@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/shell/PageHeader";
 import ErrorState from "@/components/ui/ErrorState";
-import SectionRenderer from "@/components/sections/SectionRenderer";
+import PdpSections from "../../_components/PdpSections";
 import { catalogClient } from "@/lib/catalog/client";
 import { cmsBaseUrl, createCmsClient } from "@/lib/cms/client";
 import { fetchThemeSettings } from "@/lib/cms/theme";
@@ -166,7 +166,7 @@ export default async function ProductPage({
       />
 
       {resolvedSections.length > 0 ? (
-        <SectionRenderer
+        <PdpSections
           models={resolvedSections}
           columns={{
             desktop: cardTheme.colsDesktop,
