@@ -687,23 +687,32 @@ body {
   text-decoration: none;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
 }
+/* Keyboard parity (AGENTS §3.6): focus shows the same wash hover shows, plus
+   the fixed ring. Gate the wash off aria-disabled, as the hover branch is. */
 .sf-navlinks :is(a, button):not([aria-disabled="true"]):hover,
+.sf-navlinks :is(a, button):not([aria-disabled="true"]):focus-visible,
 .sf-navlinks :is(a, button)[aria-expanded="true"],
 .sf-navlinks :is(a, button)[data-current="true"] {
   background: var(--sf-nav-hover-bg);
   border-color: var(--sf-nav-hover-border);
   color: var(--sf-nav-hover-fg);
 }
+.sf-navlinks :is(a, button):focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
 .sf-navlinks :is(a, button)[data-highlight="sale"] {
   color: var(--color-sale-text);
   font-weight: 700;
 }
-.sf-navlinks :is(a, button)[data-highlight="sale"]:hover {
+.sf-navlinks :is(a, button)[data-highlight="sale"]:hover,
+.sf-navlinks :is(a, button)[data-highlight="sale"]:focus-visible {
   background: var(--sf-nav-sale-hover-bg);
   border-color: var(--sf-nav-sale-hover-border);
   color: var(--color-sale-text);
 }
-.sf-navlinks a:hover {
+.sf-navlinks a:hover,
+.sf-navlinks a:focus-visible {
   color: var(--nb-hover, #0077b6);
   text-decoration: underline;
   text-underline-offset: 4px;
@@ -1443,6 +1452,12 @@ body {
     transform: none;
     transition: none;
   }
+  /* Every transition ships an instant counterpart (SKILL-MOTION rule 4); the
+     focus-painted controls below were the uncovered ones. */
+  .sf-navlinks :is(a, button),
+  .sf-iconbtn {
+    transition: none;
+  }
   .sf-productcard__hoverimg,
   .sf-productcard__ctas,
   .sf-productcard__img-nav,
@@ -1450,6 +1465,16 @@ body {
   .sf-productcard[data-hover="zoom"] .sf-productcard__cover {
     transition: none;
     transform: none;
+  }
+  .sf-productcard__img-arrow,
+  .sf-productcard__swatch,
+  .sf-productcard__indicator-dot,
+  .sf-productcard__indicator-bar {
+    transition: none;
+    transform: none;
+  }
+  .sf-productcard__pill {
+    transition: none;
   }
   .sf-productcard[data-hover="image"] .sf-productcard__media:hover .sf-productcard__hoverimg {
     opacity: 1;
@@ -1544,7 +1569,15 @@ body {
   font-weight: 600;
   cursor: pointer;
 }
-.sf-searchsheet__cancel:hover {
+/* Hover was bare — :hover also matches disabled buttons, so gate it. Focus
+   mirrors the same paint and adds the fixed ring (AGENTS §3.6). */
+.sf-searchsheet__cancel:not([disabled]):hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+.sf-searchsheet__cancel:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
@@ -2601,6 +2634,13 @@ body {
   border-color: var(--color-accent);
   transform: scale(1.08);
 }
+/* Named carousel buttons: keyboard focus shows the accent border + fixed ring.
+   The scale stays pointer-only (decorative motion, killed under reduced-motion). */
+.sf-productcard__img-arrow:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-color: var(--color-accent);
+}
 .sf-productcard__img-arrow[disabled] {
   /* Disabled is a solid face, never a dimmer: opacity drops the glyph below
      its contrast floor. The base arrow keeps its geometry and pointer guard. */
@@ -3043,8 +3083,13 @@ body {
   font-weight: 500;
   color: var(--pl-muted, #5b7286);
 }
-.sf-searchpalette__clear:not([disabled]):hover {
+.sf-searchpalette__clear:not([disabled]):hover,
+.sf-searchpalette__clear:focus-visible {
   color: var(--pl-heading, #0a2540);
+}
+.sf-searchpalette__clear:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 .sf-searchpalette__recent {
   display: grid;
@@ -3065,8 +3110,13 @@ body {
   flex: none;
   color: var(--pl-muted, #5b7286);
 }
-.sf-searchpalette__recentrow:not([disabled]):hover {
+.sf-searchpalette__recentrow:not([disabled]):hover,
+.sf-searchpalette__recentrow:focus-visible {
   text-decoration: underline;
+}
+.sf-searchpalette__recentrow:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 .sf-searchpalette__products-head {
   display: flex;
