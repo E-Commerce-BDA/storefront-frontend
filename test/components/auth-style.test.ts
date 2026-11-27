@@ -24,6 +24,11 @@ describe("auth style contract", () => {
     }
   });
 
+  it("keeps the form title on the display face (the admin owns size, not family)", () => {
+    const block = css.match(/\.sf-auth__form-title\s*\{([^}]*)\}/)?.[1] ?? "";
+    expect(block).toMatch(/font-family:\s*var\(--font-display\)/);
+  });
+
   it("drives split geometry through data hooks, not classes", () => {
     expect(css).toMatch(/\.sf-auth__split\[data-ratio="60-40"\]/);
     expect(css).toMatch(/\.sf-auth__split\[data-side="right"\]/);

@@ -1367,6 +1367,9 @@ body {
   opacity: 0.85;
 }
 .sf-auth__form-title {
+  /* The form title is a display heading in the prototype; the admin owns its
+     size/weight/colour, the font family is a fixed code decision. */
+  font-family: var(--font-display);
   font-size: var(--auth-form-title-size, 14px);
   font-weight: var(--auth-form-title-weight, 600);
   color: var(--auth-form-title-color, #0a2540);
@@ -3400,6 +3403,11 @@ body {
   align-items: center;
   text-align: center;
   padding: 56px 24px;
+  /* Prototype parity: the empty face is a card, not prose floating on the
+     page. Paint resolves through canonical tokens so the admin can retune it. */
+  border: 1px solid var(--sf-color-border);
+  border-radius: var(--sf-radius-card);
+  background: var(--sf-color-surface);
 }
 .sf-empty__icon {
   display: inline-flex;

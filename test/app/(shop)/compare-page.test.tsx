@@ -47,4 +47,19 @@ describe("GET /compare", () => {
     expect(screen.queryByRole("table", { name: "Product comparison" })).toBeNull();
     expect(harness.ids).toBeUndefined();
   });
+
+  it("shows the prototype's breadcrumb and eyebrow in both faces", async () => {
+    const empty = await ComparePage({ searchParams: Promise.resolve({}) });
+    const first = render(empty);
+    const crumbs = screen.getByRole("navigation", { name: "Breadcrumb" });
+    expect(crumbs.textContent).toContain("Home");
+    expect(crumbs.textContent).toContain("Compare");
+    expect(screen.getByText("SIDE BY SIDE")).not.toBeNull();
+    first.unmount();
+
+    const populated = await ComparePage({ searchParams: Promise.resolve({ ids: "a" }) });
+    render(populated);
+    expect(screen.getByRole("navigation", { name: "Breadcrumb" })).not.toBeNull();
+    expect(screen.getByText("SIDE BY SIDE")).not.toBeNull();
+  });
 });

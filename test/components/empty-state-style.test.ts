@@ -36,4 +36,11 @@ describe("empty state style contract", () => {
   it("holds no state hooks — the block is a fixed face", () => {
     expect(css).not.toMatch(/\.sf-empty\[data-/);
   });
+
+  it("restores the prototype's card face through canonical --sf-* tokens", () => {
+    const base = css.match(/\.sf-empty\s*\{([^}]*)\}/)?.[1] ?? "";
+    expect(base).toMatch(/border:\s*1px solid var\(--sf-color-border\)/);
+    expect(base).toMatch(/border-radius:\s*var\(--sf-radius-card\)/);
+    expect(base).toMatch(/background:\s*var\(--sf-color-surface\)/);
+  });
 });

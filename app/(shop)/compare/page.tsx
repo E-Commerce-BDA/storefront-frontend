@@ -25,10 +25,20 @@ export default async function ComparePage({
   const raw = Array.isArray(sp.ids) ? sp.ids[0] : sp.ids;
   const ids = parseCompareQuery(raw ?? null);
 
+  // Prototype parity: this route carries an upward path and a section eyebrow.
+  // PageHeader owns both slots; the route only decides their content.
+  const header = (
+    <PageHeader
+      eyebrow="SIDE BY SIDE"
+      title="Compare products"
+      breadcrumb={[{ label: "Home", href: "/" }, { label: "Compare" }]}
+    />
+  );
+
   if (ids.length === 0) {
     return (
       <>
-        <PageHeader title="Compare products" />
+        {header}
         <EmptyState
           title="Nothing to compare yet"
           body="Add products from a listing or product page to see them side by side."
@@ -47,7 +57,7 @@ export default async function ComparePage({
 
   return (
     <>
-      <PageHeader title="Compare products" />
+      {header}
       <CompareTray />
       {!page.ok ? (
         // The catalogue could not answer; we do not know if these products exist.
