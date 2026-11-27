@@ -5594,6 +5594,16 @@ body {
   scroll-behavior: auto;
 }
 
+/* sf-091: a CMS `carousel` section reuses the rail painter. The section adds
+   no second motion vocabulary — it only supplies the cell width through a var
+   so a merchant can retune the strip without touching this stylesheet. */
+.sf-collection__rail[data-layout="carousel"] {
+  --rail-cell-width: var(--collection-rail-cell-width, 240px);
+}
+.sf-collection__rail .sf-rail__track {
+  padding-bottom: var(--rail-track-pad, 4px);
+}
+
 /* sf-090 shared overlay language. Scrim and drawer paint resolve only through
    --sf-* tokens; side/open/motion are data attrs, never class toggles. Focus
    trapping and Escape stay with the owning island (controlled-only rule). */

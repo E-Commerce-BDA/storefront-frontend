@@ -90,6 +90,31 @@ Contract (roles, data hooks, controlled callbacks), resolver-unit (defaults,
 clamps, flat-over-object), style-contract (var-only paint, no hex, data hooks,
 reduced-motion guard) for all five components.
 
+## ProductRailIsland (`commerce/ProductRailIsland.tsx`) — sf-091
+
+### 1. Look per state
+- `carousel`: the shared `PaginatedRail` paints one snap-scrolling cell per CMS
+  card, with dots and looped prev/next; `grid` keeps the single grid island.
+- The only state is the page index, held in `lib/sections/machine.ts`'s
+  `railIndexMachine`; pointer coordinates stay a ref in the dumb rail.
+
+### 2. Customizable fields
+`cards`, `label`, `themeFallback` and `tones` arrive from the resolver; the
+island adds no defaults of its own.
+
+### 3. Where a value lives
+`resolveSections` owns the `carousel|grid` decision from the CMS contract;
+`railModel`/`railIndexMachine` own wrap and clamp; globals.css owns paint vars.
+
+### 4. Global rules
+Props → JSX below the island; no fetch/store/CMS import in the card painter.
+Rejected: N `ProductGridIsland` instances per strip and a route-group island
+import from a shared section block (both invert the depth gradient).
+
+### 5. Tests
+Resolver-unit (index clamp/wrap), contract (layout dispatch, dots, drag),
+style-contract (var-only paint, `data-layout` hook, no hex/opacity).
+
 ## Composed shell/commerce artifacts (sf-088)
 
 ### 1. Look per state

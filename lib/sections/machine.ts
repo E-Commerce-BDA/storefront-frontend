@@ -7,6 +7,7 @@
  * which slide is current, never when time passes.
  */
 import type { Status } from "@/lib/machine/status";
+import { railStep } from "@/lib/sections/railModel";
 
 export interface HeroCarouselMachineState {
   index: number;
@@ -48,4 +49,40 @@ export function heroCarouselMachine(
     case "load/ready":
       return { ...state, status: "ready" };
   }
+}
+
+/**
+ * Paginated rail index machine — sf-091. Pure.
+ *
+ * The rail's dots, arrows and drag all produce the same event: "land on this
+ * page". Keeping that one number in a reducer means a drag during a pending
+ * re-render cannot leave a stale index behind, and the DOM component stays a
+ * painter. Rejected: a `useState` per rail, which would make the state rules
+ * depend on which section happened to mount it.
+ */
+export interface RailIndexMachineState {
+  index: number;
+}
+
+export type RailIndexMachineEvent =
+  | { type: "rail/set"; index: number; count: number }
+  | { type: "rail/step"; delta: number; count: number; loop: boolean };
+
+export function initialRailIndexMachine(): RailIndexMachineState {
+  return { index: 0 };
+}
+
+export function railIndexMachine(
+  state: RailIndexMachineState,
+  event: RailIndexMachineEvent,
+): RailIndexMachineState {
+  if (event.count <= 0) return state;
+  // A dot is always in range; clamping the out-of-range case too keeps this
+  // reducer identical to `resolveRail`, so a stale dot from a shorter list
+  // can never jump to a different page.
+  const next =
+    event.type === "rail/set"
+      ? Math.min(event.count - 1, Math.max(0, Math.trunc(event.index)))
+      : railStep(state.index, event.count, event.delta, event.loop);
+  return next === state.index ? state : { index: next };
 }

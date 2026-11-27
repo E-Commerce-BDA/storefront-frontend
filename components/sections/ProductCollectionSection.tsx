@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import ProductGridIsland from "@/components/commerce/ProductGridIsland";
+import ProductRailIsland from "@/components/commerce/ProductRailIsland";
 import type { ProductCardData } from "@/lib/commerce/productCard";
 import type { GridColumns } from "@/lib/commerce/fromCatalog";
 import type { ResolvedThemeProductCard } from "@/lib/cms/themeSettings";
@@ -55,7 +56,23 @@ export default function ProductCollectionSection({
           <h2 className="sf-section__title">{model.title}</h2>
         </div>
       ) : null}
-      <ProductGridIsland items={cards} label={label} columns={columns} themeFallback={themeFallback} tones={tones} />
+      {model.layout === "carousel" ? (
+        <ProductRailIsland
+          cards={cards}
+          label={label}
+          columns={columns}
+          themeFallback={themeFallback}
+          tones={tones}
+        />
+      ) : (
+        <ProductGridIsland
+          items={cards}
+          label={label}
+          columns={columns}
+          themeFallback={themeFallback}
+          tones={tones}
+        />
+      )}
     </section>
   );
 }
