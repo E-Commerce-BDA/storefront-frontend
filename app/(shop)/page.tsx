@@ -4,6 +4,8 @@ import Link from "next/link";
 import SectionRenderer from "@/components/sections/SectionRenderer";
 import DegradedState from "@/components/ui/DegradedState";
 import { previewTokenFromPage, type PageSearchParams } from "@/lib/admin/guard";
+import { adminOrigin } from "@/lib/preview/origin";
+import PreviewDraftBridge from "./_components/PreviewDraftBridge";
 import { cmsBaseUrl, createCmsClient } from "@/lib/cms/client";
 import { fetchThemeSettings } from "@/lib/cms/theme";
 import { resolveThemeSettings, toBadgeTones } from "@/lib/cms/themeSettings";
@@ -58,8 +60,16 @@ export default async function HomePage({
   // fetch. It is never placed in a component prop, so no island can see it.
   const [query, requestHeaders] = await Promise.all([searchParams, headers()]);
   const previewToken = previewTokenFromPage(requestHeaders, query);
+  // The bridge is mounted only for a preview request; a shopper never loads a
+  // postMessage listener and never receives the admin origin as a prop.
+  const previewAdminOrigin = previewToken === null ? null : adminOrigin();
   const cms = createCmsClient({ baseUrl: cmsBaseUrl(), previewToken });
-  const read = await cms.getSections(HOME_PAGE_KEY);
+  // The published theme is read once for both the rendered tone face and the
+  // draft merge; a preview token never reaches this fallback read.
+  const [read, themeResult] = await Promise.all([
+    cms.getSections(HOME_PAGE_KEY),
+    fetchThemeSettings(),
+  ]);
   const list = read.data;
   let content: React.ReactNode;
 
@@ -80,7 +90,6 @@ export default async function HomePage({
   } else {
     const resolution = await resolveSectionsWithDiagnostics(list.sections);
     const models = resolution.models;
-    const themeResult = await fetchThemeSettings();
     const theme = resolveThemeSettings({ settings: themeResult.theme });
     const cardTheme = theme.productCard;
 
@@ -125,6 +134,9 @@ export default async function HomePage({
 
   return (
     <>
+      {previewAdminOrigin !== null ? (
+        <PreviewDraftBridge adminOrigin={previewAdminOrigin} publishedTheme={themeResult.theme} />
+      ) : null}
       {content}
       {/* A native script is right for inert structured data; the payload is
           escaped by serializeJsonLd so no CMS string can close the tag. */}

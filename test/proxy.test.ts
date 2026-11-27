@@ -157,3 +157,36 @@ describe("navigation guards", () => {
     expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 });
+
+describe("preview framing (sf-096)", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("leaves published routes with no CSP header at all", () => {
+    const response = proxy(request("/"));
+    expect(response.headers.get("content-security-policy")).toBeNull();
+  });
+
+  it("pins frame-ancestors to the exact admin origin for ?preview= routes", () => {
+    vi.stubEnv("ADMIN_ORIGIN", "https://admin.test:8443/path");
+    const response = proxy(request("/?preview=token"));
+    expect(response.headers.get("content-security-policy")).toBe(
+      "frame-ancestors https://admin.test:8443",
+    );
+  });
+
+  it("does the same for a header-supplied preview token", () => {
+    vi.stubEnv("ADMIN_ORIGIN", "https://admin.test");
+    const req = new NextRequest("http://localhost/", {
+      headers: { "x-preview-token": "token" },
+    });
+    expect(proxy(req).headers.get("content-security-policy")).toBe(
+      "frame-ancestors https://admin.test",
+    );
+  });
+
+  it("fails closed when the admin origin is unusable", () => {
+    vi.stubEnv("ADMIN_ORIGIN", "javascript:alert(1)");
+    const response = proxy(request("/?preview=token"));
+    expect(response.headers.get("content-security-policy")).toBeNull();
+  });
+});

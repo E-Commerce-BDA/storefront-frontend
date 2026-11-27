@@ -139,6 +139,7 @@ describe("home page", () => {
       await homeRoute.default({ searchParams: Promise.resolve({ preview: "draft-token" }) }),
     );
     expect(harness.clientOptions[0]?.previewToken).toBe("draft-token");
+    expect(container.querySelector("[data-preview-draft-bridge]")).not.toBeNull();
     expect(container.innerHTML).not.toContain("draft-token");
 
     harness.requestHeaders = new Headers({ "x-preview-token": "header-token" });

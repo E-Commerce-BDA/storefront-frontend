@@ -21,6 +21,10 @@
  * 3. Guest cart identity (`sf_cid`, sf-051) — minted here, for every page the
  *    shopper can add to a cart from, **before the first render**.
  *
+ * 4. Preview framing (sf-096) — a request carrying a preview token gets a
+ *    `frame-ancestors` CSP pinned to ADMIN_ORIGIN. Published routes keep no
+ *    CSP header, so nothing about their embedding changes.
+ *
  * WHY mint here rather than on the first cart write: two quick "add" taps would
  * both see no cookie, each would mint its own id, each would create its own
  * cart — and one of them is orphaned with an item the shopper paid attention
@@ -35,8 +39,10 @@
  */
 
 import { NextResponse, type NextRequest } from "next/server";
+import { previewTokenFromSources } from "@/lib/admin/guard";
 import { authServiceUrl } from "@/lib/auth/client";
 import { safeNextPath } from "@/lib/auth/next";
+import { adminOrigin } from "@/lib/preview/origin";
 import {
   ACCESS_COOKIE,
   REFRESH_COOKIE,
@@ -72,7 +78,7 @@ export const config = {
 export default function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
-  if (pathname === SESSION_PATH) return forwardSession(request);
+  if (pathname === SESSION_PATH) return withPreviewHeaders(request, forwardSession(request));
 
   // Mint **before** the response exists: `NextResponse.next()` snapshots the
   // request headers it is handed, so a cookie set afterwards would reach the
@@ -83,7 +89,23 @@ export default function proxy(request: NextRequest): NextResponse {
   const result = response ?? NextResponse.next({ request: { headers: request.headers } });
 
   if (minted !== null) result.cookies.set(minted);
-  return result;
+  return withPreviewHeaders(request, result);
+}
+
+/**
+ * sf-096 follow-up: only a preview request may be framed by the admin app.
+ * Published routes get no CSP header at all, so their embedding behaviour is
+ * unchanged. Failing to resolve ADMIN_ORIGIN fails closed (no header), which
+ * keeps an admin iframe from loading rather than admitting `*`.
+ */
+function withPreviewHeaders(request: NextRequest, response: NextResponse): NextResponse {
+  const isPreview = previewTokenFromSources(request.headers, request.nextUrl.searchParams) !== null;
+  if (!isPreview) return response;
+  const origin = adminOrigin();
+  if (origin !== null) {
+    response.headers.set("content-security-policy", `frame-ancestors ${origin}`);
+  }
+  return response;
 }
 
 function ensureGuest(request: NextRequest): CookieSpec | null {
