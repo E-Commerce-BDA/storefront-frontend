@@ -90,6 +90,33 @@ Contract (roles, data hooks, controlled callbacks), resolver-unit (defaults,
 clamps, flat-over-object), style-contract (var-only paint, no hex, data hooks,
 reduced-motion guard) for all five components.
 
+## Money-page chrome (sf-093)
+
+### 1. Look per state
+- `OrderSummaryCard` owns the free-ship bar, coupon line and totals on both the
+  cart and checkout; `PaymentPill` shows the one real provider plus informational
+  brand marks; `QuickPromos` offers the three prototype coupon codes.
+- Confirmation uses the shared `Timeline`; loading/error/degraded faces stay the
+  shared state faces. No disabled face uses opacity.
+
+### 2. Customizable fields
+Money, coupon, actions and selected provider arrive from the islands. The new
+painters have no defaults of their own.
+
+### 3. Where a value lives
+`lib/order/summaryModel.ts` owns totals and progress, `lib/checkout/payment.ts`
+owns the provider vocabulary, `lib/cart/promos.ts` owns the quick-code labels.
+Coupon validation, idempotency replay and 409 shortfall stay in `CheckoutForm`.
+
+### 4. Global rules
+Props → JSX below the islands; BFF failures keep `error.details` so the shortfall
+banner can name the exact lines. Rejected: re-deriving totals inside a pill or
+trusting a quick-promo code without the validation BFF.
+
+### 5. Tests
+Resolver-unit (providers, promos), contract (radio/pill reporting), style-contract
+(var-only paint, data hooks, no opacity/hex).
+
 ## Listing shell & PDP tabs (sf-092)
 
 ### 1. Look per state

@@ -18,6 +18,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, Button, ErrorState, LoadingState } from "@/components/ui";
+import Timeline from "@/components/commerce/Timeline";
 import { bff } from "@/lib/http/browser";
 import { orderSchema, type OrderDto } from "@/lib/order/schemas";
 import type { ServiceResult } from "@/lib/http/result";
@@ -130,10 +131,11 @@ export default function OrderConfirmation({
         </address>
       </div>
 
-      {order.status_history && order.status_history.length > 0 ? (
-        <section aria-label="Order timeline" className="grid gap-2">
-          <h3 className="m-0 text-sm font-semibold text-[var(--color-ink)]">Timeline</h3>
-          <ol className="m-0 grid list-none gap-2 p-0" role="list">
+      <section aria-label="Order timeline" className="sf-confirmation__timeline">
+        <h3 className="m-0 text-sm font-semibold text-[var(--color-ink)]">Timeline</h3>
+        <Timeline status={order.status} />
+        {order.status_history && order.status_history.length > 0 ? (
+          <ul className="m-0 grid list-none gap-2 p-0" role="list">
             {order.status_history.map((event, index) => (
               <li
                 key={event.id ?? `${event.to_status}-${index}`}
@@ -144,9 +146,9 @@ export default function OrderConfirmation({
                 <span>{event.created_at ? formatStamp(event.created_at) : ""}</span>
               </li>
             ))}
-          </ol>
-        </section>
-      ) : null}
+          </ul>
+        ) : null}
+      </section>
 
       {order.status === "delivered" ? (
         <section aria-label="Write a review" className="grid gap-3">

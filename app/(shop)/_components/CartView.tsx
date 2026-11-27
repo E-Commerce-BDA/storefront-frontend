@@ -22,11 +22,13 @@ import { useEffect, useReducer, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button, EmptyState, ErrorState, Icon, Input, LoadingState } from "@/components/ui";
 import CartTable from "@/components/shell/CartTable";
+import OrderSummaryCard from "@/components/commerce/OrderSummaryCard";
+import QuickPromos from "@/components/commerce/QuickPromos";
 import { useCart } from "@/app/_components/CartProvider";
 import { useWishlist } from "@/app/_components/WishlistProvider";
 import { capToStock } from "@/lib/cart/stock";
 import { bff } from "@/lib/http/browser";
-import { discountAmount, totalAfterDiscount } from "@/lib/order/discount";
+import { discountAmount } from "@/lib/order/discount";
 import {
   discountValidationResultSchema,
   type DiscountValidationResult,
@@ -102,8 +104,8 @@ export default function CartView() {
     );
   }
 
-  async function applyCoupon() {
-    const trimmed = couponCode.trim();
+  async function applyCoupon(code: string = couponCode) {
+    const trimmed = code.trim();
     if (!trimmed) {
       dispatch({ type: "coupon/error", message: "Please enter a coupon code" });
       return;
@@ -203,7 +205,6 @@ export default function CartView() {
   // Preview arithmetic is shared with checkout so the two surfaces cannot
   // disagree about what the same code is worth.
   const discount = discountAmount(appliedCoupon, cart.subtotal);
-  const estimatedTotal = totalAfterDiscount(cart.subtotal, discount);
 
   const displayItems = cart.items.map((line) => ({
     ...line,
@@ -253,92 +254,68 @@ export default function CartView() {
         ) : null}
       </div>
 
-      <aside className="flex flex-col gap-5 self-start rounded-[var(--radius-md,10px)] border border-[var(--border)] bg-[var(--surface-raised,var(--surface))] p-5 shadow-sm">
-        <h2 className="m-0 text-base font-semibold text-[var(--color-ink)]">
-          Summary ({cart.count} {cart.count === 1 ? "item" : "items"})
-        </h2>
-
-        <div className="grid gap-2 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[var(--text-muted)]">Subtotal</span>
-            <span className="font-medium text-[var(--color-ink)]">${cart.subtotal}</span>
-          </div>
-
-          {appliedCoupon ? (
-            <div className="flex items-center justify-between text-[var(--color-success)]">
-              <span className="flex items-center gap-1.5">
-                <span>Coupon ({appliedCoupon.code})</span>
-                <button
-                  type="button"
-                  onClick={removeCoupon}
-                  className="text-xs text-[var(--text-muted)] hover:text-[var(--color-error)] underline"
-                  aria-label="Remove coupon"
+      <OrderSummaryCard
+        className="sf-cart__summary"
+        subtotal={cart.subtotal}
+        discount={discount}
+        coupon={
+          appliedCoupon
+            ? { code: appliedCoupon.code ?? couponCode.trim(), discount }
+            : undefined
+        }
+        onRemoveCoupon={appliedCoupon ? removeCoupon : undefined}
+        action={
+          <div className="sf-summary__stack">
+            <div className="sf-summary__coupon">
+              <label
+                htmlFor="cart-coupon-input"
+                className="sf-summary__coupon-label"
+              >
+                Discount code
+              </label>
+              <div className="sf-summary__coupon-row">
+                <Input
+                  id="cart-coupon-input"
+                  value={couponCode}
+                  onChange={(value) => dispatch({ type: "coupon/type", code: value })}
+                  placeholder="Enter code"
+                  size="sm"
+                  disabled={couponLoading || !!appliedCoupon}
+                />
+                <Button
+                  variant="light"
+                  size="sm"
+                  onClick={() => void applyCoupon()}
+                  disabled={couponLoading || !couponCode.trim() || !!appliedCoupon}
                 >
-                  Remove
-                </button>
-              </span>
-              <span className="font-medium">-${discount}</span>
-            </div>
-          ) : null}
-
-          <div className="flex items-baseline justify-between border-t border-[var(--border)] pt-3 text-base font-semibold">
-            <span className="text-[var(--color-ink)]">Estimated Total</span>
-            <span className="text-lg text-[var(--color-ink)]">${estimatedTotal}</span>
-          </div>
-        </div>
-
-        {/* Coupon code input */}
-        <div className="border-t border-[var(--border)] pt-4">
-          <label
-            htmlFor="cart-coupon-input"
-            className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2"
-          >
-            Discount code
-          </label>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <Input
-                id="cart-coupon-input"
-                value={couponCode}
-                onChange={(value) => dispatch({ type: "coupon/type", code: value })}
-                placeholder="Enter code"
-                size="sm"
-                disabled={couponLoading || !!appliedCoupon}
+                  {couponLoading ? "Applying…" : "Apply"}
+                </Button>
+              </div>
+              <QuickPromos
+                applied={appliedCoupon?.code}
+                onPick={(code) => {
+                  dispatch({ type: "coupon/type", code });
+                  void applyCoupon(code);
+                }}
               />
+              {couponError ? (
+                <p className="sf-summary__coupon-error" role="alert">
+                  {couponError}
+                </p>
+              ) : null}
             </div>
-            <Button
-              variant="light"
-              size="sm"
-              onClick={() => void applyCoupon()}
-              disabled={couponLoading || !couponCode.trim() || !!appliedCoupon}
-            >
-              {couponLoading ? "Applying…" : "Apply"}
+            <Button fullWidth onClick={() => router.push(checkoutUrl)}>
+              Checkout
+            </Button>
+            <Button variant="ghost-ink" fullWidth onClick={() => void cart.clear()}>
+              Empty cart
+            </Button>
+            <Button variant="light" fullWidth onClick={() => router.push("/products")}>
+              Continue shopping
             </Button>
           </div>
-          {couponError ? (
-            <p className="mt-1.5 text-xs text-[var(--color-error)]" role="alert">
-              {couponError}
-            </p>
-          ) : null}
-          {appliedCoupon ? (
-            <p className="mt-1.5 text-xs text-[var(--color-success)]">
-              Coupon {appliedCoupon.code} applied!
-            </p>
-          ) : null}
-        </div>
-
-        <div className="grid gap-2 pt-2">
-          <Button fullWidth onClick={() => router.push(checkoutUrl)}>
-            Checkout
-          </Button>
-          <Button variant="ghost-ink" fullWidth onClick={() => void cart.clear()}>
-            Empty cart
-          </Button>
-          <Button variant="light" fullWidth onClick={() => router.push("/products")}>
-            Continue shopping
-          </Button>
-        </div>
-      </aside>
+        }
+      />
     </div>
   );
 }

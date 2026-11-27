@@ -5572,6 +5572,92 @@ body {
   display: none;
 }
 
+/* sf-093: money-page chrome. Paint resolves through vars; selected/motion
+   faces are data attributes so the stylesheet owns every visual decision. */
+.sf-cart__summary,
+.sf-checkout__summary {
+  display: grid;
+  align-content: start;
+  gap: var(--money-stack-gap, 16px);
+  min-width: 0;
+}
+.sf-checkout__summary-card {
+  position: sticky;
+  top: var(--money-sticky-top, 16px);
+}
+.sf-summary__stack {
+  display: grid;
+  gap: var(--money-action-gap, 8px);
+}
+.sf-summary__coupon {
+  display: grid;
+  gap: var(--money-coupon-gap, 8px);
+  border-top: 1px solid var(--border);
+  padding-top: var(--money-coupon-pad, 12px);
+}
+.sf-summary__coupon-row {
+  display: flex;
+  gap: var(--money-coupon-gap, 8px);
+}
+.sf-summary__coupon-label {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: var(--money-label-track, 0.06em);
+  text-transform: uppercase;
+}
+.sf-summary__coupon-error,
+.sf-summary__note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+.sf-summary__coupon-error {
+  color: var(--color-error-fg, var(--color-error));
+}
+.sf-quickpromos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--promo-gap, 6px);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+.sf-payment-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--payment-gap, 8px);
+}
+.sf-payment-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--payment-pill-gap, 6px);
+  padding: var(--payment-pill-pad, 8px 12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--surface);
+  color: var(--color-ink);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+.sf-payment-pill[data-selected="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-50, var(--brand-wash, var(--surface)));
+  color: var(--color-accent);
+}
+.sf-payment-pill[aria-disabled="true"] {
+  cursor: default;
+  color: var(--text-muted);
+}
+.sf-payment-pill__icon {
+  width: var(--payment-icon-size, 20px);
+  height: var(--payment-icon-size, 20px);
+}
+.sf-confirmation__timeline {
+  display: grid;
+  gap: var(--timeline-section-gap, 10px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sf-segmented__btn,
   .sf-menu__panel {

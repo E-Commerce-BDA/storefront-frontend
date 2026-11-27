@@ -31,6 +31,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Checkbox, ErrorState, Input, LoadingState, Select, Textarea } from "@/components/ui";
 import CartLineItem from "@/components/shell/CartLineItem";
 import CheckoutSteps from "@/components/shell/CheckoutSteps";
+import OrderSummaryCard from "@/components/commerce/OrderSummaryCard";
+import PaymentPill from "@/components/commerce/PaymentPill";
 import { fetchAddresses } from "@/lib/account/port";
 import { resolveCheckoutSteps } from "@/lib/checkout/steps";
 import { useCart } from "@/app/_components/CartProvider";
@@ -44,9 +46,10 @@ import {
   type CheckoutInput,
   type DiscountValidationResult,
 } from "@/lib/order/schemas";
-import { discountAmount, totalAfterDiscount } from "@/lib/order/discount";
+import { discountAmount } from "@/lib/order/discount";
 import { nextKey, type IdemPair } from "@/lib/checkout/idempotency";
 import { isShortLine, resolveShortfall } from "@/lib/checkout/shortfall";
+import { resolvePaymentMethods } from "@/lib/checkout/payment";
 import { checkoutMachine, initialCheckoutMachine, shouldBounceToCart } from "@/lib/checkout/machine";
 import {
   checkoutFieldsMachine,
@@ -295,7 +298,6 @@ export default function CheckoutForm() {
   const busy = cart.status === "loading";
   const hasPlaceholders = cart.items.some((line) => isPendingId(line.id));
   const discount = discountAmount(discountResult, cart.subtotal);
-  const estimatedTotal = totalAfterDiscount(cart.subtotal, discount);
   const shortfall = banner?.shortfall ?? null;
   const shortLines =
     shortfall === null ? [] : cart.items.filter((line) => isShortLine(shortfall, line));
@@ -422,7 +424,11 @@ export default function CheckoutForm() {
 
         <fieldset className="grid gap-4 border-0 p-0 min-w-0" disabled={submitting}>
           <legend className="mb-2 p-0 text-base font-semibold text-[var(--color-ink)]">Payment</legend>
-          <Select label="Provider" value="mock" onChange={() => {}} options={[{ value: "mock", label: "Mock card (no real charge)" }]} />
+          <div className="sf-payment-pills" role="radiogroup" aria-label="Payment provider">
+            {resolvePaymentMethods("mock").map((method) => (
+              <PaymentPill key={method.id} {...method} onSelect={() => {}} />
+            ))}
+          </div>
           <Input
             label="Discount code (optional)"
             value={discountCode}
@@ -443,8 +449,10 @@ export default function CheckoutForm() {
         </Button>
       </form>
 
-      <aside className="flex flex-col gap-4 self-start" aria-label="Order summary">
-        <h2 className="m-0 text-base font-semibold text-[var(--color-ink)]">{cart.count} {cart.count === 1 ? "item" : "items"}</h2>
+      <div className="sf-checkout__summary">
+        <h2 className="m-0 text-base font-semibold text-[var(--color-ink)]">
+          {cart.count} {cart.count === 1 ? "item" : "items"}
+        </h2>
         <ul className="m-0 grid list-none gap-3 p-0" role="list">
           {cart.items.map((line) => (
             <CartLineItem
@@ -456,26 +464,22 @@ export default function CheckoutForm() {
             />
           ))}
         </ul>
-        <div className="flex items-baseline justify-between">
-          <span className="text-sm text-[var(--text-muted)]">Subtotal</span>
-          <span className="text-sm text-[var(--color-ink)]">${cart.subtotal}</span>
-        </div>
-        {discountResult && discount > 0 ? (
-          <div className="flex items-baseline justify-between text-[var(--color-success)]">
-            <span className="text-sm">
-              Coupon ({discountResult.code ?? discountCode.trim()})
-            </span>
-            <span className="text-sm font-medium">-${discount}</span>
-          </div>
-        ) : null}
-        <div className="flex items-baseline justify-between border-t border-[var(--border)] pt-3">
-          <span className="text-sm font-semibold text-[var(--color-ink)]">Estimated total</span>
-          <span className="text-lg font-semibold text-[var(--color-ink)]">${estimatedTotal}</span>
-        </div>
-        <p className="m-0 text-xs text-[var(--text-muted)]">
-          Shipping and tax are calculated by the order service and shown on the confirmation.
-        </p>
-      </aside>
+        <OrderSummaryCard
+          className="sf-checkout__summary-card"
+          subtotal={cart.subtotal}
+          discount={discount}
+          coupon={
+            discountResult && discount > 0
+              ? { code: discountResult.code ?? discountCode.trim(), discount }
+              : undefined
+          }
+          action={
+            <p className="sf-summary__note">
+              Shipping and tax are calculated by the order service and shown on the confirmation.
+            </p>
+          }
+        />
+      </div>
     </div>
   );
 }
