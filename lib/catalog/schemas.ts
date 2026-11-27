@@ -44,6 +44,11 @@ export const cardBadgeSchema = z
   })
   .loose();
 
+export type CatalogBadge = z.infer<typeof cardBadgeSchema>;
+
+/** Public badge list for the 2.2.0 storefront config envelope. */
+export const badgeListResponseSchema = z.object({ data: z.array(cardBadgeSchema) }).loose();
+
 export const cardOptionValueSchema = z
   .object({
     id: z.string().optional(),

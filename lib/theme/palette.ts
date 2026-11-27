@@ -392,3 +392,292 @@ export function resolvePalette(input: ResolvePaletteInput = {}): ResolvedPalette
   }
   return result;
 }
+
+/* -------------------------------------------------------------------------- *
+ * contracts 2.2.0 component groups (sf-084 follow-up)
+ *
+ * These are paint/geometry projections onto families the stylesheet already
+ * reads: --nb-*, --facet-*, --minicart-*, --strip-* and --marquee-*, --grid-gap and
+ * --pc-cta-*. Same sparse merge, same reset-as-delete, same contract clamps as
+ * the palette above. Locked palette faces stay locked because group values
+ * cannot name them; a group may only retune its own projection.
+ * -------------------------------------------------------------------------- */
+
+export type ComponentGroupScalar = string | number | boolean | null;
+
+export interface ComponentGroupLayer {
+  navbar?: {
+    height?: ComponentGroupScalar;
+    bg?: ComponentGroupScalar;
+    text?: ComponentGroupScalar;
+    hover?: ComponentGroupScalar;
+    badgeBg?: ComponentGroupScalar;
+    badgeText?: ComponentGroupScalar;
+    announceBg?: ComponentGroupScalar;
+    announceText?: ComponentGroupScalar;
+  } | null;
+  filterRail?: {
+    bg?: ComponentGroupScalar;
+    border?: ComponentGroupScalar;
+    title?: ComponentGroupScalar;
+    label?: ComponentGroupScalar;
+    gap?: ComponentGroupScalar;
+    pad?: ComponentGroupScalar;
+    radius?: ComponentGroupScalar;
+    actionGap?: ComponentGroupScalar;
+    maxHeight?: ComponentGroupScalar;
+    headGap?: ComponentGroupScalar;
+    titleSize?: ComponentGroupScalar;
+    innerGap?: ComponentGroupScalar;
+    labelSize?: ComponentGroupScalar;
+    priceGap?: ComponentGroupScalar;
+    tagGap?: ComponentGroupScalar;
+    tagMax?: ComponentGroupScalar;
+  } | null;
+  drawer?: {
+    bg?: ComponentGroupScalar;
+    text?: ComponentGroupScalar;
+    borderColor?: ComponentGroupScalar;
+    overlayColor?: ComponentGroupScalar;
+    width?: ComponentGroupScalar;
+    durationMs?: ComponentGroupScalar;
+    motion?: ComponentGroupScalar;
+  } | null;
+  marquee?: {
+    speed?: ComponentGroupScalar;
+    direction?: ComponentGroupScalar;
+    pauseOnHover?: ComponentGroupScalar;
+  } | null;
+  grid?: { gap?: ComponentGroupScalar } | null;
+  productCard?: {
+    ctaBg?: ComponentGroupScalar;
+    ctaTextColor?: ComponentGroupScalar;
+    ctaBorderColor?: ComponentGroupScalar;
+  } | null;
+}
+
+export interface ResolvedComponentGroups {
+  navbarHeight: number;
+  navbarBg: string;
+  navbarText: string;
+  navbarHover: string;
+  navbarBadgeBg: string;
+  navbarBadgeText: string;
+  navbarAnnounceBg: string;
+  navbarAnnounceText: string;
+  facetBg: string;
+  facetBorder: string;
+  facetTitle: string;
+  facetLabel: string;
+  facetGap: number;
+  facetPad: number;
+  facetRadius: number;
+  facetActionGap: number;
+  facetMaxHeight: number;
+  facetHeadGap: number;
+  facetTitleSize: number;
+  facetInnerGap: number;
+  facetLabelSize: number;
+  facetPriceGap: number;
+  facetTagGap: number;
+  facetTagMax: number;
+  drawerBg: string;
+  drawerText: string;
+  drawerBorderColor: string;
+  drawerOverlayColor: string;
+  drawerWidth: number;
+  drawerDurationMs: number;
+  drawerMotion: "slide" | "fade" | "none";
+  marqueeSpeed: number;
+  marqueeDirection: "left" | "right";
+  marqueePauseOnHover: boolean;
+  gridGap: number;
+  pcCtaBg: string;
+  pcCtaText: string;
+  pcCtaBorder: string;
+}
+
+export type ComponentGroupFlat = Partial<Record<keyof ResolvedComponentGroups, ComponentGroupScalar>>;
+
+/** Bounds from contracts 2.2.0 theme{FilterRail,Drawer,Marquee,Grid}GroupSchema. */
+export const COMPONENT_GROUP_LIMITS = {
+  navbarHeight: { min: 48, max: 96 },
+  facetGap: { min: 0, max: 40 },
+  facetPad: { min: 0, max: 40 },
+  facetRadius: { min: 0, max: 24 },
+  facetActionGap: { min: 0, max: 24 },
+  facetMaxHeight: { min: 120, max: 800 },
+  facetHeadGap: { min: 0, max: 24 },
+  facetTitleSize: { min: 12, max: 28 },
+  facetInnerGap: { min: 0, max: 24 },
+  facetLabelSize: { min: 10, max: 20 },
+  facetPriceGap: { min: 0, max: 24 },
+  facetTagGap: { min: 0, max: 20 },
+  facetTagMax: { min: 60, max: 400 },
+  drawerWidth: { min: 280, max: 480 },
+  drawerDurationMs: { min: 100, max: 600 },
+  marqueeSpeed: { min: 20, max: 200 },
+  gridGap: { min: 0, max: 48 },
+} as const;
+
+const COMPONENT_GROUP_FIELDS: Record<string, Record<string, keyof ResolvedComponentGroups>> = {
+  navbar: {
+    height: "navbarHeight", bg: "navbarBg", text: "navbarText", hover: "navbarHover",
+    badgeBg: "navbarBadgeBg", badgeText: "navbarBadgeText",
+    announceBg: "navbarAnnounceBg", announceText: "navbarAnnounceText",
+  },
+  filterRail: {
+    bg: "facetBg", border: "facetBorder", title: "facetTitle", label: "facetLabel",
+    gap: "facetGap", pad: "facetPad", radius: "facetRadius", actionGap: "facetActionGap",
+    maxHeight: "facetMaxHeight", headGap: "facetHeadGap", titleSize: "facetTitleSize",
+    innerGap: "facetInnerGap", labelSize: "facetLabelSize", priceGap: "facetPriceGap",
+    tagGap: "facetTagGap", tagMax: "facetTagMax",
+  },
+  drawer: {
+    bg: "drawerBg", text: "drawerText", borderColor: "drawerBorderColor",
+    overlayColor: "drawerOverlayColor", width: "drawerWidth",
+    durationMs: "drawerDurationMs", motion: "drawerMotion",
+  },
+  marquee: { speed: "marqueeSpeed", direction: "marqueeDirection", pauseOnHover: "marqueePauseOnHover" },
+  grid: { gap: "gridGap" },
+  productCard: { ctaBg: "pcCtaBg", ctaTextColor: "pcCtaText", ctaBorderColor: "pcCtaBorder" },
+};
+
+const GROUP_FLAT_KEYS = new Set<string>(
+  Object.values(COMPONENT_GROUP_FIELDS).flatMap((fields) => Object.values(fields)),
+);
+const GROUP_NUMBER_KEYS = new Set<keyof ResolvedComponentGroups>(
+  Object.keys(COMPONENT_GROUP_LIMITS) as Array<keyof ResolvedComponentGroups>,
+);
+const GROUP_CSS_COLOR_KEYS = new Set<keyof ResolvedComponentGroups>(["drawerOverlayColor"]);
+
+function setGroupValue(
+  target: ComponentGroupFlat,
+  key: keyof ResolvedComponentGroups,
+  value: ComponentGroupScalar | undefined,
+): void {
+  if (value === undefined || value === null || value === "") {
+    delete target[key];
+    return;
+  }
+  if (typeof value === "number" && !Number.isFinite(value)) {
+    delete target[key];
+    return;
+  }
+  target[key] = value;
+}
+
+function normalizeGroups(layer: ComponentGroupLayer | ComponentGroupFlat | null | undefined): ComponentGroupFlat {
+  const flat: ComponentGroupFlat = {};
+  if (!layer || typeof layer !== "object") return flat;
+  for (const [name, raw] of Object.entries(layer)) {
+    if (raw !== null && typeof raw === "object" && !Array.isArray(raw)) {
+      const fields = COMPONENT_GROUP_FIELDS[name];
+      if (!fields) continue;
+      for (const [field, key] of Object.entries(fields)) {
+        setGroupValue(flat, key, (raw as Record<string, ComponentGroupScalar | undefined>)[field]);
+      }
+    } else if (GROUP_FLAT_KEYS.has(name)) {
+      // Flat product/slide props use concrete keys (e.g. navbarBg, gridGap).
+      setGroupValue(flat, name as keyof ResolvedComponentGroups, raw as ComponentGroupScalar);
+    }
+  }
+  return flat;
+}
+
+/** Builtins mirror the stylesheet fallbacks; colors follow the resolved palette. */
+export function defaultComponentGroups(palette: ResolvedPalette): ResolvedComponentGroups {
+  return {
+    navbarHeight: 64,
+    navbarBg: palette.navbarBg,
+    navbarText: palette.navbarText,
+    navbarHover: palette.navbarHover,
+    navbarBadgeBg: palette.navbarBadgeBg,
+    navbarBadgeText: palette.navbarBadgeText,
+    navbarAnnounceBg: palette.navbarAnnounceBg,
+    navbarAnnounceText: palette.navbarAnnounceText,
+    facetBg: palette.navbarBg,
+    facetBorder: palette.border,
+    facetTitle: palette.ink,
+    facetLabel: palette.ink,
+    facetGap: 20,
+    facetPad: 16,
+    facetRadius: 10,
+    facetActionGap: 8,
+    facetMaxHeight: 320,
+    facetHeadGap: 8,
+    facetTitleSize: 18,
+    facetInnerGap: 8,
+    facetLabelSize: 14,
+    facetPriceGap: 8,
+    facetTagGap: 6,
+    facetTagMax: 220,
+    drawerBg: palette.surface,
+    drawerText: palette.ink,
+    drawerBorderColor: palette.border,
+    drawerOverlayColor: "rgba(10, 37, 64, 0.5)",
+    drawerWidth: 380,
+    drawerDurationMs: 240,
+    drawerMotion: "slide",
+    marqueeSpeed: 60,
+    marqueeDirection: "left",
+    marqueePauseOnHover: true,
+    gridGap: 20,
+    pcCtaBg: palette.surface,
+    pcCtaText: palette.ink,
+    pcCtaBorder: palette.border,
+  };
+}
+
+export interface ResolveComponentGroupsInput {
+  flat?: ComponentGroupFlat | null;
+  component?: ComponentGroupLayer | ComponentGroupFlat | null;
+  section?: ComponentGroupLayer | ComponentGroupFlat | null;
+  global?: ComponentGroupLayer | ComponentGroupFlat | null;
+  /** The palette already resolved for this request (its colors are defaults). */
+  palette: ResolvedPalette;
+}
+
+/**
+ * Pure merge with the same precedence as `resolvePalette`: flat props win,
+ * then component, section and global. Wrong types are misses, never blanks.
+ */
+export function resolveComponentGroups(input: ResolveComponentGroupsInput): ResolvedComponentGroups {
+  const merged: ComponentGroupFlat = {
+    ...normalizeGroups(input.global),
+    ...normalizeGroups(input.section),
+    ...normalizeGroups(input.component),
+    ...normalizeGroups(input.flat),
+  };
+  const result = defaultComponentGroups(input.palette);
+  for (const key of Object.keys(result) as Array<keyof ResolvedComponentGroups>) {
+    const value = merged[key];
+    if (value === undefined) continue;
+    if (GROUP_NUMBER_KEYS.has(key)) {
+      if (typeof value === "number" && Number.isFinite(value)) {
+        const bounds = COMPONENT_GROUP_LIMITS[key as keyof typeof COMPONENT_GROUP_LIMITS];
+        (result as Record<keyof ResolvedComponentGroups, string | number | boolean>)[key] =
+          Math.min(bounds.max, Math.max(bounds.min, Math.round(value)));
+      }
+      continue;
+    }
+    if (key === "drawerMotion") {
+      if (value === "slide" || value === "fade" || value === "none") result.drawerMotion = value;
+      continue;
+    }
+    if (key === "marqueeDirection") {
+      if (value === "left" || value === "right") result.marqueeDirection = value;
+      continue;
+    }
+    if (key === "marqueePauseOnHover") {
+      if (typeof value === "boolean") result.marqueePauseOnHover = value;
+      continue;
+    }
+    if (typeof value !== "string") continue;
+    const pattern = GROUP_CSS_COLOR_KEYS.has(key) ? CSS_COLOR : HEX_COLOR;
+    if (pattern.test(value)) {
+      (result as Record<keyof ResolvedComponentGroups, string | number | boolean>)[key] = value;
+    }
+  }
+  return result;
+}

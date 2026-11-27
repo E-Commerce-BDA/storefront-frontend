@@ -1,9 +1,13 @@
 import { themeSettingsSchema } from "@ecom/contracts";
 import { describe, expect, it } from "vitest";
 import {
+  COMPONENT_GROUP_LIMITS,
   DEFAULT_PALETTE,
   PALETTE_LIMITS,
+  defaultComponentGroups,
+  resolveComponentGroups,
   resolvePalette,
+  type ComponentGroupFlat,
   type PaletteLayer,
   type ResolvedPalette,
 } from "@/lib/theme/palette";
@@ -140,5 +144,121 @@ describe("resolvePalette", () => {
     expect(result.brand).toBe("#123456");
     expect(result.radiusCard).toBe(9);
     expect(result.fsDisplay1).toBe(80);
+  });
+});
+
+describe("resolveComponentGroups", () => {
+  const builtins = () => defaultComponentGroups(DEFAULT_PALETTE);
+
+  it("mirrors the stylesheet fallbacks for every group", () => {
+    const groups = resolveComponentGroups({ palette: DEFAULT_PALETTE });
+    expect(groups).toEqual(builtins());
+    expect(groups.navbarHeight).toBe(64);
+    expect(groups.facetGap).toBe(20);
+    expect(groups.drawerWidth).toBe(380);
+    expect(groups.marqueeSpeed).toBe(60);
+    expect(groups.gridGap).toBe(20);
+    expect(groups.pcCtaBg).toBe(DEFAULT_PALETTE.surface);
+  });
+
+  it("follows the same per-key precedence and palette-derived defaults", () => {
+    const palette = resolvePalette({ global: { navbar: { bg: "#123456" }, ink: { ink: "#0f0f0f" } } });
+    const groups = resolveComponentGroups({
+      palette,
+      global: { navbar: { height: 70 }, filterRail: { gap: 12 } },
+      section: { navbar: { text: "#abcdef" }, grid: { gap: 24 } },
+      component: { filterRail: { gap: 14 }, productCard: { ctaBg: "#111111" } },
+      flat: { navbarHeight: 80, gridGap: 32 },
+    });
+    expect(groups.navbarHeight).toBe(80);
+    expect(groups.gridGap).toBe(32);
+    expect(groups.facetGap).toBe(14);
+    expect(groups.navbarText).toBe("#abcdef");
+    expect(groups.navbarBg, "palette navbar color is the builtin").toBe("#123456");
+    expect(groups.facetTitle, "palette ink is the builtin").toBe("#0f0f0f");
+    expect(groups.pcCtaBg).toBe("#111111");
+  });
+
+  it("resets delete keys and never writes null", () => {
+    const groups = resolveComponentGroups({
+      palette: DEFAULT_PALETTE,
+      global: { drawer: { width: 400, bg: "#123456" }, grid: { gap: 24 } },
+      section: { drawer: { width: null, bg: "" } },
+      component: { grid: { gap: null } },
+    });
+    expect(groups.drawerWidth, "section reset exposes global").toBe(400);
+    expect(groups.drawerBg, "empty string deletes the section key").toBe("#123456");
+    expect(groups.gridGap, "component reset exposes section").toBe(24);
+    const resetOnly = resolveComponentGroups({
+      palette: DEFAULT_PALETTE,
+      global: { drawer: { width: null } },
+    });
+    expect(resetOnly.drawerWidth, "reset with no lower override reaches builtin").toBe(builtins().drawerWidth);
+    expect(JSON.stringify(groups)).not.toContain("null");
+  });
+
+  it("clamps geometry and refuses wrong enums, booleans and colors", () => {
+    const groups = resolveComponentGroups({
+      palette: DEFAULT_PALETTE,
+      global: {
+        navbar: { height: 999 },
+        filterRail: { radius: 99, titleSize: 1 },
+        drawer: { width: 1000, durationMs: 1, motion: "bounce" as never, overlayColor: "url(evil)" as never },
+        marquee: { speed: 999, direction: "up" as never, pauseOnHover: "yes" as never },
+        grid: { gap: 999 },
+        productCard: { ctaBg: "blue" as never },
+      },
+    });
+    expect(groups.navbarHeight).toBe(COMPONENT_GROUP_LIMITS.navbarHeight.max);
+    expect(groups.facetRadius).toBe(COMPONENT_GROUP_LIMITS.facetRadius.max);
+    expect(groups.facetTitleSize).toBe(COMPONENT_GROUP_LIMITS.facetTitleSize.min);
+    expect(groups.drawerWidth).toBe(COMPONENT_GROUP_LIMITS.drawerWidth.max);
+    expect(groups.drawerDurationMs).toBe(COMPONENT_GROUP_LIMITS.drawerDurationMs.min);
+    expect(groups.drawerMotion).toBe("slide");
+    expect(groups.drawerOverlayColor).toBe(builtins().drawerOverlayColor);
+    expect(groups.marqueeSpeed).toBe(COMPONENT_GROUP_LIMITS.marqueeSpeed.max);
+    expect(groups.marqueeDirection).toBe("left");
+    expect(groups.marqueePauseOnHover).toBe(true);
+    expect(groups.gridGap).toBe(COMPONENT_GROUP_LIMITS.gridGap.max);
+    expect(groups.pcCtaBg).toBe(builtins().pcCtaBg);
+  });
+
+  it("ignores locked palette keys arriving on the component flat layer", () => {
+    const groups = resolveComponentGroups({
+      palette: DEFAULT_PALETTE,
+      flat: { onBrand: "#000000", focusOutline: "#000000" } as unknown as ComponentGroupFlat,
+    });
+    expect(JSON.stringify(groups)).not.toContain("#000000");
+  });
+
+  it("resolves contract-validated group reads from a 2.2.0 theme", () => {
+    const parsed = themeSettingsSchema.parse({
+      navbar: { height: 72, bg: "#ffffff" },
+      filterRail: { gap: 24 },
+      drawer: { width: 420, motion: "fade" },
+      marquee: { speed: 90, direction: "right", pauseOnHover: false },
+      grid: { gap: 0 },
+      productCard: { ctaBg: "#0077b6", ctaTextColor: "#ffffff", ctaBorderColor: "" },
+    });
+    const groups = resolveComponentGroups({
+      palette: DEFAULT_PALETTE,
+      global: {
+        navbar: parsed.navbar,
+        filterRail: parsed.filterRail,
+        drawer: parsed.drawer,
+        marquee: parsed.marquee,
+        grid: parsed.grid,
+        productCard: parsed.productCard,
+      },
+    });
+    expect(groups.navbarHeight).toBe(72);
+    expect(groups.facetGap).toBe(24);
+    expect(groups.drawerWidth).toBe(420);
+    expect(groups.drawerMotion).toBe("fade");
+    expect(groups.marqueeDirection).toBe("right");
+    expect(groups.marqueePauseOnHover).toBe(false);
+    expect(groups.gridGap).toBe(0);
+    expect(groups.pcCtaBg).toBe("#0077b6");
+    expect(groups.pcCtaBorder).toBe(DEFAULT_PALETTE.border);
   });
 });

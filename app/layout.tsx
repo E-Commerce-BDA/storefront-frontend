@@ -5,7 +5,7 @@ import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/lib/site";
 import { fetchThemeSettings } from "@/lib/cms/theme";
 import { resolveThemeSettings } from "@/lib/cms/themeSettings";
 import { themeToCssVars } from "@/lib/cms/themeVars";
-import { resolvePalette } from "@/lib/theme/palette";
+import { resolveComponentGroups, resolvePalette } from "@/lib/theme/palette";
 import { paletteToThemeVars } from "@/lib/theme/vars";
 
 const fraunces = Fraunces({
@@ -49,9 +49,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // The palette is a separate, versioned layer: cms-svc validation keeps raw
   // admin CSS out, the resolver clamps it, and the emitter paints via vars.
   const palette = resolvePalette({ global: themeResult.theme?.palette });
+  const groups = resolveComponentGroups({
+    palette,
+    global: {
+      navbar: themeResult.theme?.navbar,
+      filterRail: themeResult.theme?.filterRail,
+      drawer: themeResult.theme?.drawer,
+      marquee: themeResult.theme?.marquee,
+      grid: themeResult.theme?.grid,
+      productCard: themeResult.theme?.productCard,
+    },
+  });
   return (
     <html lang="en" className={`${fraunces.variable} ${outfit.variable}`}>
-      <body style={{ ...themeToCssVars(theme), ...paletteToThemeVars(palette) }}>{children}</body>
+      <body style={{ ...themeToCssVars(theme), ...paletteToThemeVars(palette, groups) }}>{children}</body>
     </html>
   );
 }

@@ -13,7 +13,12 @@
  */
 
 import { themeVarsSchema } from "@ecom/contracts";
-import type { ResolvedPalette } from "./palette";
+import {
+  DEFAULT_PALETTE,
+  defaultComponentGroups,
+  type ResolvedComponentGroups,
+  type ResolvedPalette,
+} from "./palette";
 
 export type ThemeVars = Record<string, string | number>;
 
@@ -140,8 +145,76 @@ const LEGACY_VARS: ReadonlyArray<[string, string]> = [
   ["--radius-md", "var(--sf-radius-md)"],
 ];
 
+/**
+ * Component groups onto the families the stylesheet already reads.
+ * Strip paint comes from semantics (one definition per family); the marquee
+ * clock is calibrated so the builtin 60 px/s keeps the shipped 30 s fallback
+ * instead of changing every strip the moment this token is emitted.
+ */
+export function componentGroupsToThemeVars(groups: ResolvedComponentGroups): ThemeVars {
+  const vars: ThemeVars = {};
+  vars["--nb-height"] = `${groups.navbarHeight}px`;
+  vars["--nb-bg"] = groups.navbarBg;
+  vars["--nb-text"] = groups.navbarText;
+  vars["--nb-hover"] = groups.navbarHover;
+  vars["--nb-badge-bg"] = groups.navbarBadgeBg;
+  vars["--nb-badge-text"] = groups.navbarBadgeText;
+  vars["--nb-announce-bg"] = groups.navbarAnnounceBg;
+  vars["--nb-announce-text"] = groups.navbarAnnounceText;
+
+  vars["--facet-bg"] = groups.facetBg;
+  vars["--facet-border"] = groups.facetBorder;
+  vars["--facet-title"] = groups.facetTitle;
+  vars["--facet-label"] = groups.facetLabel;
+  vars["--facet-gap"] = `${groups.facetGap}px`;
+  vars["--facet-pad"] = `${groups.facetPad}px`;
+  vars["--facet-radius"] = `${groups.facetRadius}px`;
+  vars["--facet-action-gap"] = `${groups.facetActionGap}px`;
+  vars["--facet-max-height"] = `${groups.facetMaxHeight}px`;
+  vars["--facet-head-gap"] = `${groups.facetHeadGap}px`;
+  vars["--facet-title-size"] = `${groups.facetTitleSize}px`;
+  vars["--facet-inner-gap"] = `${groups.facetInnerGap}px`;
+  vars["--facet-label-size"] = `${groups.facetLabelSize}px`;
+  vars["--facet-price-gap"] = `${groups.facetPriceGap}px`;
+  vars["--facet-tag-gap"] = `${groups.facetTagGap}px`;
+  vars["--facet-tag-max"] = `${groups.facetTagMax}px`;
+
+  vars["--minicart-bg"] = groups.drawerBg;
+  vars["--minicart-title"] = groups.drawerText;
+  vars["--minicart-subtotal"] = groups.drawerText;
+  vars["--minicart-border"] = groups.drawerBorderColor;
+  vars["--minicart-scrim"] = groups.drawerOverlayColor;
+  vars["--minicart-width"] = `${groups.drawerWidth}px`;
+  vars["--minicart-pad"] = "20px";
+  vars["--minicart-duration"] = `${groups.drawerDurationMs}ms`;
+  vars["--minicart-motion"] = groups.drawerMotion;
+
+  vars["--strip-cell-bg"] = "var(--sf-color-surface)";
+  vars["--strip-cell-border"] = "var(--sf-color-border)";
+  vars["--strip-wordmark"] = "var(--sf-color-ink)";
+  vars["--strip-cell-radius"] = "var(--sf-radius-card)";
+  const seconds = Math.min(240, Math.max(4, Number((1800 / groups.marqueeSpeed).toFixed(2))));
+  const builtin = defaultComponentGroups(DEFAULT_PALETTE);
+  // These two families carry per-section fallbacks of 16/20/32px and 30/40s.
+  // Emitting a global value at the builtin would silently restyle sections that
+  // have no inline override, so they are emitted only when admin actually
+  // retunes them; CSS keeps its own fallbacks otherwise.
+  if (seconds !== 30) vars["--marquee-duration"] = `${seconds}s`;
+  vars["--marquee-direction"] = groups.marqueeDirection === "right" ? "reverse" : "normal";
+  vars["--marquee-play-state"] = groups.marqueePauseOnHover ? "paused" : "running";
+  if (groups.gridGap !== builtin.gridGap) vars["--grid-gap"] = `${groups.gridGap}px`;
+
+  vars["--pc-cta-bg"] = groups.pcCtaBg;
+  vars["--pc-cta-text"] = groups.pcCtaText;
+  vars["--pc-cta-border"] = groups.pcCtaBorder;
+  return vars;
+}
+
 /** Every emitted key has a fallback mirror in `app/globals.css :root`. */
-export function paletteToThemeVars(palette: ResolvedPalette): ThemeVars {
+export function paletteToThemeVars(
+  palette: ResolvedPalette,
+  groups?: ResolvedComponentGroups,
+): ThemeVars {
   const vars: ThemeVars = {};
   for (const [key, name] of SEMANTIC_VARS) vars[name] = palette[key];
   for (const [key, name] of STATE_VARS) vars[name] = palette[key];
@@ -160,6 +233,7 @@ export function paletteToThemeVars(palette: ResolvedPalette): ThemeVars {
   vars["--sf-type-fs-caption"] = `${palette.fsCaption}px`;
   for (const [name, ref] of COMPONENT_VARS) vars[name] = ref;
   for (const [name, ref] of LEGACY_VARS) vars[name] = ref;
+  if (groups) Object.assign(vars, componentGroupsToThemeVars(groups));
 
   // Contracts 2.2.0 gates the wire shape; a failure here is an emitter bug,
   // not bad admin input (the resolver already rejected bad values).

@@ -31,22 +31,49 @@ describe("admin guard", () => {
 });
 
 describe("versioned config route", () => {
-  it("exposes the contract version and additive CMS fields", async () => {
-    const { STOREFRONT_CONFIG_VERSION } = await import("@/lib/config/version");
+  it("emits the contracts 2.2.0 envelope with resolved vars and preview metadata", async () => {
+    const { storefrontConfigResponseSchema } = await import("@ecom/contracts");
+    const { STOREFRONT_CONFIG_VERSION, STOREFRONT_CONFIG_VERSION_STRING } = await import("@/lib/config/version");
     const { GET } = await import("@/app/api/config/storefront/route");
+    const { PREVIEW_METADATA } = await import("@/lib/config/preview");
     const cms = await import("@/lib/cms/client");
-    const spy = vi.spyOn(cms, "createCmsClient").mockReturnValue({
-      getGlobalSettings: async () => ({ data: { theme: {}, version: 1, configured: true }, status: 200, code: null }),
+    const catalog = await import("@/lib/catalog/client");
+    const cmsSpy = vi.spyOn(cms, "createCmsClient").mockReturnValue({
+      getGlobalSettings: async () => ({
+        data: { theme: { palette: { brand: { brand: "#123456" } } }, version: 7, configured: true },
+        status: 200,
+        code: null,
+      }),
       getNavigation: async () => ({ data: { navbar: {}, version: 1 }, status: 200, code: null }),
       getFooter: async () => ({ data: { footer: {}, version: 1 }, status: 200, code: null }),
     } as never);
+    const badgeSpy = vi.spyOn(catalog, "catalogClient").mockReturnValue({
+      listPublicBadges: async () => ({
+        ok: true,
+        data: [
+          {
+            id: "11111111-1111-4111-8111-111111111111",
+            key: "sale",
+            label: "Sale",
+            bg: "#FF6B4A",
+            textColor: "#FFFFFF",
+          },
+        ],
+      }),
+    } as never);
     const response = await GET(new NextRequest("http://localhost/api/config/storefront"));
     const body = await response.json();
+    expect(storefrontConfigResponseSchema.safeParse(body).success).toBe(true);
+    expect(body.configVersion).toBe(STOREFRONT_CONFIG_VERSION_STRING);
+    expect(body.revision).toBe(7);
     expect(body.version).toBe(STOREFRONT_CONFIG_VERSION);
-    expect(body.theme.configured).toBe(true);
+    expect(body.theme["--sf-color-brand"]).toBe("#123456");
+    expect(body.palette.brand.brand).toBe("#123456");
+    expect(body.badges).toHaveLength(1);
+    expect(body.preview).toEqual(PREVIEW_METADATA);
     expect(body).toHaveProperty("navigation");
     expect(body).toHaveProperty("footer");
-    expect(body).toHaveProperty("badges");
-    spy.mockRestore();
+    cmsSpy.mockRestore();
+    badgeSpy.mockRestore();
   });
 });

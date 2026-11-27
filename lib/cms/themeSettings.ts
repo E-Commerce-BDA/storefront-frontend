@@ -1,6 +1,6 @@
 
 import type { ThemePhotoSettingsField } from "@ecom/contracts";
-import type { PaletteLayer } from "@/lib/theme/palette";
+import type { ComponentGroupLayer, PaletteLayer } from "@/lib/theme/palette";
 import type { ButtonAnimationField } from "./buttonAnimation";
 import { resolveOverlayMotion, type OverlayMotionField, type ResolvedOverlayMotion } from "@/lib/search/motion";
 import type {
@@ -249,6 +249,12 @@ export interface ThemeSettings {
   photoSettings?: ThemePhotoSettingsField;
   /** contracts 2.2.0 layered palette; resolved by lib/theme/palette.ts. */
   palette?: PaletteLayer;
+  /** contracts 2.2.0 component groups — paint/geometry projections only. */
+  navbar?: ComponentGroupLayer["navbar"];
+  filterRail?: ComponentGroupLayer["filterRail"];
+  drawer?: ComponentGroupLayer["drawer"];
+  marquee?: ComponentGroupLayer["marquee"];
+  grid?: ComponentGroupLayer["grid"];
 }
 
 

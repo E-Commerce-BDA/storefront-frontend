@@ -10,7 +10,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PALETTE } from "@/lib/theme/palette";
+import { DEFAULT_PALETTE, resolveComponentGroups } from "@/lib/theme/palette";
 import { paletteToThemeVars } from "@/lib/theme/vars";
 
 const css = readFileSync(
@@ -19,7 +19,10 @@ const css = readFileSync(
 );
 const root = css.match(/:root\s*\{([\s\S]*?)\}/)?.[1] ?? "";
 const inline = css.match(/@theme inline\s*\{([\s\S]*?)\}/)?.[1] ?? "";
-const emitted = paletteToThemeVars(DEFAULT_PALETTE);
+const emitted = paletteToThemeVars(
+  DEFAULT_PALETTE,
+  resolveComponentGroups({ palette: DEFAULT_PALETTE }),
+);
 const declared = new Set([...root.matchAll(/(--[a-z0-9-]+)\s*:/g)].map((m) => m[1]));
 
 describe("theme token style contract", () => {
@@ -41,7 +44,10 @@ describe("theme token style contract", () => {
   });
 
   it("keeps legacy aliases as references, never a second literal", () => {
-    const aliases = Object.keys(emitted).filter((name) => !name.startsWith("--sf-"));
+    // Only the palette emitter's legacy names are aliases; component families
+    // keep their own concrete CSS fallbacks (px/ms) and mirror those as-is.
+    const paletteEmitted = paletteToThemeVars(DEFAULT_PALETTE);
+    const aliases = Object.keys(paletteEmitted).filter((name) => !name.startsWith("--sf-"));
     expect(aliases.length).toBeGreaterThan(20);
     for (const name of aliases) {
       const matches = [...root.matchAll(new RegExp(`${name}\\s*:\\s*([^;]+);`, "g"))];
@@ -54,5 +60,15 @@ describe("theme token style contract", () => {
     expect(inline).toMatch(/--color-card:\s*var\(/);
     expect(inline).not.toMatch(/--color-card:\s*#/);
     expect(inline).toMatch(/--color-primary:\s*var\(--sf-color-brand\)/);
+  });
+
+  it("lets the component-group marquee tokens drive the existing track rules", () => {
+    expect(css).toMatch(/animation-direction:\s*var\(--marquee-direction,\s*normal\)/);
+    expect(css).toMatch(/animation-play-state:\s*var\(--marquee-play-state,\s*paused\)/);
+  });
+
+  it("keeps section-sized families out of :root so their per-section fallbacks survive", () => {
+    expect(root).not.toMatch(/--grid-gap\s*:/);
+    expect(root).not.toMatch(/--marquee-duration\s*:/);
   });
 });

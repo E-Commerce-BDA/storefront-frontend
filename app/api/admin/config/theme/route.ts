@@ -6,7 +6,9 @@ import { toResponse } from "@/lib/bff/handler";
 import { readJson, sameOrigin } from "@/lib/bff/handler";
 import { forbidden } from "@/lib/bff/handler";
 
-const PATH = "/api/v1/cms/settings/global";
+/** Reads stay on the public/versioned document; writes need the admin route. */
+const READ_PATH = "/api/v1/cms/settings/global";
+const WRITE_PATH = "/api/v1/cms/admin/settings/global";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { identity, error } = await requireAdmin(request);
@@ -14,7 +16,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   return toResponse(
     await forwardAdmin(request, {
       service: "cms",
-      path: PATH,
+      path: READ_PATH,
       identity,
       previewToken: previewTokenFrom(request),
     }),
@@ -28,7 +30,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
   return toResponse(
     await forwardAdmin(request, {
       service: "cms",
-      path: PATH,
+      path: WRITE_PATH,
       method: "PUT",
       body: await readJson(request),
       identity,

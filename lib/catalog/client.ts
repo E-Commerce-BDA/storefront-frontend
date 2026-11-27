@@ -22,6 +22,8 @@ import { catalogTag } from "@/lib/cms/tags";
 import { createServiceClient } from "@/lib/http/client";
 import type { Perform, ServiceResult } from "@/lib/http/result";
 import {
+  badgeListResponseSchema,
+  type CatalogBadge,
   brandListResponseSchema,
   brandResponseSchema,
   categoryListResponseSchema,
@@ -76,6 +78,8 @@ export interface CatalogClient {
   getCategory(slug: string): Promise<ServiceResult<CatalogCategory>>;
   listBrands(): Promise<ServiceResult<CatalogBrand[]>>;
   getBrand(slug: string): Promise<ServiceResult<CatalogBrand>>;
+  /** Active badges only; powers the resolved storefront config envelope. */
+  listPublicBadges(): Promise<ServiceResult<CatalogBadge[]>>;
 }
 
 const BASE = "/api/v1/catalog";
@@ -193,6 +197,17 @@ export function createCatalogClient(perform: Perform): CatalogClient {
       });
       if (!result.ok) return result;
       return { ok: true, data: result.data.brand };
+    },
+
+    async listPublicBadges() {
+      const result = await perform({
+        path: `${BASE}/badges`,
+        query: { activeOnly: "true" },
+        schema: badgeListResponseSchema,
+        cache,
+      });
+      if (!result.ok) return result;
+      return { ok: true, data: result.data.data };
     },
   };
 }

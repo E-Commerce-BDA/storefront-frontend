@@ -123,7 +123,7 @@ describe("section state contract", () => {
       /\.sf-strip\[data-motion="marquee"\]\[data-pause="true"\]:hover\s*\.sf-strip__track/,
     );
     expect(css).toMatch(/:focus-within\s*\.sf-testimonials__track/);
-    expect(css).toMatch(/animation-play-state:\s*paused/);
+    expect(css).toMatch(/animation-play-state:\s*var\(--marquee-play-state,\s*paused\)/);
   });
 
   it("renders the strip and the quotes static under reduced motion, and drops the loop copy", () => {

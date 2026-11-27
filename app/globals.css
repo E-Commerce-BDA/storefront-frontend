@@ -83,7 +83,52 @@
   --sf-comp-footer-text: var(--sf-color-footer-text);
   --sf-comp-footer-link: var(--sf-color-footer-link);
   --sf-comp-footer-hover: var(--sf-color-footer-hover);
-  --color-navbar-bg: var(--sf-color-navbar-bg);
+  /* sf-084 component-group mirrors: nav, filter rail, drawer, strip, cards.
+     Values match the shipped var() fallbacks, so these declarations change no
+     pixels; only admin retunes them. --grid-gap/--marquee-duration stay absent
+     here: sections carry their own section-size fallbacks. */
+  --nb-height: 64px;
+  --nb-bg: var(--sf-color-navbar-bg);
+  --nb-text: var(--sf-color-navbar-text);
+  --nb-hover: var(--sf-color-navbar-hover);
+  --nb-badge-bg: var(--sf-color-navbar-badge-bg);
+  --nb-badge-text: var(--sf-color-navbar-badge-text);
+  --nb-announce-bg: var(--sf-color-navbar-announce-bg);
+  --nb-announce-text: var(--sf-color-navbar-announce-text);
+  --facet-bg: var(--sf-color-navbar-bg);
+  --facet-border: var(--sf-color-border);
+  --facet-title: var(--sf-color-ink);
+  --facet-label: var(--sf-color-ink);
+  --facet-gap: 20px;
+  --facet-pad: 16px;
+  --facet-radius: 10px;
+  --facet-action-gap: 8px;
+  --facet-max-height: 320px;
+  --facet-head-gap: 8px;
+  --facet-title-size: 18px;
+  --facet-inner-gap: 8px;
+  --facet-label-size: 14px;
+  --facet-price-gap: 8px;
+  --facet-tag-gap: 6px;
+  --facet-tag-max: 220px;
+  --minicart-bg: var(--sf-color-surface);
+  --minicart-title: var(--sf-color-ink);
+  --minicart-subtotal: var(--sf-color-ink);
+  --minicart-border: var(--sf-color-border);
+  --minicart-scrim: rgba(10, 37, 64, 0.5);
+  --minicart-width: 380px;
+  --minicart-pad: 20px;
+  --minicart-duration: 240ms;
+  --minicart-motion: slide;
+  --strip-cell-bg: var(--sf-color-surface);
+  --strip-cell-border: var(--sf-color-border);
+  --strip-wordmark: var(--sf-color-ink);
+  --strip-cell-radius: var(--sf-radius-card);
+  --marquee-direction: normal;
+  --marquee-play-state: paused;
+  --pc-cta-bg: var(--sf-color-surface);
+  --pc-cta-text: var(--sf-color-ink);
+  --pc-cta-border: var(--sf-color-border);  --color-navbar-bg: var(--sf-color-navbar-bg);
   --color-navbar-text: var(--sf-color-navbar-text);
   --color-ink: var(--sf-color-ink);
   --color-accent: var(--sf-color-brand);
@@ -3981,6 +4026,7 @@ body {
   flex-wrap: nowrap;
   width: max-content;
   animation: sf-marquee var(--marquee-duration, 30s) linear infinite;
+  animation-direction: var(--marquee-direction, normal);
 }
 .sf-strip[data-motion="marquee"][data-direction="right"] .sf-strip__track {
   animation-direction: reverse;
@@ -3992,7 +4038,7 @@ body {
 .sf-strip[data-motion="marquee"][data-pause="true"]:focus-within .sf-strip__track,
 .sf-testimonials[data-layout="marquee"][data-pause="true"]:hover .sf-testimonials__track,
 .sf-testimonials[data-layout="marquee"][data-pause="true"]:focus-within .sf-testimonials__track {
-  animation-play-state: paused;
+  animation-play-state: var(--marquee-play-state, paused);
 }
 @keyframes sf-marquee {
   from {
