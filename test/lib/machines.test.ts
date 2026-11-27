@@ -15,6 +15,16 @@ import { initialNavbarMachine, navbarMachine } from "@/lib/navbar/machine";
 import { compareMachine, initialCompareMachine } from "@/lib/compare/machine";
 import { initialOverlayMachine, overlayMachine } from "@/lib/overlay/machine";
 import { initialPdpMachine, pdpMachine } from "@/lib/pdp/machine";
+import {
+  filterDrawerMachine,
+  gridModeMachine,
+  initialFilterDrawerMachine,
+  initialGridModeMachine,
+} from "@/lib/shop/machine";
+import { cartViewMachine, initialCartViewMachine } from "@/lib/cart/machine";
+import { authFormMachine, initialAuthFormMachine } from "@/lib/auth/machine";
+import { heroCarouselMachine, initialHeroCarouselMachine } from "@/lib/sections/machine";
+import { accountTabsMachine, initialAccountTabsMachine } from "@/lib/account/machine";
 
 const line = (id: string, qty = 1) => ({
   id,
@@ -178,5 +188,28 @@ describe("shell / form machines", () => {
     const next = pdpMachine(dirty, { type: "product/change", productId: "b" });
     expect(next.qty).toBe(1);
     expect(next.galleryIndex).toBe(0);
+  });
+});
+
+/**
+ * sf-085: every explicit prototype machine now has a pure reducer. Focused
+ * specs cover each transition table; this aggregate pins the initial faces so
+ * an island cannot boot into a state the prototype never declared.
+ */
+describe("prototype machine faces (sf-085)", () => {
+  it("boots all 13 ported machines at their declared initial state", () => {
+    expect(filterDrawerMachine(initialFilterDrawerMachine(), { type: "CLOSE" }).face).toBe("closed");
+    expect(gridModeMachine(initialGridModeMachine(), { type: "SET_TWO" }).mode).toBe("two");
+    expect(cartViewMachine(initialCartViewMachine(), { type: "SET_TABLE" }).mode).toBe("table");
+    expect(authFormMachine(initialAuthFormMachine(), { type: "reset" }).status).toBe("idle");
+    expect(heroCarouselMachine(initialHeroCarouselMachine(), { type: "resume" }).index).toBe(0);
+    expect(accountTabsMachine(initialAccountTabsMachine(), { type: "OVERVIEW" }).tab).toBe("overview");
+    expect(pdpMachine(initialPdpMachine("a"), { type: "tab/set", tab: "description" }).tab).toBe("description");
+    expect(overlayMachine(initialOverlayMachine(), { type: "timer/clear" }).status).toBe("idle");
+    expect(searchMachine(initialSearchMachine<string>(), { type: "results/clear" }).status).toBe("idle");
+    expect(initialCartMachine().status).toBe("idle");
+    expect(initialCheckoutMachine().status).toBe("idle");
+    expect(initialCompareMachine().status).toBe("idle");
+    expect(initialNavbarMachine().hidden).toBe(false);
   });
 });

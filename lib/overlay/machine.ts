@@ -14,6 +14,10 @@ export interface OverlayMachineState {
   message: string | null;
   /** Deadline token; the owner clears it on unmount or close. */
   timerToken: number | null;
+  /** Quick-view selection — sf-085, ported from the prototype's QuickView state. */
+  selectedOptions: Record<string, string>;
+  qty: number;
+  imageIndex: number;
 }
 
 export type OverlayMachineEvent =
@@ -24,10 +28,23 @@ export type OverlayMachineEvent =
   | { type: "load/error"; message: string }
   | { type: "add/success" }
   | { type: "add/error"; message: string }
-  | { type: "timer/clear" };
+  | { type: "timer/clear" }
+  | { type: "selection/set"; name: string; value: string }
+  | { type: "selection/reset"; options: Record<string, string> }
+  | { type: "qty/set"; qty: number; min: number; max: number }
+  | { type: "image/set"; index: number; count: number };
 
 export function initialOverlayMachine(): OverlayMachineState {
-  return { open: false, closing: false, status: "idle", message: null, timerToken: null };
+  return {
+    open: false,
+    closing: false,
+    status: "idle",
+    message: null,
+    timerToken: null,
+    selectedOptions: {},
+    qty: 1,
+    imageIndex: 0,
+  };
 }
 
 export function overlayMachine(
@@ -53,5 +70,20 @@ export function overlayMachine(
       return { ...state, status: "error", message: event.message };
     case "timer/clear":
       return { ...state, timerToken: null };
+    case "selection/set":
+      return {
+        ...state,
+        selectedOptions: { ...state.selectedOptions, [event.name]: event.value },
+      };
+    case "selection/reset":
+      return { ...state, selectedOptions: { ...event.options }, qty: 1, imageIndex: 0 };
+    case "qty/set":
+      // Clamping lives here so two entry points (stepper/keyboard) cannot
+      // disagree about the bounds of the same selection.
+      return { ...state, qty: Math.min(event.max, Math.max(event.min, Math.trunc(event.qty))) };
+    case "image/set":
+      return event.count === 0
+        ? state
+        : { ...state, imageIndex: ((event.index % event.count) + event.count) % event.count };
   }
 }

@@ -6,6 +6,9 @@
  */
 import { statusForItems, type Status } from "@/lib/machine/status";
 
+/** The prototype's SearchOverlayMachine face, derived from one source of truth. */
+export type SearchOverlayFace = "idle" | "results" | "empty";
+
 export interface SearchMachineState<T = unknown> {
   query: string;
   status: Status;
@@ -27,6 +30,16 @@ export type SearchMachineEvent<T = unknown> =
 
 export function initialSearchMachine<T>(): SearchMachineState<T> {
   return { query: "", status: "idle", results: [], seq: 0, activeIndex: 0, aborted: false };
+}
+
+/**
+ * A face is derived, never stored: keeping a second `face` field would let a
+ * stale results/empty value survive a query change. `idle` also covers loading
+ * — an in-flight request is not an answer, so no rows may be painted as empty.
+ */
+export function searchOverlayFace<T>(state: SearchMachineState<T>): SearchOverlayFace {
+  if (state.status === "idle" || state.status === "loading") return "idle";
+  return state.results.length === 0 ? "empty" : "results";
 }
 
 export function searchMachine<T>(

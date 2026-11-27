@@ -73,6 +73,36 @@ export function rollbackDelta(cart: CartState, before: CartState, after: CartSta
   return undo(cart, delta(before, after));
 }
 
+/** Cart view mode — the table|cards choice from the prototype's CartViewMachine. */
+export type CartViewMode = "table" | "cards";
+
+export interface CartViewMachineState {
+  mode: CartViewMode;
+}
+
+export type CartViewMachineEvent =
+  | { type: "SET_TABLE" }
+  | { type: "SET_CARDS" }
+  | { type: "TOGGLE" };
+
+export function initialCartViewMachine(): CartViewMachineState {
+  return { mode: "table" };
+}
+
+export function cartViewMachine(
+  state: CartViewMachineState,
+  event: CartViewMachineEvent,
+): CartViewMachineState {
+  switch (event.type) {
+    case "SET_TABLE":
+      return { mode: "table" };
+    case "SET_CARDS":
+      return { mode: "cards" };
+    case "TOGGLE":
+      return { mode: state.mode === "table" ? "cards" : "table" };
+  }
+}
+
 export function cartMachine(state: CartMachineState, event: CartMachineEvent): CartMachineState {
   switch (event.type) {
     case "load/start":
